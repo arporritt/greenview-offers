@@ -6,126 +6,105 @@
 <title>3827 N Greenview — Offer Tracker</title>
 <style>
   :root {
-    --navy: #1a2744;
-    --gold: #c9a84c;
-    --green: #2e7d52;
-    --amber: #b45309;
-    --red: #b91c1c;
-    --light: #f8f7f4;
-    --border: #e2ddd6;
-    --text: #1c1917;
-    --muted: #6b7280;
+    --navy: #1a2744; --gold: #c9a84c; --green: #2e7d52;
+    --amber: #b45309; --red: #b91c1c; --light: #f8f7f4;
+    --border: #e2ddd6; --text: #1c1917; --muted: #6b7280;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--light); color: var(--text); line-height: 1.5; }
 
-  /* ── LOCK / SETUP SCREENS ── */
-  .full-screen {
-    position: fixed; inset: 0; background: var(--navy);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 9999; padding: 2rem;
-  }
-  .full-screen.hidden { display: none; }
-  .full-screen h1 { color: var(--gold); font-size: 1.4rem; font-weight: 600; margin-bottom: .25rem; letter-spacing: .05em; text-transform: uppercase; }
-  .full-screen p { color: #94a3b8; font-size: .85rem; margin-bottom: 1.75rem; text-align: center; max-width: 320px; }
-  .screen-input {
-    width: 100%; max-width: 320px; padding: .75rem 1rem; border: 1.5px solid #334155;
-    border-radius: 8px; background: #0f172a; color: #f1f5f9; font-size: 1rem;
-    text-align: center; outline: none; margin-bottom: .5rem;
-  }
+  /* ── FULL-SCREEN OVERLAY ── */
+  .screen { position: fixed; inset: 0; background: var(--navy); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; padding: 2rem; }
+  .screen.hidden { display: none; }
+  .screen h1 { color: var(--gold); font-size: 1.4rem; font-weight: 600; margin-bottom: .25rem; letter-spacing: .05em; text-transform: uppercase; }
+  .screen p { color: #94a3b8; font-size: .85rem; margin-bottom: 1.75rem; text-align: center; max-width: 320px; }
+  .screen-input { width: 100%; max-width: 320px; padding: .75rem 1rem; border: 1.5px solid #334155; border-radius: 8px; background: #0f172a; color: #f1f5f9; font-size: 1rem; text-align: center; outline: none; margin-bottom: .5rem; }
   .screen-input:focus { border-color: var(--gold); }
-  .screen-btn {
-    width: 100%; max-width: 320px; padding: .75rem;
-    background: var(--gold); color: var(--navy); font-weight: 700; font-size: .95rem;
-    border: none; border-radius: 8px; cursor: pointer;
-  }
-  .screen-btn.secondary {
-    background: transparent; color: #94a3b8; border: 1.5px solid #334155; margin-top: .5rem;
-  }
+  .screen-btn { width: 100%; max-width: 320px; padding: .75rem; background: var(--gold); color: var(--navy); font-weight: 700; font-size: .95rem; border: none; border-radius: 8px; cursor: pointer; }
+  .screen-btn.sec { background: transparent; color: #94a3b8; border: 1.5px solid #334155; margin-top: .5rem; }
   .screen-err { color: #f87171; font-size: .8rem; margin-top: .5rem; min-height: 1em; }
-  .screen-note { color: #64748b; font-size: .72rem; max-width: 300px; text-align: center; margin-top: .75rem; }
+  .screen-note { color: #475569; font-size: .72rem; max-width: 300px; text-align: center; margin-top: .75rem; }
 
-  /* ── MAIN ── */
+  /* ── APP ── */
   #app { display: none; }
-  #app.visible { display: block; }
+  #app.on { display: block; }
 
   /* ── HERO ── */
   .hero { background: var(--navy); padding: 1.5rem 1.25rem 1.25rem; }
-  .hero-address { color: var(--gold); font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .25rem; }
-  .hero-title { color: #fff; font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+  .hero-addr { color: var(--gold); font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .25rem; }
+  .hero-title { color: #fff; font-size: 1.5rem; font-weight: 700; }
   .hero-sub { color: #94a3b8; font-size: .85rem; margin-top: .4rem; }
   .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-top: 1.25rem; }
-  .hero-stat { background: rgba(255,255,255,.07); border-radius: 8px; padding: .6rem .75rem; }
-  .hero-stat-val { color: var(--gold); font-size: 1.1rem; font-weight: 700; }
-  .hero-stat-lbl { color: #94a3b8; font-size: .7rem; margin-top: .1rem; text-transform: uppercase; letter-spacing: .05em; }
+  .stat { background: rgba(255,255,255,.07); border-radius: 8px; padding: .6rem .75rem; }
+  .stat-v { color: var(--gold); font-size: 1.1rem; font-weight: 700; }
+  .stat-l { color: #94a3b8; font-size: .7rem; margin-top: .1rem; text-transform: uppercase; letter-spacing: .05em; }
 
   /* ── IDEAL BANNER ── */
-  .ideal-banner { background: #ecfdf5; border-left: 4px solid var(--green); margin: 1rem; border-radius: 0 8px 8px 0; padding: .75rem 1rem; }
-  .ideal-banner strong { color: var(--green); font-size: .8rem; text-transform: uppercase; letter-spacing: .07em; display: block; margin-bottom: .25rem; }
-  .ideal-banner ul { font-size: .8rem; color: #374151; margin-top: .25rem; padding-left: 1rem; }
-  .ideal-banner li { margin-bottom: .15rem; }
+  .banner { background: #ecfdf5; border-left: 4px solid var(--green); margin: 1rem; border-radius: 0 8px 8px 0; padding: .75rem 1rem; }
+  .banner strong { color: var(--green); font-size: .8rem; text-transform: uppercase; letter-spacing: .07em; display: block; margin-bottom: .25rem; }
+  .banner ul { font-size: .8rem; color: #374151; padding-left: 1rem; }
+  .banner li { margin-bottom: .15rem; }
 
   /* ── SECTION HEADER ── */
-  .section-header { padding: .5rem 1rem .25rem; font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; border-bottom: 1px solid var(--border); margin-bottom: .75rem; }
+  .sh { padding: .5rem 1rem .25rem; font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; border-bottom: 1px solid var(--border); margin-bottom: .75rem; display: flex; justify-content: space-between; align-items: center; }
+  .sh button { font-size: .65rem; background: var(--navy); color: var(--gold); border: none; border-radius: 4px; padding: .2rem .5rem; cursor: pointer; font-weight: 700; }
 
-  /* ── IMPORT ZONE ── */
-  .import-section { padding: 0 1rem 1rem; }
-  .import-zone {
-    border: 2px dashed var(--border); border-radius: 12px; padding: 1.5rem 1rem;
-    text-align: center; cursor: pointer; transition: all .2s; background: #fff;
-    position: relative;
-  }
-  .import-zone.drag-over { border-color: var(--gold); background: #fffbeb; }
-  .import-zone.loading { border-color: var(--navy); background: #f0f4ff; pointer-events: none; }
-  .import-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-  .import-icon { font-size: 2rem; margin-bottom: .5rem; }
-  .import-title { font-size: .9rem; font-weight: 700; color: var(--navy); }
-  .import-sub { font-size: .75rem; color: var(--muted); margin-top: .25rem; }
-  .import-loading { display: none; }
-  .import-zone.loading .import-idle { display: none; }
-  .import-zone.loading .import-loading { display: block; }
-  .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid #ddd; border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: .5rem; }
+  /* ── IMPORT ── */
+  .import-wrap { padding: 0 1rem .75rem; }
+  .drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 1.5rem 1rem; text-align: center; cursor: pointer; background: #fff; transition: all .2s; position: relative; }
+  .drop-zone.over { border-color: var(--gold); background: #fffbeb; }
+  .drop-zone.busy { border-color: var(--navy); background: #f0f4ff; pointer-events: none; }
+  .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-idle .di { font-size: 1.75rem; margin-bottom: .4rem; }
+  .drop-idle .dt { font-size: .9rem; font-weight: 700; color: var(--navy); }
+  .drop-idle .ds { font-size: .75rem; color: var(--muted); margin-top: .2rem; }
+  .drop-busy { display: none; }
+  .drop-zone.busy .drop-idle { display: none; }
+  .drop-zone.busy .drop-busy { display: block; }
+  .spin { display: inline-block; width: 22px; height: 22px; border: 3px solid #ddd; border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: .4rem; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .import-err { color: var(--red); font-size: .8rem; margin-top: .5rem; display: none; }
+  .drop-err { color: var(--red); font-size: .8rem; margin-top: .4rem; display: none; }
+  .no-api-note { font-size: .72rem; color: var(--amber); text-align: center; margin-top: .4rem; display: none; }
+
+  /* ── LOADING STATE ── */
+  .loading-state { padding: 3rem 1rem; text-align: center; color: var(--muted); font-size: .85rem; }
 
   /* ── OFFER CARDS ── */
   .offers { padding: 0 1rem; display: flex; flex-direction: column; gap: 1rem; }
-  .offer-card { background: #fff; border-radius: 12px; border: 1.5px solid var(--border); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
-  .offer-card.top-pick { border-color: var(--green); }
-  .offer-header { padding: .875rem 1rem .75rem; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--border); }
-  .offer-num { font-size: .65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-  .offer-buyer { font-size: .95rem; font-weight: 700; color: var(--text); margin-top: .1rem; line-height: 1.2; }
-  .offer-agent { font-size: .75rem; color: var(--muted); margin-top: .15rem; }
-  .offer-badge { font-size: .65rem; font-weight: 700; padding: .2rem .5rem; border-radius: 99px; white-space: nowrap; flex-shrink: 0; margin-left: .5rem; }
-  .badge-green { background: #d1fae5; color: var(--green); }
-  .badge-amber { background: #fef3c7; color: var(--amber); }
-  .offer-price-row { padding: .75rem 1rem; display: flex; align-items: center; gap: .75rem; border-bottom: 1px solid var(--border); }
-  .offer-price { font-size: 1.5rem; font-weight: 800; color: var(--text); }
-  .offer-vs-list { font-size: .75rem; font-weight: 600; color: var(--green); }
-  .offer-financing-chip { margin-left: auto; font-size: .7rem; font-weight: 700; padding: .2rem .55rem; border-radius: 6px; background: var(--navy); color: #fff; white-space: nowrap; }
-  .offer-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
-  .offer-cell { padding: .55rem 1rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .offer-cell:nth-child(even) { border-right: none; }
-  .offer-cell:last-child, .offer-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
-  .offer-cell.full-width { grid-column: 1/-1; border-right: none; }
-  .offer-cell-lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-  .offer-cell-val { font-size: .85rem; font-weight: 600; color: var(--text); margin-top: .1rem; }
-  .offer-net-row { padding: .75rem 1rem; display: flex; align-items: center; justify-content: space-between; background: #f9f8f6; border-bottom: 1px solid var(--border); }
-  .offer-net-lbl { font-size: .75rem; color: var(--muted); }
-  .offer-net-val { font-size: 1.15rem; font-weight: 800; color: var(--green); }
-  .offer-score-row { padding: .6rem 1rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
-  .score-bar-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 6px; margin: 0 .75rem; }
-  .score-bar { height: 6px; border-radius: 99px; background: var(--gold); }
-  .score-val { font-size: .8rem; font-weight: 700; color: var(--navy); white-space: nowrap; }
-  .score-lbl { font-size: .7rem; color: var(--muted); white-space: nowrap; }
-  .offer-flags { padding: .5rem 1rem .75rem; display: flex; flex-direction: column; gap: .3rem; }
+  .card { background: #fff; border-radius: 12px; border: 1.5px solid var(--border); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card.top { border-color: var(--green); }
+  .card-hd { padding: .875rem 1rem .75rem; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .c-num { font-size: .65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .c-buyer { font-size: .95rem; font-weight: 700; margin-top: .1rem; line-height: 1.2; }
+  .c-agent { font-size: .75rem; color: var(--muted); margin-top: .15rem; }
+  .badge { font-size: .65rem; font-weight: 700; padding: .2rem .5rem; border-radius: 99px; white-space: nowrap; flex-shrink: 0; margin-left: .5rem; }
+  .bg-g { background: #d1fae5; color: var(--green); }
+  .card-price { padding: .75rem 1rem; display: flex; align-items: center; gap: .75rem; border-bottom: 1px solid var(--border); }
+  .price { font-size: 1.5rem; font-weight: 800; }
+  .delta { font-size: .75rem; font-weight: 600; color: var(--green); }
+  .fin-chip { margin-left: auto; font-size: .7rem; font-weight: 700; padding: .2rem .55rem; border-radius: 6px; background: var(--navy); color: #fff; white-space: nowrap; }
+  .cgrid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
+  .cc { padding: .55rem 1rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .cc:nth-child(even) { border-right: none; }
+  .cc.fw { grid-column: 1/-1; border-right: none; }
+  .cc-l { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .cc-v { font-size: .85rem; font-weight: 600; margin-top: .1rem; }
+  .card-net { padding: .75rem 1rem; display: flex; justify-content: space-between; align-items: center; background: #f9f8f6; border-bottom: 1px solid var(--border); }
+  .net-l { font-size: .75rem; color: var(--muted); }
+  .net-v { font-size: 1.15rem; font-weight: 800; color: var(--green); }
+  .card-score { padding: .6rem 1rem; display: flex; align-items: center; border-bottom: 1px solid var(--border); }
+  .bar-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 6px; margin: 0 .75rem; }
+  .bar { height: 6px; border-radius: 99px; background: var(--gold); }
+  .sc-v { font-size: .8rem; font-weight: 700; color: var(--navy); white-space: nowrap; }
+  .sc-l { font-size: .7rem; color: var(--muted); white-space: nowrap; }
+  .flags { padding: .5rem 1rem .75rem; display: flex; flex-direction: column; gap: .3rem; }
   .flag { font-size: .72rem; padding: .3rem .6rem; border-radius: 6px; }
   .flag-red { background: #fef2f2; color: var(--red); }
   .flag-amber { background: #fffbeb; color: var(--amber); }
   .flag-green { background: #f0fdf4; color: var(--green); }
 
-  /* ── COMPARISON TABLE ── */
-  .comp-section { padding: 0 1rem 1.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* ── TABLE ── */
+  .tbl-wrap { padding: 0 1rem 1.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   table { width: 100%; border-collapse: collapse; font-size: .78rem; min-width: 520px; }
   th { background: var(--navy); color: var(--gold); padding: .5rem .6rem; text-align: left; font-size: .65rem; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
   th:first-child { border-radius: 8px 0 0 0; } th:last-child { border-radius: 0 8px 0 0; }
@@ -133,111 +112,105 @@
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #f9f8f6; }
   td.best { color: var(--green); font-weight: 700; }
-  td.warn { color: var(--amber); font-weight: 600; }
-  td.bad  { color: var(--red); font-weight: 600; }
+  td.bad  { color: var(--red); }
 
   /* ── METHODOLOGY ── */
-  .methodology { margin: 0 1rem 2rem; background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 1rem; }
-  .methodology h3 { font-size: .8rem; font-weight: 700; color: var(--navy); margin-bottom: .5rem; }
-  .methodology ul { font-size: .75rem; color: #374151; padding-left: 1rem; display: flex; flex-direction: column; gap: .2rem; }
+  .method { margin: 0 1rem 2rem; background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 1rem; }
+  .method h3 { font-size: .8rem; font-weight: 700; color: var(--navy); margin-bottom: .5rem; }
+  .method ul { font-size: .75rem; color: #374151; padding-left: 1rem; }
+  .method li { margin-bottom: .2rem; }
 
-  /* ── REVIEW MODAL ── */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; padding: 0; }
-  .modal-overlay.hidden { display: none; }
-  .modal {
-    background: #fff; width: 100%; max-width: 560px; border-radius: 16px 16px 0 0;
-    max-height: 90vh; overflow-y: auto; padding: 1.25rem;
-    animation: slideUp .25s ease;
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-handle { width: 40px; height: 4px; background: #d1d5db; border-radius: 99px; margin: 0 auto 1rem; }
-  .modal h2 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: .25rem; }
-  .modal-sub { font-size: .75rem; color: var(--muted); margin-bottom: 1rem; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
-  .form-group { display: flex; flex-direction: column; gap: .25rem; }
-  .form-group.full { grid-column: 1/-1; }
-  .form-group label { font-size: .65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
-  .form-group input, .form-group select, .form-group textarea {
-    padding: .5rem .65rem; border: 1.5px solid var(--border); border-radius: 8px;
-    font-size: .85rem; color: var(--text); background: #fff; outline: none; width: 100%;
-  }
-  .form-group input:focus, .form-group select:focus { border-color: var(--navy); }
-  .form-group textarea { resize: vertical; min-height: 3rem; font-size: .8rem; }
-  .form-section-title { font-size: .7rem; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: .08em; margin-top: .75rem; margin-bottom: .25rem; grid-column: 1/-1; border-bottom: 1px solid var(--border); padding-bottom: .3rem; }
-  .modal-actions { display: flex; gap: .6rem; margin-top: 1rem; }
-  .btn-primary { flex: 1; padding: .75rem; background: var(--navy); color: #fff; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; font-size: .9rem; }
-  .btn-secondary { padding: .75rem 1rem; background: transparent; color: var(--muted); font-weight: 600; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; font-size: .9rem; }
-  .ai-badge { display: inline-block; background: #ede9fe; color: #6d28d9; font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; margin-bottom: .75rem; }
+  /* ── MODAL ── */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
+  .overlay.hidden { display: none; }
+  .modal { background: #fff; width: 100%; max-width: 560px; border-radius: 16px 16px 0 0; max-height: 90vh; overflow-y: auto; padding: 1.25rem; animation: up .25s ease; }
+  @keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: #d1d5db; border-radius: 99px; margin: 0 auto .75rem; }
+  .modal h2 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: .2rem; }
+  .modal-sub { font-size: .75rem; color: var(--muted); margin-bottom: .75rem; }
+  .ai-tag { display: inline-block; background: #ede9fe; color: #6d28d9; font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; margin-bottom: .6rem; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
+  .fg { display: flex; flex-direction: column; gap: .2rem; }
+  .fg.fw { grid-column: 1/-1; }
+  .fg label { font-size: .65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+  .fg input, .fg select, .fg textarea { padding: .5rem .65rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: .85rem; color: var(--text); outline: none; width: 100%; }
+  .fg input:focus, .fg select:focus { border-color: var(--navy); }
+  .fg textarea { resize: vertical; min-height: 3rem; font-size: .8rem; }
+  .fsec { font-size: .7rem; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: .08em; margin-top: .6rem; margin-bottom: .2rem; grid-column: 1/-1; border-bottom: 1px solid var(--border); padding-bottom: .25rem; }
+  .modal-btns { display: flex; gap: .6rem; margin-top: .75rem; }
+  .btn-p { flex: 1; padding: .75rem; background: var(--navy); color: #fff; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; }
+  .btn-s { padding: .75rem 1rem; background: transparent; color: var(--muted); font-weight: 600; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; }
+  .save-status { font-size: .75rem; color: var(--muted); text-align: center; margin-top: .5rem; min-height: 1.2em; }
 
   /* ── FOOTER ── */
   .footer { padding: 1rem; text-align: center; font-size: .7rem; color: var(--muted); border-top: 1px solid var(--border); }
-  .api-key-status { text-align: right; padding: .5rem 1rem; font-size: .7rem; color: var(--muted); cursor: pointer; }
-  .api-key-status span { text-decoration: underline; }
+  .api-row { text-align: right; padding: .4rem 1rem; font-size: .7rem; color: var(--muted); cursor: pointer; }
+  .api-row span { text-decoration: underline; }
 
-  /* ── DESKTOP ── */
+  /* ── RESPONSIVE ── */
   @media (min-width: 768px) {
-    .hero { padding: 2rem 2rem 1.75rem; }
+    .hero { padding: 2rem; }
     .hero-title { font-size: 2rem; }
     .hero-stats { grid-template-columns: repeat(6, 1fr); }
-    .ideal-banner { margin: 1.25rem 2rem; }
-    .section-header { padding: .5rem 2rem .25rem; }
-    .import-section { padding: 0 2rem 1rem; }
-    .offers { padding: 0 2rem; display: grid; grid-template-columns: repeat(2, 1fr); }
-    .comp-section, .methodology { padding-left: 2rem; padding-right: 2rem; }
-    .methodology { margin-left: 2rem; margin-right: 2rem; }
-    .modal-overlay { align-items: center; padding: 1rem; }
+    .banner, .sh, .import-wrap, .offers, .tbl-wrap, .method { padding-left: 2rem; padding-right: 2rem; }
+    .method { margin-left: 2rem; margin-right: 2rem; }
+    .offers { display: grid; grid-template-columns: repeat(2, 1fr); }
+    .overlay { align-items: center; padding: 1rem; }
     .modal { border-radius: 16px; }
-    .api-key-status { padding-right: 2rem; }
+    .api-row { padding-right: 2rem; }
   }
   @media (min-width: 1200px) { .offers { grid-template-columns: repeat(4, 1fr); } }
 </style>
 </head>
 <body>
 
-<!-- ── LOCK SCREEN ── -->
-<div id="lock-screen" class="full-screen">
+<!-- PASTE YOUR APPS SCRIPT WEB APP URL BELOW -->
+<script>
+  const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+</script>
+
+<!-- ── PASSWORD ── -->
+<div id="lock" class="screen">
   <h1>3827 N Greenview</h1>
   <p>Offer Tracker · Sellers Only</p>
-  <input id="pw-input" class="screen-input" type="password" placeholder="Enter password" autocomplete="off" />
+  <input id="pw" class="screen-input" type="password" placeholder="Password" autocomplete="off">
   <button id="pw-btn" class="screen-btn">Unlock</button>
   <div id="pw-err" class="screen-err"></div>
 </div>
 
 <!-- ── API KEY SETUP ── -->
-<div id="api-screen" class="full-screen hidden">
+<div id="api-screen" class="screen hidden">
   <h1>Claude API Key</h1>
-  <p>Used to extract offer details from PDFs and images. Stored only in your browser session — never saved or shared.</p>
-  <input id="api-input" class="screen-input" type="password" placeholder="sk-ant-..." autocomplete="off" />
-  <button id="api-btn" class="screen-btn">Save &amp; Continue</button>
-  <button id="api-skip" class="screen-btn secondary">Skip (manual entry only)</button>
+  <p>Used to extract offer data from PDFs and images you drop in. Stored in your browser session only.</p>
+  <input id="api-in" class="screen-input" type="password" placeholder="sk-ant-..." autocomplete="off">
+  <button id="api-btn" class="screen-btn">Save & Continue</button>
+  <button id="api-skip" class="screen-btn sec">Skip (I'll enter offers manually)</button>
   <div id="api-err" class="screen-err"></div>
-  <p class="screen-note">Get your key at console.anthropic.com → API Keys</p>
+  <p class="screen-note">console.anthropic.com → API Keys → Create Key</p>
 </div>
 
 <!-- ── APP ── -->
 <div id="app">
 
-  <div class="api-key-status" id="api-key-status" style="display:none">
-    AI extraction: <span id="api-key-indicator">Not configured</span>
+  <div class="api-row" id="api-row" style="display:none">
+    AI extraction: <span id="api-ind">Not set</span>
   </div>
 
-  <!-- HERO -->
   <div class="hero">
-    <div class="hero-address">3827 N Greenview Ave Unit 2S · Chicago IL 60613</div>
+    <div class="hero-addr">3827 N Greenview Ave Unit 2S · Chicago IL 60613</div>
     <div class="hero-title">Offer Tracker</div>
-    <div class="hero-sub">MLS #12652161 · Listed May 28, 2026 · Haylee Stone, @properties Christie's</div>
+    <div class="hero-sub" id="hero-sub">MLS #12652161 · Loading…</div>
     <div class="hero-stats">
-      <div class="hero-stat"><div class="hero-stat-val">$799K</div><div class="hero-stat-lbl">List Price</div></div>
-      <div class="hero-stat"><div class="hero-stat-val">1,533</div><div class="hero-stat-lbl">Sq Ft</div></div>
-      <div class="hero-stat"><div class="hero-stat-val">3 / 2</div><div class="hero-stat-lbl">Bed / Bath</div></div>
-      <div class="hero-stat"><div class="hero-stat-val">$254</div><div class="hero-stat-lbl">HOA / mo</div></div>
-      <div class="hero-stat"><div class="hero-stat-val">$834K</div><div class="hero-stat-lbl">Redfin Est.</div></div>
-      <div class="hero-stat" id="offer-count-stat"><div class="hero-stat-val">4</div><div class="hero-stat-lbl">Offers</div></div>
+      <div class="stat"><div class="stat-v" id="s-list">—</div><div class="stat-l">List Price</div></div>
+      <div class="stat"><div class="stat-v">1,533</div><div class="stat-l">Sq Ft</div></div>
+      <div class="stat"><div class="stat-v">3 / 2</div><div class="stat-l">Bed / Bath</div></div>
+      <div class="stat"><div class="stat-v">$254</div><div class="stat-l">HOA / mo</div></div>
+      <div class="stat"><div class="stat-v" id="s-redfin">—</div><div class="stat-l">Redfin Est.</div></div>
+      <div class="stat"><div class="stat-v" id="s-count">—</div><div class="stat-l">Offers</div></div>
     </div>
   </div>
 
-  <!-- IDEAL SCENARIO -->
-  <div class="ideal-banner">
+  <div class="banner">
     <strong>Your Ideal Scenario</strong>
     <ul>
       <li>Highest possible price · Cash buyer · No contingencies</li>
@@ -246,81 +219,76 @@
     </ul>
   </div>
 
-  <!-- IMPORT -->
-  <div class="section-header" style="margin-top:.5rem">Add New Offer</div>
-  <div class="import-section">
-    <div class="import-zone" id="import-zone">
-      <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.heic,.webp" multiple />
-      <div class="import-idle">
-        <div class="import-icon">📄</div>
-        <div class="import-title">Drop offer contract here</div>
-        <div class="import-sub">PDF or image (JPG, PNG, HEIC) · Claude AI extracts all fields automatically</div>
+  <div class="sh" style="margin-top:.5rem">
+    <span>Add New Offer</span>
+  </div>
+  <div class="import-wrap">
+    <div class="drop-zone" id="dz">
+      <input type="file" id="fi" accept=".pdf,.png,.jpg,.jpeg,.heic,.webp">
+      <div class="drop-idle">
+        <div class="di">📄</div>
+        <div class="dt">Drop contract here or click to browse</div>
+        <div class="ds">PDF or image · Claude AI extracts all fields</div>
       </div>
-      <div class="import-loading">
-        <div class="spinner"></div>
-        <div class="import-title" style="color:var(--navy)">Reading document…</div>
-        <div class="import-sub" id="import-status-text">Extracting with Claude AI</div>
+      <div class="drop-busy">
+        <div class="spin"></div>
+        <div class="dt" style="color:var(--navy)">Reading document…</div>
+        <div class="ds" id="dz-status">Extracting with Claude AI</div>
       </div>
     </div>
-    <div class="import-err" id="import-err"></div>
+    <div class="drop-err" id="dz-err"></div>
+    <div class="no-api-note" id="no-api-note">No API key set — drop a file to open a blank form for manual entry. <span style="cursor:pointer;text-decoration:underline" id="set-api-link">Add key</span></div>
   </div>
 
-  <!-- OFFER CARDS -->
-  <div class="section-header" id="offers-header">4 Offers Received · May 31, 2026</div>
-  <div class="offers" id="offer-cards"></div>
-
-  <!-- COMPARISON TABLE -->
-  <div class="section-header" style="margin-top:1.5rem">Side-by-Side Comparison</div>
-  <div class="comp-section">
-    <table id="comp-table">
-      <thead>
-        <tr id="comp-header-row">
-          <th>Field</th>
-        </tr>
-      </thead>
-      <tbody id="comp-body"></tbody>
-    </table>
+  <div class="sh" id="offers-sh">
+    <span id="offers-label">Loading offers…</span>
+    <button id="refresh-btn" title="Refresh from Google Sheet">↻ Refresh</button>
+  </div>
+  <div id="offers-area">
+    <div class="loading-state">Loading offers from Google Sheet…</div>
   </div>
 
-  <!-- METHODOLOGY -->
-  <div class="section-header">Score Methodology</div>
-  <div class="methodology">
+  <div class="sh" style="margin-top:1.5rem"><span>Side-by-Side Comparison</span></div>
+  <div class="tbl-wrap">
+    <table><thead><tr id="thr"><th>Field</th></tr></thead><tbody id="tbody"></tbody></table>
+  </div>
+
+  <div class="sh"><span>Score Methodology</span></div>
+  <div class="method">
     <h3>Strength Score (100-point scale)</h3>
     <ul>
       <li><strong>Price (50%)</strong> — Min(110, offer ÷ list × 100)</li>
-      <li><strong>Financing (15%)</strong> — Cash=100 · Conv ≥20% down=85 · Conv 10–20%=70 · Conv &lt;10%=50 · FHA/VA=35</li>
+      <li><strong>Financing (15%)</strong> — Cash=100 · Conv ≥20% down=85 · Conv 10–20%=70 · &lt;10%=50 · FHA/VA=35</li>
       <li><strong>Earnest Money (10%)</strong> — Min(100, EM% ÷ 5% × 100)</li>
       <li><strong>Inspection (10%)</strong> — None/AS-IS=100 · Info Only=80 · With Requests=50</li>
-      <li><strong>Appraisal (5%)</strong> — Waived / No termination right=100 · Gap coverage=75 · Included=50</li>
+      <li><strong>Appraisal (5%)</strong> — Waived/No termination=100 · Gap coverage=75 · Included=50</li>
       <li><strong>Timeline (5%)</strong> — Max(0, 100 − |close days − 30| × 2)</li>
       <li><strong>Rent-Back (5%)</strong> — Free=100 · Modified/Paid=70 · Declined=0</li>
     </ul>
-    <p style="font-size:.72rem;color:#6b7280;margin-top:.5rem">
-      Net Proceeds = Price − Commission − Transfer Tax (0.45%) − Closing Costs ($3,650) − Rent-Back Cost − Mortgage Payoff ($451,500)
-    </p>
+    <p style="font-size:.72rem;color:#6b7280;margin-top:.5rem">Net = Price − Commission − Transfer Tax (0.45%) − Closing Costs − Rent-Back Cost − Mortgage Payoff</p>
   </div>
 
-  <div class="footer">Last updated: May 31, 2026 · Alyssa &amp; Thomas · 3827 N Greenview Unit 2S</div>
+  <div class="footer" id="footer">Last updated: —</div>
 </div>
 
 <!-- ── REVIEW MODAL ── -->
-<div class="modal-overlay hidden" id="review-modal">
+<div class="overlay hidden" id="modal-ov">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="ai-badge" id="modal-ai-badge">✦ AI-extracted — review before adding</div>
-    <h2 id="modal-title">Review Offer</h2>
-    <div class="modal-sub" id="modal-sub">Verify all fields before adding to tracker</div>
-    <form id="review-form">
+    <div class="ai-tag" id="ai-tag">✦ AI-extracted — review before saving</div>
+    <h2 id="modal-h">Add Offer</h2>
+    <div class="modal-sub">Fields save directly to Google Sheet</div>
+    <form id="rev-form">
       <div class="form-grid">
-        <div class="form-section-title">Buyer & Agent</div>
-        <div class="form-group full"><label>Buyer Name(s)</label><input name="buyers" required /></div>
-        <div class="form-group full"><label>Agent · Brokerage</label><input name="agent" /></div>
-        <div class="form-group"><label>Date of Offer</label><input name="date" placeholder="MM/DD/YYYY" /></div>
-        <div class="form-group"><label>Buyer Attorney</label><input name="attorney" placeholder="—" /></div>
+        <div class="fsec">Buyer & Agent</div>
+        <div class="fg fw"><label>Buyer Name(s)</label><input name="buyers" required></div>
+        <div class="fg fw"><label>Agent · Brokerage</label><input name="agent"></div>
+        <div class="fg"><label>Date of Offer</label><input name="date" placeholder="M/D/YYYY"></div>
+        <div class="fg"><label>Buyer Attorney</label><input name="attorney" placeholder="—"></div>
 
-        <div class="form-section-title">Price & Financing</div>
-        <div class="form-group"><label>Offer Price ($)</label><input name="price" type="number" required /></div>
-        <div class="form-group"><label>Financing</label>
+        <div class="fsec">Price & Financing</div>
+        <div class="fg"><label>Offer Price ($)</label><input name="price" type="number" required></div>
+        <div class="fg"><label>Financing</label>
           <select name="finCode">
             <option value="cash">All Cash</option>
             <option value="conv20">Conv ≥20% down</option>
@@ -330,481 +298,377 @@
             <option value="va">VA</option>
           </select>
         </div>
-        <div class="form-group"><label>Down Payment %</label><input name="downPct" type="number" min="0" max="100" /></div>
-        <div class="form-group"><label>Total Earnest Money ($)</label><input name="em" type="number" /></div>
-        <div class="form-group full"><label>EM Schedule (details)</label><input name="emNote" /></div>
+        <div class="fg"><label>Down %</label><input name="down_pct" type="number" min="0" max="100"></div>
+        <div class="fg"><label>Total EM ($)</label><input name="em" type="number"></div>
+        <div class="fg fw"><label>EM Schedule</label><input name="em_note"></div>
 
-        <div class="form-section-title">Contingencies</div>
-        <div class="form-group"><label>Inspection</label>
-          <select name="inspCode">
+        <div class="fsec">Contingencies</div>
+        <div class="fg"><label>Inspection</label>
+          <select name="insp_code">
             <option value="none">None / AS-IS / No Requests</option>
             <option value="info">Info Only</option>
             <option value="full">With Requests</option>
           </select>
         </div>
-        <div class="form-group"><label>Appraisal</label>
-          <select name="apprCode">
+        <div class="fg"><label>Appraisal</label>
+          <select name="appr_code">
             <option value="included">Included</option>
             <option value="waived">Waived / Gap Addendum</option>
             <option value="gap">Gap Coverage</option>
           </select>
         </div>
-        <div class="form-group full"><label>Inspection Detail</label><input name="inspection" /></div>
-        <div class="form-group full"><label>Appraisal Detail</label><input name="appraisal" /></div>
+        <div class="fg fw"><label>Inspection Detail</label><input name="inspection"></div>
+        <div class="fg fw"><label>Appraisal Detail</label><input name="appraisal"></div>
 
-        <div class="form-section-title">Closing & Possession</div>
-        <div class="form-group"><label>Close Date</label><input name="closeDate" placeholder="Month D, YYYY" /></div>
-        <div class="form-group"><label>Close Days from Today</label><input name="closeDays" type="number" /></div>
-        <div class="form-group"><label>Possession Date</label><input name="possession" /></div>
-        <div class="form-group"><label>Rent-Back Type</label>
-          <select name="rentCode">
-            <option value="free">Free / $0 per day</option>
-            <option value="modified">Paid (PITI or fixed rate)</option>
+        <div class="fsec">Closing & Possession</div>
+        <div class="fg"><label>Close Date</label><input name="close_date" placeholder="Month D, YYYY"></div>
+        <div class="fg"><label>Days from Today</label><input name="close_days" type="number"></div>
+        <div class="fg"><label>Possession Date</label><input name="possession"></div>
+        <div class="fg"><label>Rent-Back Type</label>
+          <select name="rent_code">
+            <option value="free">Free / $0/day</option>
+            <option value="modified">Paid (PITI or fixed)</option>
             <option value="declined">Declined</option>
           </select>
         </div>
-        <div class="form-group full"><label>Rent-Back Detail</label><input name="rentBack" /></div>
-        <div class="form-group"><label>Rent-Back Cost Total Est. ($)</label><input name="rentCost" type="number" value="0" /></div>
-        <div class="form-group"><label>Total Commission %</label><input name="commPct" type="number" step="0.1" min="0" max="10" placeholder="e.g. 5" /></div>
-        <div class="form-group"><label>Possession Escrow</label><input name="escrow" /></div>
-        <div class="form-group"><label>Tax Proration</label><input name="taxProrate" placeholder="e.g. 105% or TBD" /></div>
+        <div class="fg fw"><label>Rent-Back Detail</label><input name="rent_back"></div>
+        <div class="fg"><label>Rent-Back Cost Est. ($)</label><input name="rent_cost" type="number" value="0"></div>
+        <div class="fg"><label>Total Commission %</label><input name="comm_pct" type="number" step="0.1" placeholder="e.g. 5"></div>
+        <div class="fg"><label>Possession Escrow</label><input name="escrow"></div>
+        <div class="fg"><label>Tax Proration</label><input name="tax_prorate" placeholder="105% or TBD"></div>
 
-        <div class="form-section-title">Notes & Flags</div>
-        <div class="form-group full"><label>Key Notes / Flags</label><textarea name="flagsText" placeholder="One flag per line. Start with ✓ for positive, ⚠ for warning, ✗ for risk."></textarea></div>
+        <div class="fsec">Notes & Flags</div>
+        <div class="fg fw"><label>Flags (one per line · start ✓ green, ⚠ amber, ✗ red)</label>
+          <textarea name="flags_text" rows="4"></textarea>
+        </div>
       </div>
     </form>
-    <div class="modal-actions">
-      <button class="btn-secondary" id="modal-cancel">Cancel</button>
-      <button class="btn-primary" id="modal-confirm">Add to Tracker</button>
+    <div class="modal-btns">
+      <button class="btn-s" id="m-cancel">Cancel</button>
+      <button class="btn-p" id="m-confirm">Save to Sheet</button>
     </div>
+    <div class="save-status" id="save-status"></div>
   </div>
 </div>
 
-<!-- PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ── CONSTANTS ─────────────────────────────────────────────────────────────────
-const LIST_PRICE = 799000;
-const MORTGAGE   = 451500;
-const CLOSING    = 3650;
-const TX_TAX     = 0.0045;
-const PW_HASH    = '6b3d626bac001b7c3ec9d22b17a78d43fca77157';
-
-// ── DEFAULT OFFERS (from signed contracts) ────────────────────────────────────
-const DEFAULT_OFFERS = [
-  {
-    num: 1, buyers: 'John & Rebecca Hilbrich', agent: 'Amy Chowaniec · Keller Williams Experience',
-    attorney: 'Joe Robinson (jrobinson@lilliglaw.com)', date: '5/29/2026',
-    price: 850000, financing: 'All Cash', finCode: 'cash', downPct: 100,
-    em: 34000, emNote: '$24K initial (3 bus days) + $10K at close A/I',
-    inspection: 'No Requests (Para 15c)', inspCode: 'none',
-    appraisal: 'N/A — Cash', apprCode: 'waived',
-    closeDate: 'June 15, 2026', closeDays: 15,
-    possession: 'July 31, 2026', rentBack: 'FREE · $0/day', rentCode: 'free', rentCost: 0,
-    commPct: 0.04, escrow: '$50,000', taxProrate: '105%', topPick: true,
-    flags: [
-      { type: 'red',   text: '⚠ POF in name of Joseph M. Sanders / Genoa Group — not Hilbrich. Clarify before accepting.' },
-      { type: 'green', text: '✓ Cash: no appraisal or financing contingency.' },
-      { type: 'green', text: '✓ Lowest total commission (4.0%) — highest net.' },
-      { type: 'green', text: '✓ Free rent-back to July 31 + $50K possession escrow.' },
-    ]
-  },
-  {
-    num: 2, buyers: 'Ailis Yeager & Diego Cruz', agent: 'Jacob Reiner · Redfin Corporation',
-    attorney: '—', date: '5/30/2026',
-    price: 851000, financing: 'Conv · 90% LTV', finCode: 'conv10', downPct: 10,
-    em: 15000, emNote: '$15K initial (2 bus days) — no additional EM',
-    inspection: 'AS-IS + No Requests (Para 14 + 15c)', inspCode: 'none',
-    appraisal: 'Included', apprCode: 'included',
-    closeDate: 'June 26, 2026', closeDays: 26,
-    possession: 'August 1, 2026', rentBack: 'Free (N/A per contract)', rentCode: 'free', rentCost: 0,
-    commPct: 0.05, escrow: 'N/A', taxProrate: 'TBD', topPick: false,
-    flags: [
-      { type: 'red',   text: '⚠ Pre-approval expires 06/22/2026 — 4 days BEFORE June 26 close. Must be renewed.' },
-      { type: 'red',   text: '⚠ Diego Cruz not on pre-approval letter (Yeager only).' },
-      { type: 'amber', text: '⚠ Original contract $810,500 — revised to $851K verbally. No updated contract yet.' },
-      { type: 'amber', text: '⚠ Possession Aug 1 — 1 day past July 31 target.' },
-      { type: 'green', text: '✓ AS-IS inspection — no repair requests.' },
-    ]
-  },
-  {
-    num: 3, buyers: 'Jay Patel & Ami Pandya', agent: 'Dan Nelson · Compass',
-    attorney: '—', date: '5/31/2026',
-    price: 799000, financing: 'Conv · 80% LTV', finCode: 'conv20', downPct: 20,
-    em: 17000, emNote: '$1K initial (1 bus day) + $16K after A/I',
-    inspection: 'AS-IS + No Requests (Para 14 + 15c)', inspCode: 'none',
-    appraisal: 'Included', apprCode: 'included',
-    closeDate: 'July 2, 2026', closeDays: 32,
-    possession: 'July 31, 2026', rentBack: 'FREE · $0/day', rentCode: 'free', rentCost: 0,
-    commPct: 0.05, escrow: '2% default (~$15,980)', taxProrate: 'TBD', topPick: false,
-    flags: [
-      { type: 'red',   text: '⚠ Pre-approval mismatch: Fifth Third letter is jumbo ARM at $1.25M purchase — does not match this offer.' },
-      { type: 'red',   text: '⚠ Only $1,000 EM at risk during attorney-inspection period.' },
-      { type: 'amber', text: '⚠ Close July 2 — 6 days past June 26 target.' },
-      { type: 'green', text: '✓ AS-IS inspection — no repair requests.' },
-    ]
-  },
-  {
-    num: 4, buyers: 'Cate Devey & Adam Lim', agent: 'James Fredian · @properties',
-    attorney: '—', date: '5/31/2026',
-    price: 862000, financing: 'Conv · 70% LTV', finCode: 'conv20', downPct: 30,
-    em: 30000, emNote: '$1K initial (2 bus days) + $29K after A/I',
-    inspection: 'With Requests (Para 15b)', inspCode: 'full',
-    appraisal: 'Gap Waived — No Right to Terminate (Addendum §1b)', apprCode: 'waived',
-    closeDate: 'June 25, 2026', closeDays: 25,
-    possession: 'July 31, 2026', rentBack: "Buyer's PITI & HOA/day (~$175–190/day est.)", rentCode: 'modified', rentCost: 6660,
-    commPct: 0.05, escrow: '2% default (~$17,240)', taxProrate: 'TBD', topPick: false,
-    flags: [
-      { type: 'amber', text: '⚠ Full inspection WITH requests — buyer can negotiate repairs.' },
-      { type: 'red',   text: '⚠ Only $1,000 EM at risk during attorney-inspection period.' },
-      { type: 'amber', text: '⚠ Rent-back at PITI rate — no dollar amount in contract. Est. ~$175–190/day × 36 days ≈ $6,660.' },
-      { type: 'red',   text: '⚠ Pre-approval (Federal Savings Bank) has no loan amount, rate, or LTV stated.' },
-      { type: 'green', text: '✓ Appraisal gap addendum: buyer cannot terminate if appraisal comes in low.' },
-      { type: 'green', text: '✓ Strongest gross price at $862,000.' },
-    ]
-  }
-];
-
-// ── STATE ─────────────────────────────────────────────────────────────────────
+const PW_HASH = '6b3d626bac001b7c3ec9d22b17a78d43fca77157';
+let config = {};
 let offers = [];
 let apiKey = '';
-let pendingOffer = null;
 
-function loadOffers() {
-  try {
-    const saved = sessionStorage.getItem('offers_v1');
-    return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_OFFERS));
-  } catch { return JSON.parse(JSON.stringify(DEFAULT_OFFERS)); }
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+async function sha1(s) {
+  const b = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
 }
-function saveOffers() { sessionStorage.setItem('offers_v1', JSON.stringify(offers)); }
+function fmt(n) { return '$' + Math.round(+n).toLocaleString(); }
+function cfgNum(k, def) { return parseFloat(config[k]) || def; }
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-async function sha1(str) {
-  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
-
-function calcScore(o) {
-  const fin  = { cash:100, conv20:85, conv10:70, convlt10:50, fha:35, va:35 }[o.finCode] || 50;
-  const insp = { none:100, info:80, full:50 }[o.inspCode] || 50;
-  const appr = { waived:100, gap:75, included:50 }[o.apprCode] || 50;
-  const rent = { free:100, modified:70, declined:0 }[o.rentCode] || 50;
-  const emPct = o.em / o.price;
+function score(o) {
+  const fin  = {cash:100,conv20:85,conv10:70,convlt10:50,fha:35,va:35}[o.fin_code]||50;
+  const insp = {none:100,info:80,full:50}[o.insp_code]||50;
+  const appr = {waived:100,gap:75,included:50}[o.appr_code]||50;
+  const rent = {free:100,modified:70,declined:0}[o.rent_code]||50;
+  const emPct = (+o.em) / (+o.price);
+  const LIST = cfgNum('list_price', 799000);
   return (
-    0.50 * Math.min(110, o.price / LIST_PRICE * 100) +
+    0.50 * Math.min(110, +o.price / LIST * 100) +
     0.15 * fin +
     0.10 * Math.min(100, emPct / 0.05 * 100) +
-    0.10 * insp +
-    0.05 * appr +
-    0.05 * Math.max(0, 100 - Math.abs(o.closeDays - 30) * 2) +
+    0.10 * insp + 0.05 * appr +
+    0.05 * Math.max(0, 100 - Math.abs(+o.close_days - 30) * 2) +
     0.05 * rent
   );
 }
-function calcNet(o) {
-  return o.price - o.price * o.commPct - o.price * TX_TAX - CLOSING - (o.rentCost || 0) - MORTGAGE;
+function net(o) {
+  const MORT = cfgNum('mortgage_payoff', 451500);
+  const CLOS = cfgNum('closing_costs', 3650);
+  const TX   = cfgNum('transfer_tax_pct', 0.0045);
+  const comm = parseFloat(o.comm_pct) || 0.05;
+  return +o.price - +o.price * comm - +o.price * TX - CLOS - (+o.rent_cost||0) - MORT;
 }
 
 // ── PASSWORD ──────────────────────────────────────────────────────────────────
-async function setupPassword() {
-  if (sessionStorage.getItem('unlocked') === '1') { showApiScreen(); return; }
-  const lockEl = document.getElementById('lock-screen');
-  const input  = document.getElementById('pw-input');
-  const btn    = document.getElementById('pw-btn');
-  const err    = document.getElementById('pw-err');
-  async function check() {
-    const h = await sha1(input.value.trim().toLowerCase());
-    if (h === PW_HASH) {
-      sessionStorage.setItem('unlocked', '1');
-      lockEl.classList.add('hidden');
-      showApiScreen();
-    } else {
-      err.textContent = 'Incorrect password.';
-      input.value = ''; input.focus();
-    }
+document.getElementById('pw-btn').addEventListener('click', tryUnlock);
+document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+async function tryUnlock() {
+  const h = await sha1(document.getElementById('pw').value.trim().toLowerCase());
+  if (h === PW_HASH) {
+    sessionStorage.setItem('unlocked','1');
+    document.getElementById('lock').classList.add('hidden');
+    showApiScreen();
+  } else {
+    document.getElementById('pw-err').textContent = 'Incorrect password.';
+    document.getElementById('pw').value = '';
   }
-  btn.addEventListener('click', check);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+}
+if (sessionStorage.getItem('unlocked') === '1') {
+  document.getElementById('lock').classList.add('hidden');
+  showApiScreen();
 }
 
-// ── API KEY SETUP ─────────────────────────────────────────────────────────────
+// ── API KEY ───────────────────────────────────────────────────────────────────
 function showApiScreen() {
   const stored = sessionStorage.getItem('api_key');
-  if (stored) { apiKey = stored; showApp(); return; }
+  if (stored) { apiKey = stored; launch(); return; }
   document.getElementById('api-screen').classList.remove('hidden');
-  const input = document.getElementById('api-input');
-  const btn   = document.getElementById('api-btn');
-  const skip  = document.getElementById('api-skip');
-  const err   = document.getElementById('api-err');
-  btn.addEventListener('click', () => {
-    const val = input.value.trim();
-    if (!val.startsWith('sk-ant-')) { err.textContent = 'Key should start with sk-ant-'; return; }
-    apiKey = val;
-    sessionStorage.setItem('api_key', apiKey);
-    document.getElementById('api-screen').classList.add('hidden');
-    showApp();
-  });
-  skip.addEventListener('click', () => {
-    document.getElementById('api-screen').classList.add('hidden');
-    showApp();
-  });
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
 }
+document.getElementById('api-btn').addEventListener('click', () => {
+  const v = document.getElementById('api-in').value.trim();
+  if (!v.startsWith('sk-ant-')) { document.getElementById('api-err').textContent = 'Key should start with sk-ant-'; return; }
+  apiKey = v; sessionStorage.setItem('api_key', v);
+  document.getElementById('api-screen').classList.add('hidden');
+  launch();
+});
+document.getElementById('api-skip').addEventListener('click', () => {
+  document.getElementById('api-screen').classList.add('hidden');
+  launch();
+});
+document.getElementById('api-in').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('api-btn').click(); });
 
-function showApp() {
-  const app = document.getElementById('app');
-  app.classList.add('visible');
-  offers = loadOffers();
-  renderAll();
+function launch() {
+  document.getElementById('app').classList.add('on');
+  setupApiRow();
   setupImport();
   setupModal();
-  setupApiKeyStatus();
+  loadData();
+  document.getElementById('refresh-btn').addEventListener('click', loadData);
 }
 
-function setupApiKeyStatus() {
-  const el = document.getElementById('api-key-status');
-  const ind = document.getElementById('api-key-indicator');
-  el.style.display = 'block';
+function setupApiRow() {
+  const row = document.getElementById('api-row');
+  const ind = document.getElementById('api-ind');
+  row.style.display = 'block';
   ind.textContent = apiKey ? '✓ Active — click to update' : 'Not set — click to add';
-  el.addEventListener('click', () => {
-    const k = prompt('Enter Anthropic API key (sk-ant-...) or leave blank to clear:');
+  row.addEventListener('click', () => {
+    const k = prompt('Anthropic API key (sk-ant-...) or blank to clear:');
     if (k === null) return;
-    if (k.trim() === '') { apiKey = ''; sessionStorage.removeItem('api_key'); ind.textContent = 'Not set — click to add'; }
+    if (!k.trim()) { apiKey = ''; sessionStorage.removeItem('api_key'); ind.textContent = 'Not set — click to add'; }
     else { apiKey = k.trim(); sessionStorage.setItem('api_key', apiKey); ind.textContent = '✓ Active — click to update'; }
+    updateNoApiNote();
   });
+  updateNoApiNote();
+  document.getElementById('set-api-link').addEventListener('click', e => { e.stopPropagation(); row.click(); });
+}
+function updateNoApiNote() {
+  document.getElementById('no-api-note').style.display = apiKey ? 'none' : 'block';
 }
 
-// ── RENDER ────────────────────────────────────────────────────────────────────
-function renderAll() {
+// ── LOAD FROM SHEET ───────────────────────────────────────────────────────────
+async function loadData() {
+  document.getElementById('offers-area').innerHTML = '<div class="loading-state">Loading from Google Sheet…</div>';
+  try {
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') {
+      throw new Error('Apps Script URL not configured. See setup instructions.');
+    }
+    const r = await fetch(APPS_SCRIPT_URL);
+    const data = await r.json();
+    config = data.config || {};
+    offers = data.offers || [];
+    render();
+    document.getElementById('footer').textContent =
+      'Last updated: ' + (data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '—') +
+      ' · Alyssa & Thomas · 3827 N Greenview Unit 2S';
+  } catch (e) {
+    document.getElementById('offers-area').innerHTML =
+      `<div class="loading-state" style="color:var(--red)">Could not load sheet: ${e.message}</div>`;
+  }
+}
+
+function render() {
+  const LIST = cfgNum('list_price', 799000);
+  document.getElementById('s-list').textContent = '$' + (LIST/1000).toFixed(0) + 'K';
+  document.getElementById('s-redfin').textContent = config.redfin_estimate ? '$' + (cfgNum('redfin_estimate')/1000).toFixed(0)+'K' : '—';
+  document.getElementById('s-count').textContent = offers.length;
+  document.getElementById('hero-sub').textContent =
+    `MLS #${config.mls||'12652161'} · Listed ${config.listed||''} · ${config.agent||''}`;
+  document.getElementById('offers-label').textContent =
+    `${offers.length} Offer${offers.length !== 1 ? 's' : ''} Received`;
   renderCards();
   renderTable();
-  document.getElementById('offer-count-stat').querySelector('.hero-stat-val').textContent = offers.length;
-  document.getElementById('offers-header').textContent = `${offers.length} Offer${offers.length !== 1 ? 's' : ''} Received`;
 }
 
 function renderCards() {
+  const el = document.getElementById('offers-area');
+  el.innerHTML = '<div class="offers" id="offer-cards"></div>';
   const container = document.getElementById('offer-cards');
-  container.innerHTML = '';
-  const sorted = [...offers].sort((a,b) => calcScore(b) - calcScore(a));
-  sorted.forEach((o, idx) => {
-    const score  = calcScore(o);
-    const net    = calcNet(o);
-    const delta  = o.price - LIST_PRICE;
-    const deltaPct = (delta / LIST_PRICE * 100).toFixed(1);
-    const isTop  = idx === 0;
+  const sorted = [...offers].sort((a,b) => score(b) - score(a));
+  const LIST = cfgNum('list_price', 799000);
 
+  sorted.forEach((o, idx) => {
+    const sc = score(o), nt = net(o);
+    const delta = +o.price - LIST;
     const card = document.createElement('div');
-    card.className = 'offer-card' + (isTop ? ' top-pick' : '');
+    card.className = 'card' + (idx === 0 ? ' top' : '');
     card.innerHTML = `
-      <div class="offer-header">
+      <div class="card-hd">
         <div>
-          <div class="offer-num">Offer ${o.num} · ${o.date || ''}</div>
-          <div class="offer-buyer">${o.buyers}</div>
-          <div class="offer-agent">${o.agent || ''}</div>
+          <div class="c-num">Offer ${o.num} · ${o.date||''}</div>
+          <div class="c-buyer">${o.buyers}</div>
+          <div class="c-agent">${o.agent||''}</div>
         </div>
-        ${isTop ? '<span class="offer-badge badge-green">★ Top Pick</span>' : ''}
+        ${idx===0 ? '<span class="badge bg-g">★ Top Pick</span>' : ''}
       </div>
-      <div class="offer-price-row">
+      <div class="card-price">
         <div>
-          <div class="offer-price">${fmt(o.price)}</div>
-          <div class="offer-vs-list">+${fmt(delta)} (${deltaPct}% over list)</div>
+          <div class="price">${fmt(o.price)}</div>
+          <div class="delta">${delta>=0?'+':''}${fmt(delta)} (${(delta/LIST*100).toFixed(1)}% over list)</div>
         </div>
-        <div class="offer-financing-chip">${o.financing}</div>
+        <div class="fin-chip">${o.financing||''}</div>
       </div>
-      <div class="offer-grid">
-        <div class="offer-cell"><div class="offer-cell-lbl">Total EM</div><div class="offer-cell-val">${fmt(o.em)}</div></div>
-        <div class="offer-cell"><div class="offer-cell-lbl">Down</div><div class="offer-cell-val">${o.downPct}%</div></div>
-        <div class="offer-cell"><div class="offer-cell-lbl">Inspection</div><div class="offer-cell-val" style="${o.inspCode==='full'?'color:var(--red)':''}">${o.inspection}</div></div>
-        <div class="offer-cell"><div class="offer-cell-lbl">Appraisal</div><div class="offer-cell-val" style="${o.apprCode==='included'?'color:var(--amber)':''}">${o.appraisal}</div></div>
-        <div class="offer-cell"><div class="offer-cell-lbl">Close</div><div class="offer-cell-val">${o.closeDate}</div></div>
-        <div class="offer-cell"><div class="offer-cell-lbl">Possession</div><div class="offer-cell-val">${o.possession}</div></div>
-        <div class="offer-cell full-width"><div class="offer-cell-lbl">Rent-Back</div><div class="offer-cell-val" style="${o.rentCode==='modified'?'color:var(--amber)':''}">${o.rentBack}</div></div>
-        <div class="offer-cell full-width"><div class="offer-cell-lbl">EM Schedule</div><div class="offer-cell-val">${o.emNote || '—'}</div></div>
-        ${o.attorney && o.attorney !== '—' ? `<div class="offer-cell full-width"><div class="offer-cell-lbl">Buyer Attorney</div><div class="offer-cell-val">${o.attorney}</div></div>` : ''}
+      <div class="cgrid">
+        <div class="cc"><div class="cc-l">Total EM</div><div class="cc-v">${fmt(o.em)}</div></div>
+        <div class="cc"><div class="cc-l">Down</div><div class="cc-v">${o.down_pct}%</div></div>
+        <div class="cc"><div class="cc-l">Inspection</div><div class="cc-v" style="${o.insp_code==='full'?'color:var(--red)':''}">${o.inspection||''}</div></div>
+        <div class="cc"><div class="cc-l">Appraisal</div><div class="cc-v" style="${o.appr_code==='included'?'color:var(--amber)':''}">${o.appraisal||''}</div></div>
+        <div class="cc"><div class="cc-l">Close</div><div class="cc-v">${o.close_date||''}</div></div>
+        <div class="cc"><div class="cc-l">Possession</div><div class="cc-v">${o.possession||''}</div></div>
+        <div class="cc fw"><div class="cc-l">Rent-Back</div><div class="cc-v" style="${o.rent_code==='modified'?'color:var(--amber)':''}">${o.rent_back||''}</div></div>
+        <div class="cc fw"><div class="cc-l">EM Schedule</div><div class="cc-v">${o.em_note||'—'}</div></div>
+        ${o.attorney && o.attorney!=='—' ? `<div class="cc fw"><div class="cc-l">Buyer Attorney</div><div class="cc-v">${o.attorney}</div></div>` : ''}
       </div>
-      <div class="offer-net-row">
-        <div class="offer-net-lbl">Est. Net Proceeds</div>
-        <div class="offer-net-val">${fmt(net)}</div>
+      <div class="card-net"><div class="net-l">Est. Net Proceeds</div><div class="net-v">${fmt(nt)}</div></div>
+      <div class="card-score">
+        <span class="sc-l">Score</span>
+        <div class="bar-wrap"><div class="bar" style="width:${sc}%"></div></div>
+        <span class="sc-v">${sc.toFixed(1)} / 100</span>
       </div>
-      <div class="offer-score-row">
-        <span class="score-lbl">Score</span>
-        <div class="score-bar-wrap"><div class="score-bar" style="width:${score}%"></div></div>
-        <span class="score-val">${score.toFixed(1)} / 100</span>
-      </div>
-      <div class="offer-flags">
-        ${(o.flags||[]).map(f => `<div class="flag flag-${f.type}">${f.text}</div>`).join('')}
+      <div class="flags">
+        ${(o.flags||[]).map(f=>`<div class="flag flag-${f.type}">${f.text}</div>`).join('')}
       </div>`;
     container.appendChild(card);
   });
 }
 
 function renderTable() {
-  const headerRow = document.getElementById('comp-header-row');
-  const tbody = document.getElementById('comp-body');
-  headerRow.innerHTML = '<th>Field</th>';
+  const thr = document.getElementById('thr');
+  const tb  = document.getElementById('tbody');
+  thr.innerHTML = '<th>Field</th>';
   offers.forEach(o => {
     const th = document.createElement('th');
-    th.textContent = `#${o.num} ${o.buyers.split(' ')[o.buyers.split(' ').length > 2 ? 2 : 1] || ''}`;
-    headerRow.appendChild(th);
+    th.textContent = `#${o.num} ${o.buyers.split('&')[0].trim().split(' ')[0]}`;
+    thr.appendChild(th);
   });
-
+  const LIST = cfgNum('list_price', 799000);
   const rows = [
-    ['Price', o => fmt(o.price)],
-    ['Financing', o => o.financing],
-    ['Total EM', o => `${fmt(o.em)} (${(o.em/o.price*100).toFixed(1)}%)`],
-    ['Inspection', o => o.inspection],
-    ['Appraisal', o => o.appraisal],
-    ['Close Date', o => o.closeDate],
-    ['Possession', o => o.possession],
-    ['Rent-Back', o => o.rentBack],
-    ['Commission', o => (o.commPct*100).toFixed(1)+'%'],
-    ['Est. Net', o => fmt(calcNet(o))],
-    ['Score', o => calcScore(o).toFixed(1)],
+    ['Price', o => fmt(o.price), true],
+    ['Financing', o => o.financing||''],
+    ['Total EM', o => `${fmt(o.em)} (${(+o.em/+o.price*100).toFixed(1)}%)`],
+    ['Inspection', o => o.inspection||''],
+    ['Appraisal', o => o.appraisal||''],
+    ['Close Date', o => o.close_date||''],
+    ['Possession', o => o.possession||''],
+    ['Rent-Back', o => o.rent_back||''],
+    ['Commission', o => ((+o.comm_pct||0.05)*100).toFixed(1)+'%'],
+    ['Est. Net', o => fmt(net(o)), true],
+    ['Score', o => score(o).toFixed(1), true],
   ];
-
-  tbody.innerHTML = '';
-  rows.forEach(([label, fn]) => {
+  tb.innerHTML = '';
+  rows.forEach(([lbl, fn, rank]) => {
     const tr = document.createElement('tr');
-    let cells = '<td><strong>' + label + '</strong></td>';
-    if (label === 'Est. Net' || label === 'Score' || label === 'Price') {
-      const vals = offers.map(o => ({ o, v: label === 'Score' ? calcScore(o) : label === 'Price' || label === 'Est. Net' ? calcNet(o) : 0 }));
-      const maxVal = Math.max(...vals.map(x => x.v));
-      const minVal = Math.min(...vals.map(x => x.v));
-      offers.forEach(o => {
-        const v = label === 'Score' ? calcScore(o) : label === 'Est. Net' ? calcNet(o) : o.price;
-        const allVals = offers.map(x => label === 'Score' ? calcScore(x) : label === 'Est. Net' ? calcNet(x) : x.price);
-        const isMax = v === Math.max(...allVals);
-        const isMin = v === Math.min(...allVals) && offers.length > 1;
-        cells += `<td class="${isMax ? 'best' : isMin ? 'bad' : ''}">${fn(o)}</td>`;
-      });
+    let cells = `<td><strong>${lbl}</strong></td>`;
+    if (rank) {
+      const vals = offers.map(o => parseFloat(fn(o).replace(/[$,]/g,'')));
+      const mx = Math.max(...vals), mn = Math.min(...vals);
+      offers.forEach((o, i) => { cells += `<td class="${vals[i]===mx?'best':vals[i]===mn&&offers.length>1?'bad':''}">${fn(o)}</td>`; });
     } else {
       offers.forEach(o => { cells += `<td>${fn(o)}</td>`; });
     }
     tr.innerHTML = cells;
-    tbody.appendChild(tr);
+    tb.appendChild(tr);
   });
 }
 
-// ── FILE IMPORT ────────────────────────────────────────────────────────────────
+// ── FILE IMPORT ───────────────────────────────────────────────────────────────
 function setupImport() {
-  const zone  = document.getElementById('import-zone');
-  const input = document.getElementById('file-input');
-  const err   = document.getElementById('import-err');
-
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('drag-over');
-    const files = e.dataTransfer.files;
-    if (files.length) processFile(files[0]);
-  });
-  input.addEventListener('change', () => { if (input.files.length) processFile(input.files[0]); });
+  const dz  = document.getElementById('dz');
+  const fi  = document.getElementById('fi');
+  const err = document.getElementById('dz-err');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); if (e.dataTransfer.files[0]) process(e.dataTransfer.files[0]); });
+  fi.addEventListener('change', () => { if (fi.files[0]) process(fi.files[0]); });
 }
 
-async function processFile(file) {
-  const zone = document.getElementById('import-zone');
-  const err  = document.getElementById('import-err');
-  const statusText = document.getElementById('import-status-text');
+async function process(file) {
+  const dz  = document.getElementById('dz');
+  const err = document.getElementById('dz-err');
+  const st  = document.getElementById('dz-status');
   err.style.display = 'none';
-  zone.classList.add('loading');
-
+  dz.classList.add('busy');
   try {
-    let extractedData;
-    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-      statusText.textContent = 'Reading PDF…';
-      const text = await extractPdfText(file);
-      statusText.textContent = 'Extracting fields with Claude AI…';
-      extractedData = await extractWithClaude({ type: 'text', content: text }, file.name);
+    let data;
+    if (!apiKey) {
+      data = blankOffer();
+    } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+      st.textContent = 'Reading PDF…';
+      const text = await pdfText(file);
+      st.textContent = 'Extracting fields…';
+      data = await aiExtract({ type:'text', content: text });
     } else {
-      statusText.textContent = 'Encoding image…';
-      const b64 = await fileToBase64(file);
-      const mtype = file.type || 'image/jpeg';
-      statusText.textContent = 'Extracting fields with Claude AI…';
-      extractedData = await extractWithClaude({ type: 'image', content: b64, mediaType: mtype }, file.name);
+      st.textContent = 'Encoding image…';
+      const b64 = await toB64(file);
+      st.textContent = 'Extracting fields…';
+      data = await aiExtract({ type:'image', content: b64, mt: file.type||'image/jpeg' });
     }
-    zone.classList.remove('loading');
-    pendingOffer = extractedData;
-    openReviewModal(extractedData, true);
-  } catch (e) {
-    zone.classList.remove('loading');
+    dz.classList.remove('busy');
+    openModal(data, !!apiKey);
+  } catch(e) {
+    dz.classList.remove('busy');
     err.style.display = 'block';
-    err.textContent = e.message || 'Failed to process file. Try again or enter manually.';
+    err.textContent = e.message || 'Failed. Try again or enter manually.';
   }
-  document.getElementById('file-input').value = '';
+  fi.value = '';
 }
 
-async function extractPdfText(file) {
+function blankOffer() {
+  return { buyers:'',agent:'',attorney:'—',date:'',price:'',fin_code:'conv20',financing:'Conv · 80% LTV',
+    down_pct:20,em:'',em_note:'',inspection:'',insp_code:'none',appraisal:'Included',appr_code:'included',
+    close_date:'',close_days:'',possession:'',rent_back:'',rent_code:'free',rent_cost:0,
+    comm_pct:5,escrow:'',tax_prorate:'TBD',flags:[] };
+}
+
+async function pdfText(file) {
   const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
   let text = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map(item => item.str).join(' ') + '\n';
+  for (let i=1; i<=pdf.numPages; i++) {
+    const pg = await pdf.getPage(i);
+    const c = await pg.getTextContent();
+    text += c.items.map(x=>x.str).join(' ') + '\n';
   }
-  return text.slice(0, 40000); // Claude context limit safety
+  return text.slice(0,40000);
 }
 
-function fileToBase64(file) {
-  return new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = () => res(reader.result.split(',')[1]);
-    reader.onerror = rej;
-    reader.readAsDataURL(file);
+function toB64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
   });
 }
 
-async function extractWithClaude(input, filename) {
-  if (!apiKey) {
-    // No API key — return blank form for manual entry
-    return { buyers: '', agent: '', attorney: '—', date: '', price: '', financing: 'Conv ≥20% down', finCode: 'conv20', downPct: 20, em: '', emNote: '', inspection: '', inspCode: 'none', appraisal: 'Included', apprCode: 'included', closeDate: '', closeDays: '', possession: '', rentBack: '', rentCode: 'free', rentCost: 0, commPct: 5, escrow: '', taxProrate: 'TBD', flags: [] };
-  }
+async function aiExtract(input) {
+  const sys = `You are extracting Illinois real estate offer data. Today = May 31, 2026. List price = $799,000.
+Return ONLY valid JSON (no markdown) with these keys:
+buyers, agent, attorney, date (M/D/YYYY), price (number), financing (display string), fin_code (cash|conv20|conv10|convlt10|fha|va),
+down_pct (number), em (number), em_note, inspection, insp_code (none|info|full),
+appraisal, appr_code (waived|gap|included), close_date (Month D YYYY), close_days (integer from May 31),
+possession, rent_back, rent_code (free|modified|declined), rent_cost (number, 0 if free),
+comm_pct (decimal, e.g. 0.05), escrow, tax_prorate,
+flags (array of {type:"red|amber|green", text:"..."}).
+Rules: insp_code=none if AS-IS or no requests; full if with requests (Para 15b). appr_code=waived if gap addendum §1b. rent_code=free if $0/day.`;
 
-  const systemPrompt = `You are extracting real estate offer data from a Multi-Board Residential Real Estate Contract (Illinois).
-Today's date is May 31, 2026. The list price is $799,000.
-Return ONLY valid JSON with these exact keys (no markdown, no explanation):
-{
-  "buyers": "full buyer name(s)",
-  "agent": "agent name · brokerage",
-  "attorney": "buyer attorney name/email or —",
-  "date": "M/D/YYYY",
-  "price": 850000,
-  "financing": "All Cash OR Conv · 90% LTV OR Conv · 80% LTV OR Conv · 70% LTV OR FHA OR VA",
-  "finCode": "cash OR conv10 OR conv20 OR convlt10 OR fha OR va",
-  "downPct": 20,
-  "em": 34000,
-  "emNote": "earnest money schedule details",
-  "inspection": "brief description",
-  "inspCode": "none OR info OR full",
-  "appraisal": "brief description",
-  "apprCode": "waived OR gap OR included",
-  "closeDate": "Month D, YYYY",
-  "closeDays": 25,
-  "possession": "Month D, YYYY",
-  "rentBack": "brief description",
-  "rentCode": "free OR modified OR declined",
-  "rentCost": 0,
-  "commPct": 5,
-  "escrow": "possession escrow amount or 2% default or —",
-  "taxProrate": "percentage or TBD",
-  "flags": [{"type":"red|amber|green","text":"description"}]
-}
-Rules:
-- finCode: cash if all cash; conv10 if 10-20% down; conv20 if ≥20% down; convlt10 if <10% down
-- inspCode: none if no requests or AS-IS; info if inspection info only; full if with requests (Para 15b)
-- apprCode: waived if appraisal gap addendum with no termination right; gap if gap coverage; included otherwise
-- rentCode: free if $0/day or N/A; modified if paid at PITI or dollar amount; declined if not accepted
-- closeDays: integer days from May 31 2026 to closing date
-- commPct: total commission as a plain number (e.g. 5 for 5%), add buyer + listing sides (assume 2.5% listing unless stated)
-- flags: include 3-6 key observations — risks in red, warnings in amber, positives in green`;
+  const content = input.type === 'text'
+    ? `Extract offer data:\n\n${input.content}`
+    : [{ type:'image', source:{type:'base64',media_type:input.mt,data:input.content}},{type:'text',text:'Extract offer data from this image.'}];
 
-  const userMessage = input.type === 'text'
-    ? `Extract offer data from this contract text:\n\n${input.content}`
-    : [{ type: 'image', source: { type: 'base64', media_type: input.mediaType, data: input.content } }, { type: 'text', text: 'Extract offer data from this contract image.' }];
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'x-api-key': apiKey,
@@ -815,110 +679,108 @@ Rules:
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }]
+      system: sys,
+      messages: [{ role:'user', content }]
     })
   });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error?.message || `API error ${response.status}`);
-  }
-
-  const result = await response.json();
-  const text = result.content?.[0]?.text || '';
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('Could not parse AI response. Please enter manually.');
-  const data = JSON.parse(jsonMatch[0]);
-  // Convert commPct from percentage to decimal if needed
-  if (data.commPct > 1) data.commPct = data.commPct / 100;
-  return data;
+  if (!resp.ok) { const b = await resp.json().catch(()=>({})); throw new Error(b.error?.message||`API ${resp.status}`); }
+  const j = await resp.json();
+  const txt = j.content?.[0]?.text || '';
+  const m = txt.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('Could not parse AI response.');
+  const d = JSON.parse(m[0]);
+  if (d.comm_pct > 1) d.comm_pct = d.comm_pct / 100;
+  return d;
 }
 
-// ── REVIEW MODAL ─────────────────────────────────────────────────────────────
+// ── MODAL ─────────────────────────────────────────────────────────────────────
 function setupModal() {
-  document.getElementById('modal-cancel').addEventListener('click', closeModal);
-  document.getElementById('review-modal').addEventListener('click', e => { if (e.target.id === 'review-modal') closeModal(); });
-  document.getElementById('modal-confirm').addEventListener('click', confirmOffer);
+  document.getElementById('m-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-ov').addEventListener('click', e => { if (e.target.id==='modal-ov') closeModal(); });
+  document.getElementById('m-confirm').addEventListener('click', saveOffer);
 }
 
-function openReviewModal(data, aiExtracted) {
-  const modal = document.getElementById('review-modal');
-  const form  = document.getElementById('review-form');
-  const badge = document.getElementById('modal-ai-badge');
-  const title = document.getElementById('modal-title');
+function openModal(data, aiExtracted) {
+  const form = document.getElementById('rev-form');
+  document.getElementById('ai-tag').style.display = aiExtracted ? 'inline-block' : 'none';
+  document.getElementById('modal-h').textContent = aiExtracted ? 'Review AI-Extracted Offer' : 'Add New Offer';
+  document.getElementById('save-status').textContent = '';
 
-  badge.style.display = aiExtracted && apiKey ? 'inline-block' : 'none';
-  title.textContent = aiExtracted && apiKey ? 'Review AI-Extracted Offer' : 'Add New Offer';
-
-  // Populate form
-  const fields = ['buyers','agent','attorney','date','price','downPct','em','emNote','inspection','appraisal','closeDate','closeDays','possession','rentBack','rentCost','escrow','taxProrate'];
-  fields.forEach(f => { const el = form.elements[f]; if (el) el.value = data[f] ?? ''; });
-  if (form.elements.finCode) form.elements.finCode.value = data.finCode || 'conv20';
-  if (form.elements.inspCode) form.elements.inspCode.value = data.inspCode || 'none';
-  if (form.elements.apprCode) form.elements.apprCode.value = data.apprCode || 'included';
-  if (form.elements.rentCode) form.elements.rentCode.value = data.rentCode || 'free';
-  if (form.elements.commPct) form.elements.commPct.value = data.commPct ? (data.commPct * 100).toFixed(1) : '5';
-  if (form.elements.flagsText) {
-    form.elements.flagsText.value = (data.flags || []).map(f => `${f.type === 'green' ? '✓' : '⚠'} ${f.text}`).join('\n');
+  const map = { buyers:'buyers',agent:'agent',attorney:'attorney',date:'date',price:'price',
+    down_pct:'down_pct',em:'em',em_note:'em_note',inspection:'inspection',appraisal:'appraisal',
+    close_date:'close_date',close_days:'close_days',possession:'possession',rent_back:'rent_back',
+    rent_cost:'rent_cost',escrow:'escrow',tax_prorate:'tax_prorate' };
+  Object.entries(map).forEach(([field, key]) => {
+    const el = form.elements[field]; if (el) el.value = data[key] ?? '';
+  });
+  if (form.elements.finCode) form.elements.finCode.value = data.fin_code || 'conv20';
+  if (form.elements.insp_code) form.elements.insp_code.value = data.insp_code || 'none';
+  if (form.elements.appr_code) form.elements.appr_code.value = data.appr_code || 'included';
+  if (form.elements.rent_code) form.elements.rent_code.value = data.rent_code || 'free';
+  if (form.elements.comm_pct) form.elements.comm_pct.value = data.comm_pct ? (data.comm_pct * 100).toFixed(1) : '5';
+  if (form.elements.flags_text) {
+    form.elements.flags_text.value = (data.flags||[]).map(f => `${f.type==='green'?'✓':'⚠'} ${f.text}`).join('\n');
   }
-  modal.classList.remove('hidden');
+  document.getElementById('modal-ov').classList.remove('hidden');
 }
 
 function closeModal() {
-  document.getElementById('review-modal').classList.add('hidden');
-  pendingOffer = null;
+  document.getElementById('modal-ov').classList.add('hidden');
 }
 
-function confirmOffer() {
-  const form = document.getElementById('review-form');
+async function saveOffer() {
+  const form = document.getElementById('rev-form');
+  const status = document.getElementById('save-status');
+  const btn = document.getElementById('m-confirm');
   const raw = Object.fromEntries(new FormData(form));
   if (!raw.buyers || !raw.price) { alert('Buyer name and price are required.'); return; }
 
-  const flagsText = (raw.flagsText || '').split('\n').filter(Boolean);
-  const flags = flagsText.map(line => {
+  const flagLines = (raw.flags_text||'').split('\n').filter(Boolean);
+  const flags = flagLines.map(line => {
     const type = line.startsWith('✓') ? 'green' : line.startsWith('✗') ? 'red' : 'amber';
-    return { type, text: line.replace(/^[✓⚠✗]\s*/, '') };
+    return { type, text: line.replace(/^[✓⚠✗]\s*/,'') };
   });
 
-  const commPct = parseFloat(raw.commPct) || 5;
-  const newOffer = {
+  const finLabels = {cash:'All Cash',conv20:'Conv · ≥20% down',conv10:'Conv · 90% LTV',convlt10:'Conv · <10% down',fha:'FHA',va:'VA'};
+  const offer = {
     num: offers.length + 1,
-    buyers: raw.buyers,
-    agent: raw.agent || '—',
-    attorney: raw.attorney || '—',
-    date: raw.date || '',
+    buyers: raw.buyers, agent: raw.agent||'—', attorney: raw.attorney||'—', date: raw.date||'',
     price: parseFloat(raw.price),
-    financing: { cash:'All Cash', conv20:'Conv · ≥20% down', conv10:'Conv · 90% LTV', convlt10:'Conv · <10% down', fha:'FHA', va:'VA' }[raw.finCode] || raw.finCode,
-    finCode: raw.finCode,
-    downPct: parseFloat(raw.downPct) || 20,
-    em: parseFloat(raw.em) || 0,
-    emNote: raw.emNote || '',
-    inspection: raw.inspection || '',
-    inspCode: raw.inspCode,
-    appraisal: raw.appraisal || '',
-    apprCode: raw.apprCode,
-    closeDate: raw.closeDate || '',
-    closeDays: parseInt(raw.closeDays) || 30,
-    possession: raw.possession || '',
-    rentBack: raw.rentBack || '',
-    rentCode: raw.rentCode,
-    rentCost: parseFloat(raw.rentCost) || 0,
-    commPct: commPct / 100,
-    escrow: raw.escrow || '—',
-    taxProrate: raw.taxProrate || 'TBD',
-    topPick: false,
+    financing: finLabels[raw.finCode] || raw.finCode,
+    fin_code: raw.finCode || 'conv20',
+    down_pct: parseFloat(raw.down_pct)||20,
+    em: parseFloat(raw.em)||0, em_note: raw.em_note||'',
+    inspection: raw.inspection||'', insp_code: raw.insp_code||'none',
+    appraisal: raw.appraisal||'', appr_code: raw.appr_code||'included',
+    close_date: raw.close_date||'', close_days: parseInt(raw.close_days)||30,
+    possession: raw.possession||'', rent_back: raw.rent_back||'',
+    rent_code: raw.rent_code||'free', rent_cost: parseFloat(raw.rent_cost)||0,
+    comm_pct: (parseFloat(raw.comm_pct)||5) / 100,
+    escrow: raw.escrow||'—', tax_prorate: raw.tax_prorate||'TBD',
     flags
   };
 
-  offers.push(newOffer);
-  saveOffers();
-  renderAll();
-  closeModal();
-}
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') {
+    status.textContent = '⚠ Apps Script URL not set. Offer added locally only.';
+    offers.push(offer); render(); closeModal();
+    return;
+  }
 
-// ── BOOT ──────────────────────────────────────────────────────────────────────
-setupPassword();
+  btn.disabled = true;
+  status.textContent = 'Saving to Google Sheet…';
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(offer),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    status.textContent = '✓ Saved!';
+    setTimeout(() => { closeModal(); loadData(); }, 800);
+  } catch(e) {
+    status.textContent = 'Save failed — offer added locally. Refresh to sync from Sheet.';
+    offers.push(offer); render();
+  } finally { btn.disabled = false; }
+}
 </script>
 </body>
 </html>
