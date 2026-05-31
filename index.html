@@ -3,378 +3,235 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3827 N Greenview — Offer Tracker</title>
+<title>3827 N Greenview — Offer Analyzer</title>
 <style>
-  :root {
-    --navy: #1a2744; --gold: #c9a84c; --green: #2e7d52;
-    --amber: #b45309; --red: #b91c1c; --light: #f8f7f4;
-    --border: #e2ddd6; --text: #1c1917; --muted: #6b7280;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--light); color: var(--text); line-height: 1.5; }
+:root {
+  --navy: #1a2744; --gold: #c9a84c; --green: #2e7d52; --green-lt: #ecfdf5;
+  --amber: #b45309; --amber-lt: #fffbeb; --red: #b91c1c; --red-lt: #fef2f2;
+  --light: #f8f7f4; --white: #ffffff; --border: #e2ddd6;
+  --text: #1c1917; --muted: #6b7280; --navy-lt: #eef1f8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--light); color: var(--text); font-size: 15px; }
 
-  /* ── FULL-SCREEN OVERLAY ── */
-  .screen { position: fixed; inset: 0; background: var(--navy); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; padding: 2rem; }
-  .screen.hidden { display: none; }
-  .screen h1 { color: var(--gold); font-size: 1.4rem; font-weight: 600; margin-bottom: .25rem; letter-spacing: .05em; text-transform: uppercase; }
-  .screen p { color: #94a3b8; font-size: .85rem; margin-bottom: 1.75rem; text-align: center; max-width: 320px; }
-  .screen-input { width: 100%; max-width: 320px; padding: .75rem 1rem; border: 1.5px solid #334155; border-radius: 8px; background: #0f172a; color: #f1f5f9; font-size: 1rem; text-align: center; outline: none; margin-bottom: .5rem; }
-  .screen-input:focus { border-color: var(--gold); }
-  .screen-btn { width: 100%; max-width: 320px; padding: .75rem; background: var(--gold); color: var(--navy); font-weight: 700; font-size: .95rem; border: none; border-radius: 8px; cursor: pointer; }
-  .screen-btn.sec { background: transparent; color: #94a3b8; border: 1.5px solid #334155; margin-top: .5rem; }
-  .screen-err { color: #f87171; font-size: .8rem; margin-top: .5rem; min-height: 1em; }
-  .screen-note { color: #475569; font-size: .72rem; max-width: 300px; text-align: center; margin-top: .75rem; }
+/* ── LOCK SCREEN ── */
+#lock { position: fixed; inset: 0; background: var(--navy); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; padding: 2rem; }
+#lock.off { display: none; }
+#lock h1 { color: var(--gold); font-size: 1.3rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .25rem; }
+#lock p { color: #94a3b8; font-size: .85rem; margin-bottom: 1.5rem; }
+#lock input { width: 100%; max-width: 300px; padding: .75rem 1rem; border: 1.5px solid #334155; border-radius: 8px; background: #0f172a; color: #f1f5f9; font-size: 1rem; text-align: center; outline: none; letter-spacing: .1em; }
+#lock input:focus { border-color: var(--gold); }
+#lock button { margin-top: .6rem; width: 100%; max-width: 300px; padding: .75rem; background: var(--gold); color: var(--navy); font-weight: 700; font-size: .95rem; border: none; border-radius: 8px; cursor: pointer; }
+#lock-err { color: #f87171; font-size: .8rem; margin-top: .4rem; min-height: 1em; }
 
-  /* ── APP ── */
-  #app { display: none; }
-  #app.on { display: block; }
+/* ── APP SHELL ── */
+#app { display: none; height: 100%; flex-direction: column; }
+#app.on { display: flex; }
 
-  /* ── HERO ── */
-  .hero { background: var(--navy); padding: 1.5rem 1.25rem 1.25rem; }
-  .hero-addr { color: var(--gold); font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .25rem; }
-  .hero-title { color: #fff; font-size: 1.5rem; font-weight: 700; }
-  .hero-sub { color: #94a3b8; font-size: .85rem; margin-top: .4rem; }
-  .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-top: 1.25rem; }
-  .stat { background: rgba(255,255,255,.07); border-radius: 8px; padding: .6rem .75rem; }
-  .stat-v { color: var(--gold); font-size: 1.1rem; font-weight: 700; }
-  .stat-l { color: #94a3b8; font-size: .7rem; margin-top: .1rem; text-transform: uppercase; letter-spacing: .05em; }
+/* ── TOP BAR ── */
+.topbar { background: var(--navy); padding: .75rem 1.25rem; flex-shrink: 0; }
+.topbar-addr { color: var(--gold); font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.topbar-title { color: #fff; font-size: 1rem; font-weight: 700; margin-top: .1rem; }
 
-  /* ── IDEAL BANNER ── */
-  .banner { background: #ecfdf5; border-left: 4px solid var(--green); margin: 1rem; border-radius: 0 8px 8px 0; padding: .75rem 1rem; }
-  .banner strong { color: var(--green); font-size: .8rem; text-transform: uppercase; letter-spacing: .07em; display: block; margin-bottom: .25rem; }
-  .banner ul { font-size: .8rem; color: #374151; padding-left: 1rem; }
-  .banner li { margin-bottom: .15rem; }
+/* ── TAB NAV ── */
+.tabnav { background: var(--white); border-bottom: 2px solid var(--border); display: flex; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; position: sticky; top: 0; z-index: 100; }
+.tabnav::-webkit-scrollbar { display: none; }
+.tab-btn { padding: .7rem 1rem; font-size: .78rem; font-weight: 600; color: var(--muted); border: none; background: none; cursor: pointer; white-space: nowrap; border-bottom: 2.5px solid transparent; margin-bottom: -2px; transition: all .15s; flex-shrink: 0; }
+.tab-btn:hover { color: var(--navy); }
+.tab-btn.active { color: var(--navy); border-bottom-color: var(--gold); font-weight: 700; }
 
-  /* ── SECTION HEADER ── */
-  .sh { padding: .5rem 1rem .25rem; font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; border-bottom: 1px solid var(--border); margin-bottom: .75rem; display: flex; justify-content: space-between; align-items: center; }
-  .sh button { font-size: .65rem; background: var(--navy); color: var(--gold); border: none; border-radius: 4px; padding: .2rem .5rem; cursor: pointer; font-weight: 700; }
+/* ── TAB CONTENT ── */
+.tab-content { flex: 1; overflow-y: auto; }
+.tab-pane { display: none; padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
+.tab-pane.active { display: block; }
 
-  /* ── IMPORT ── */
-  .import-wrap { padding: 0 1rem .75rem; }
-  .drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 1.5rem 1rem; text-align: center; cursor: pointer; background: #fff; transition: all .2s; position: relative; }
-  .drop-zone.over { border-color: var(--gold); background: #fffbeb; }
-  .drop-zone.busy { border-color: var(--navy); background: #f0f4ff; pointer-events: none; }
-  .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-  .drop-idle .di { font-size: 1.75rem; margin-bottom: .4rem; }
-  .drop-idle .dt { font-size: .9rem; font-weight: 700; color: var(--navy); }
-  .drop-idle .ds { font-size: .75rem; color: var(--muted); margin-top: .2rem; }
-  .drop-busy { display: none; }
-  .drop-zone.busy .drop-idle { display: none; }
-  .drop-zone.busy .drop-busy { display: block; }
-  .spin { display: inline-block; width: 22px; height: 22px; border: 3px solid #ddd; border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: .4rem; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .drop-err { color: var(--red); font-size: .8rem; margin-top: .4rem; display: none; }
-  .no-api-note { font-size: .72rem; color: var(--amber); text-align: center; margin-top: .4rem; display: none; }
+/* ── SHARED COMPONENTS ── */
+.section-title { font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .75rem; margin-top: 1.5rem; padding-bottom: .4rem; border-bottom: 1px solid var(--border); }
+.section-title:first-child { margin-top: 0; }
 
-  /* ── LOADING STATE ── */
-  .loading-state { padding: 3rem 1rem; text-align: center; color: var(--muted); font-size: .85rem; }
+.pill { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15rem .5rem; border-radius: 99px; }
+.pill-green { background: #d1fae5; color: var(--green); }
+.pill-amber { background: #fef3c7; color: var(--amber); }
+.pill-red   { background: #fee2e2; color: var(--red); }
+.pill-navy  { background: var(--navy); color: #fff; }
+.pill-gray  { background: #f3f4f6; color: #374151; }
 
-  /* ── OFFER CARDS ── */
-  .offers { padding: 0 1rem; display: flex; flex-direction: column; gap: 1rem; }
-  .card { background: #fff; border-radius: 12px; border: 1.5px solid var(--border); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
-  .card.top { border-color: var(--green); }
-  .card-hd { padding: .875rem 1rem .75rem; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--border); }
-  .c-num { font-size: .65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-  .c-buyer { font-size: .95rem; font-weight: 700; margin-top: .1rem; line-height: 1.2; }
-  .c-agent { font-size: .75rem; color: var(--muted); margin-top: .15rem; }
-  .badge { font-size: .65rem; font-weight: 700; padding: .2rem .5rem; border-radius: 99px; white-space: nowrap; flex-shrink: 0; margin-left: .5rem; }
-  .bg-g { background: #d1fae5; color: var(--green); }
-  .card-price { padding: .75rem 1rem; display: flex; align-items: center; gap: .75rem; border-bottom: 1px solid var(--border); }
-  .price { font-size: 1.5rem; font-weight: 800; }
-  .delta { font-size: .75rem; font-weight: 600; color: var(--green); }
-  .fin-chip { margin-left: auto; font-size: .7rem; font-weight: 700; padding: .2rem .55rem; border-radius: 6px; background: var(--navy); color: #fff; white-space: nowrap; }
-  .cgrid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
-  .cc { padding: .55rem 1rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .cc:nth-child(even) { border-right: none; }
-  .cc.fw { grid-column: 1/-1; border-right: none; }
-  .cc-l { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-  .cc-v { font-size: .85rem; font-weight: 600; margin-top: .1rem; }
-  .card-net { padding: .75rem 1rem; display: flex; justify-content: space-between; align-items: center; background: #f9f8f6; border-bottom: 1px solid var(--border); }
-  .net-l { font-size: .75rem; color: var(--muted); }
-  .net-v { font-size: 1.15rem; font-weight: 800; color: var(--green); }
-  .card-score { padding: .6rem 1rem; display: flex; align-items: center; border-bottom: 1px solid var(--border); }
-  .bar-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 6px; margin: 0 .75rem; }
-  .bar { height: 6px; border-radius: 99px; background: var(--gold); }
-  .sc-v { font-size: .8rem; font-weight: 700; color: var(--navy); white-space: nowrap; }
-  .sc-l { font-size: .7rem; color: var(--muted); white-space: nowrap; }
-  .flags { padding: .5rem 1rem .75rem; display: flex; flex-direction: column; gap: .3rem; }
-  .flag { font-size: .72rem; padding: .3rem .6rem; border-radius: 6px; }
-  .flag-red { background: #fef2f2; color: var(--red); }
-  .flag-amber { background: #fffbeb; color: var(--amber); }
-  .flag-green { background: #f0fdf4; color: var(--green); }
+.flag { font-size: .78rem; padding: .35rem .7rem; border-radius: 6px; margin-bottom: .3rem; line-height: 1.4; }
+.flag-red   { background: var(--red-lt); color: var(--red); }
+.flag-amber { background: var(--amber-lt); color: var(--amber); }
+.flag-green { background: var(--green-lt); color: var(--green); }
 
-  /* ── TABLE ── */
-  .tbl-wrap { padding: 0 1rem 1.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { width: 100%; border-collapse: collapse; font-size: .78rem; min-width: 520px; }
-  th { background: var(--navy); color: var(--gold); padding: .5rem .6rem; text-align: left; font-size: .65rem; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
-  th:first-child { border-radius: 8px 0 0 0; } th:last-child { border-radius: 0 8px 0 0; }
-  td { padding: .45rem .6rem; border-bottom: 1px solid var(--border); vertical-align: top; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #f9f8f6; }
-  td.best { color: var(--green); font-weight: 700; }
-  td.bad  { color: var(--red); }
+/* ── DASHBOARD ── */
+.ideal-bar { background: var(--green-lt); border-left: 4px solid var(--green); border-radius: 0 8px 8px 0; padding: .75rem 1rem; margin-bottom: 1.25rem; }
+.ideal-bar strong { color: var(--green); font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; display: block; margin-bottom: .3rem; }
+.ideal-bar ul { font-size: .82rem; color: #1a3a2a; padding-left: 1.1rem; }
+.ideal-bar li { margin-bottom: .1rem; }
 
-  /* ── METHODOLOGY ── */
-  .method { margin: 0 1rem 2rem; background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 1rem; }
-  .method h3 { font-size: .8rem; font-weight: 700; color: var(--navy); margin-bottom: .5rem; }
-  .method ul { font-size: .75rem; color: #374151; padding-left: 1rem; }
-  .method li { margin-bottom: .2rem; }
+.score-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: .875rem; margin-bottom: 1.25rem; }
+.sc-card { background: var(--white); border-radius: 12px; border: 1.5px solid var(--border); padding: .875rem 1rem; cursor: pointer; transition: box-shadow .15s; }
+.sc-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+.sc-card.rank-1 { border-color: var(--green); }
+.sc-card-rank { font-size: .62rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .2rem; }
+.sc-card-rank.gold { color: var(--green); }
+.sc-card-buyers { font-size: .88rem; font-weight: 700; line-height: 1.2; margin-bottom: .35rem; }
+.sc-card-price { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+.sc-card-net { font-size: .78rem; color: var(--green); font-weight: 600; margin-top: .1rem; }
+.sc-card-fin { font-size: .72rem; color: var(--muted); margin-top: .2rem; }
+.score-bar-row { display: flex; align-items: center; gap: .5rem; margin-top: .6rem; }
+.score-bar-bg { flex: 1; background: #e5e7eb; border-radius: 99px; height: 5px; }
+.score-bar-fill { height: 5px; border-radius: 99px; background: var(--gold); }
+.score-num { font-size: .75rem; font-weight: 700; color: var(--navy); white-space: nowrap; }
 
-  /* ── MODAL ── */
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
-  .overlay.hidden { display: none; }
-  .modal { background: #fff; width: 100%; max-width: 560px; border-radius: 16px 16px 0 0; max-height: 90vh; overflow-y: auto; padding: 1.25rem; animation: up .25s ease; }
-  @keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-handle { width: 40px; height: 4px; background: #d1d5db; border-radius: 99px; margin: 0 auto .75rem; }
-  .modal h2 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: .2rem; }
-  .modal-sub { font-size: .75rem; color: var(--muted); margin-bottom: .75rem; }
-  .ai-tag { display: inline-block; background: #ede9fe; color: #6d28d9; font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; margin-bottom: .6rem; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
-  .fg { display: flex; flex-direction: column; gap: .2rem; }
-  .fg.fw { grid-column: 1/-1; }
-  .fg label { font-size: .65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
-  .fg input, .fg select, .fg textarea { padding: .5rem .65rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: .85rem; color: var(--text); outline: none; width: 100%; }
-  .fg input:focus, .fg select:focus { border-color: var(--navy); }
-  .fg textarea { resize: vertical; min-height: 3rem; font-size: .8rem; }
-  .fsec { font-size: .7rem; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: .08em; margin-top: .6rem; margin-bottom: .2rem; grid-column: 1/-1; border-bottom: 1px solid var(--border); padding-bottom: .25rem; }
-  .modal-btns { display: flex; gap: .6rem; margin-top: .75rem; }
-  .btn-p { flex: 1; padding: .75rem; background: var(--navy); color: #fff; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; }
-  .btn-s { padding: .75rem 1rem; background: transparent; color: var(--muted); font-weight: 600; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; }
-  .save-status { font-size: .75rem; color: var(--muted); text-align: center; margin-top: .5rem; min-height: 1.2em; }
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin-bottom: 1.25rem; }
+.stat-box { background: var(--white); border-radius: 10px; border: 1px solid var(--border); padding: .75rem 1rem; }
+.stat-box-val { font-size: 1.25rem; font-weight: 800; color: var(--navy); }
+.stat-box-lbl { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .15rem; }
+.stat-box-sub { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
 
-  /* ── FOOTER ── */
-  .footer { padding: 1rem; text-align: center; font-size: .7rem; color: var(--muted); border-top: 1px solid var(--border); }
-  .api-row { text-align: right; padding: .4rem 1rem; font-size: .7rem; color: var(--muted); cursor: pointer; }
-  .api-row span { text-decoration: underline; }
+.net-bars { display: flex; flex-direction: column; gap: .6rem; }
+.net-bar-row { display: flex; align-items: center; gap: .75rem; }
+.net-bar-label { font-size: .78rem; font-weight: 600; width: 120px; flex-shrink: 0; }
+.net-bar-track { flex: 1; background: #e5e7eb; border-radius: 6px; height: 22px; position: relative; overflow: hidden; }
+.net-bar-fill { height: 100%; border-radius: 6px; background: var(--navy); display: flex; align-items: center; padding-left: .5rem; transition: width .5s ease; }
+.net-bar-fill span { font-size: .7rem; font-weight: 700; color: #fff; white-space: nowrap; }
 
-  /* ── RESPONSIVE ── */
-  @media (min-width: 768px) {
-    .hero { padding: 2rem; }
-    .hero-title { font-size: 2rem; }
-    .hero-stats { grid-template-columns: repeat(6, 1fr); }
-    .banner, .sh, .import-wrap, .offers, .tbl-wrap, .method { padding-left: 2rem; padding-right: 2rem; }
-    .method { margin-left: 2rem; margin-right: 2rem; }
-    .offers { display: grid; grid-template-columns: repeat(2, 1fr); }
-    .overlay { align-items: center; padding: 1rem; }
-    .modal { border-radius: 16px; }
-    .api-row { padding-right: 2rem; }
-  }
-  @media (min-width: 1200px) { .offers { grid-template-columns: repeat(4, 1fr); } }
+/* ── COMPARE TAB ── */
+.compare-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border); }
+.compare-table { width: 100%; border-collapse: collapse; min-width: 580px; }
+.compare-table th { background: var(--navy); color: var(--gold); padding: .6rem .875rem; text-align: left; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; font-weight: 700; }
+.compare-table th.offer-col { text-align: center; min-width: 120px; }
+.compare-table th:first-child { border-radius: 12px 0 0 0; width: 130px; }
+.compare-table th:last-child { border-radius: 0 12px 0 0; }
+.compare-table td { padding: .55rem .875rem; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: .82rem; }
+.compare-table td.offer-col { text-align: center; }
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table tr:hover td { background: #fafaf9; }
+.compare-table .row-label { font-size: .75rem; font-weight: 600; color: var(--muted); }
+.compare-table .section-row td { background: var(--light); font-size: .65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding: .35rem .875rem; }
+.cval { display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+.cval-main { font-size: .82rem; font-weight: 600; }
+.cval-sub { font-size: .68rem; color: var(--muted); }
+.c-best { background: #f0fdf4 !important; }
+.c-mid  { background: #fffbeb !important; }
+.c-bad  { background: #fef2f2 !important; }
+.ideal-check { font-size: .9rem; }
+
+/* ── OFFER DETAIL TAB ── */
+.offer-hero { background: var(--navy); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
+.offer-hero-num { color: var(--gold); font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .2rem; }
+.offer-hero-name { color: #fff; font-size: 1.25rem; font-weight: 700; }
+.offer-hero-agent { color: #94a3b8; font-size: .82rem; margin-top: .2rem; }
+.offer-hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-top: 1rem; }
+.ohs { background: rgba(255,255,255,.08); border-radius: 8px; padding: .5rem .75rem; }
+.ohs-v { color: var(--gold); font-size: 1rem; font-weight: 700; }
+.ohs-l { color: #94a3b8; font-size: .65rem; text-transform: uppercase; letter-spacing: .05em; margin-top: .1rem; }
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-bottom: .875rem; }
+.dg-item { background: var(--white); border-radius: 8px; border: 1px solid var(--border); padding: .6rem .875rem; }
+.dg-item.full { grid-column: 1/-1; }
+.dg-lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .2rem; }
+.dg-val { font-size: .88rem; font-weight: 600; }
+
+.net-breakdown { background: var(--white); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+.nb-row { display: flex; justify-content: space-between; align-items: center; padding: .55rem 1rem; border-bottom: 1px solid var(--border); font-size: .82rem; }
+.nb-row:last-child { border-bottom: none; background: var(--navy-lt); font-weight: 700; }
+.nb-row.deduct { color: var(--muted); }
+.nb-row.deduct .nb-amt { color: var(--red); }
+.nb-row.total .nb-amt { color: var(--green); font-size: 1rem; }
+
+.ideal-check-list { background: var(--white); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+.icl-row { display: flex; align-items: center; gap: .75rem; padding: .55rem 1rem; border-bottom: 1px solid var(--border); font-size: .82rem; }
+.icl-row:last-child { border-bottom: none; }
+.icl-icon { font-size: 1rem; flex-shrink: 0; }
+.icl-label { flex: 1; }
+.icl-val { font-size: .78rem; color: var(--muted); text-align: right; }
+
+/* ── GLOSSARY ── */
+.glossary-list { display: flex; flex-direction: column; gap: .6rem; }
+.gl-item { background: var(--white); border-radius: 10px; border: 1px solid var(--border); padding: .875rem 1rem; }
+.gl-term { font-size: .9rem; font-weight: 700; color: var(--navy); margin-bottom: .3rem; }
+.gl-def { font-size: .82rem; color: #374151; line-height: 1.5; }
+.gl-tip { font-size: .75rem; color: var(--muted); margin-top: .3rem; font-style: italic; }
+
+/* ── LOADING ── */
+.loading { padding: 3rem; text-align: center; color: var(--muted); font-size: .85rem; }
+.spin { display: inline-block; width: 20px; height: 20px; border: 2.5px solid #ddd; border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin-right: .5rem; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RESPONSIVE ── */
+@media (min-width: 640px) {
+  .score-cards { grid-template-columns: repeat(4, 1fr); }
+  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  .offer-hero-stats { grid-template-columns: repeat(6, 1fr); }
+}
+@media (min-width: 768px) {
+  .tab-btn { padding: .75rem 1.25rem; font-size: .82rem; }
+  .topbar { padding: 1rem 2rem; }
+  .tab-pane { padding: 1.75rem 2rem; }
+  .net-bar-label { width: 160px; }
+}
 </style>
 </head>
 <body>
 
-<!-- PASTE YOUR APPS SCRIPT WEB APP URL BELOW -->
 <script>
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyfRtBgw9sXVb9-Z2v9eTnoWhYX26HIDIJ7LtP9u2TAj0x-7PNbRPrVQqydKgP6ThKeqQ/exec';
 </script>
 
-<!-- ── PASSWORD ── -->
-<div id="lock" class="screen">
+<!-- LOCK -->
+<div id="lock">
   <h1>3827 N Greenview</h1>
-  <p>Offer Tracker · Sellers Only</p>
-  <input id="pw" class="screen-input" type="password" placeholder="Password" autocomplete="off">
-  <button id="pw-btn" class="screen-btn">Unlock</button>
-  <div id="pw-err" class="screen-err"></div>
+  <p>Offer Analyzer · Sellers Only</p>
+  <input id="pw" type="password" placeholder="Password" autocomplete="off">
+  <button id="pw-btn">Unlock</button>
+  <div id="lock-err"></div>
 </div>
 
-<!-- ── API KEY SETUP ── -->
-<div id="api-screen" class="screen hidden">
-  <h1>Claude API Key</h1>
-  <p>Used to extract offer data from PDFs and images you drop in. Stored in your browser session only.</p>
-  <input id="api-in" class="screen-input" type="password" placeholder="sk-ant-..." autocomplete="off">
-  <button id="api-btn" class="screen-btn">Save & Continue</button>
-  <button id="api-skip" class="screen-btn sec">Skip (I'll enter offers manually)</button>
-  <div id="api-err" class="screen-err"></div>
-  <p class="screen-note">console.anthropic.com → API Keys → Create Key</p>
-</div>
-
-<!-- ── APP ── -->
+<!-- APP -->
 <div id="app">
-
-  <div class="api-row" id="api-row" style="display:none">
-    AI extraction: <span id="api-ind">Not set</span>
+  <div class="topbar">
+    <div class="topbar-addr">3827 N Greenview Ave Unit 2S · Chicago IL 60613</div>
+    <div class="topbar-title">Offer Analyzer</div>
   </div>
 
-  <div class="hero">
-    <div class="hero-addr">3827 N Greenview Ave Unit 2S · Chicago IL 60613</div>
-    <div class="hero-title">Offer Tracker</div>
-    <div class="hero-sub" id="hero-sub">MLS #12652161 · Loading…</div>
-    <div class="hero-stats">
-      <div class="stat"><div class="stat-v" id="s-list">—</div><div class="stat-l">List Price</div></div>
-      <div class="stat"><div class="stat-v">1,533</div><div class="stat-l">Sq Ft</div></div>
-      <div class="stat"><div class="stat-v">3 / 2</div><div class="stat-l">Bed / Bath</div></div>
-      <div class="stat"><div class="stat-v">$254</div><div class="stat-l">HOA / mo</div></div>
-      <div class="stat"><div class="stat-v" id="s-redfin">—</div><div class="stat-l">Redfin Est.</div></div>
-      <div class="stat"><div class="stat-v" id="s-count">—</div><div class="stat-l">Offers</div></div>
-    </div>
-  </div>
+  <nav class="tabnav" id="tabnav">
+    <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+    <button class="tab-btn" data-tab="compare">⚖️ Compare</button>
+    <!-- offer tabs injected here -->
+    <button class="tab-btn" data-tab="glossary">📖 Glossary</button>
+  </nav>
 
-  <div class="banner">
-    <strong>Your Ideal Scenario</strong>
-    <ul>
-      <li>Highest possible price · Cash buyer · No contingencies</li>
-      <li>Free rent-back through July 31, 2026</li>
-      <li>Close before June 26, 2026 · Buyer commission: 2.5%</li>
-    </ul>
-  </div>
-
-  <div class="sh" style="margin-top:.5rem">
-    <span>Add New Offer</span>
-  </div>
-  <div class="import-wrap">
-    <div class="drop-zone" id="dz">
-      <input type="file" id="fi" accept=".pdf,.png,.jpg,.jpeg,.heic,.webp">
-      <div class="drop-idle">
-        <div class="di">📄</div>
-        <div class="dt">Drop contract here or click to browse</div>
-        <div class="ds">PDF or image · Claude AI extracts all fields</div>
-      </div>
-      <div class="drop-busy">
-        <div class="spin"></div>
-        <div class="dt" style="color:var(--navy)">Reading document…</div>
-        <div class="ds" id="dz-status">Extracting with Claude AI</div>
-      </div>
-    </div>
-    <div class="drop-err" id="dz-err"></div>
-    <div class="no-api-note" id="no-api-note">No API key set — drop a file to open a blank form for manual entry. <span style="cursor:pointer;text-decoration:underline" id="set-api-link">Add key</span></div>
-  </div>
-
-  <div class="sh" id="offers-sh">
-    <span id="offers-label">Loading offers…</span>
-    <button id="refresh-btn" title="Refresh from Google Sheet">↻ Refresh</button>
-  </div>
-  <div id="offers-area">
-    <div class="loading-state">Loading offers from Google Sheet…</div>
-  </div>
-
-  <div class="sh" style="margin-top:1.5rem"><span>Side-by-Side Comparison</span></div>
-  <div class="tbl-wrap">
-    <table><thead><tr id="thr"><th>Field</th></tr></thead><tbody id="tbody"></tbody></table>
-  </div>
-
-  <div class="sh"><span>Score Methodology</span></div>
-  <div class="method">
-    <h3>Strength Score (100-point scale)</h3>
-    <ul>
-      <li><strong>Price (50%)</strong> — Min(110, offer ÷ list × 100)</li>
-      <li><strong>Financing (15%)</strong> — Cash=100 · Conv ≥20% down=85 · Conv 10–20%=70 · &lt;10%=50 · FHA/VA=35</li>
-      <li><strong>Earnest Money (10%)</strong> — Min(100, EM% ÷ 5% × 100)</li>
-      <li><strong>Inspection (10%)</strong> — None/AS-IS=100 · Info Only=80 · With Requests=50</li>
-      <li><strong>Appraisal (5%)</strong> — Waived/No termination=100 · Gap coverage=75 · Included=50</li>
-      <li><strong>Timeline (5%)</strong> — Max(0, 100 − |close days − 30| × 2)</li>
-      <li><strong>Rent-Back (5%)</strong> — Free=100 · Modified/Paid=70 · Declined=0</li>
-    </ul>
-    <p style="font-size:.72rem;color:#6b7280;margin-top:.5rem">Net = Price − Commission − Transfer Tax (0.45%) − Closing Costs − Rent-Back Cost − Mortgage Payoff</p>
-  </div>
-
-  <div class="footer" id="footer">Last updated: —</div>
-</div>
-
-<!-- ── REVIEW MODAL ── -->
-<div class="overlay hidden" id="modal-ov">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="ai-tag" id="ai-tag">✦ AI-extracted — review before saving</div>
-    <h2 id="modal-h">Add Offer</h2>
-    <div class="modal-sub">Fields save directly to Google Sheet</div>
-    <form id="rev-form">
-      <div class="form-grid">
-        <div class="fsec">Buyer & Agent</div>
-        <div class="fg fw"><label>Buyer Name(s)</label><input name="buyers" required></div>
-        <div class="fg fw"><label>Agent · Brokerage</label><input name="agent"></div>
-        <div class="fg"><label>Date of Offer</label><input name="date" placeholder="M/D/YYYY"></div>
-        <div class="fg"><label>Buyer Attorney</label><input name="attorney" placeholder="—"></div>
-
-        <div class="fsec">Price & Financing</div>
-        <div class="fg"><label>Offer Price ($)</label><input name="price" type="number" required></div>
-        <div class="fg"><label>Financing</label>
-          <select name="finCode">
-            <option value="cash">All Cash</option>
-            <option value="conv20">Conv ≥20% down</option>
-            <option value="conv10">Conv 10–20% down</option>
-            <option value="convlt10">Conv &lt;10% down</option>
-            <option value="fha">FHA</option>
-            <option value="va">VA</option>
-          </select>
-        </div>
-        <div class="fg"><label>Down %</label><input name="down_pct" type="number" min="0" max="100"></div>
-        <div class="fg"><label>Total EM ($)</label><input name="em" type="number"></div>
-        <div class="fg fw"><label>EM Schedule</label><input name="em_note"></div>
-
-        <div class="fsec">Contingencies</div>
-        <div class="fg"><label>Inspection</label>
-          <select name="insp_code">
-            <option value="none">None / AS-IS / No Requests</option>
-            <option value="info">Info Only</option>
-            <option value="full">With Requests</option>
-          </select>
-        </div>
-        <div class="fg"><label>Appraisal</label>
-          <select name="appr_code">
-            <option value="included">Included</option>
-            <option value="waived">Waived / Gap Addendum</option>
-            <option value="gap">Gap Coverage</option>
-          </select>
-        </div>
-        <div class="fg fw"><label>Inspection Detail</label><input name="inspection"></div>
-        <div class="fg fw"><label>Appraisal Detail</label><input name="appraisal"></div>
-
-        <div class="fsec">Closing & Possession</div>
-        <div class="fg"><label>Close Date</label><input name="close_date" placeholder="Month D, YYYY"></div>
-        <div class="fg"><label>Days from Today</label><input name="close_days" type="number"></div>
-        <div class="fg"><label>Possession Date</label><input name="possession"></div>
-        <div class="fg"><label>Rent-Back Type</label>
-          <select name="rent_code">
-            <option value="free">Free / $0/day</option>
-            <option value="modified">Paid (PITI or fixed)</option>
-            <option value="declined">Declined</option>
-          </select>
-        </div>
-        <div class="fg fw"><label>Rent-Back Detail</label><input name="rent_back"></div>
-        <div class="fg"><label>Rent-Back Cost Est. ($)</label><input name="rent_cost" type="number" value="0"></div>
-        <div class="fg"><label>Total Commission %</label><input name="comm_pct" type="number" step="0.1" placeholder="e.g. 5"></div>
-        <div class="fg"><label>Possession Escrow</label><input name="escrow"></div>
-        <div class="fg"><label>Tax Proration</label><input name="tax_prorate" placeholder="105% or TBD"></div>
-
-        <div class="fsec">Notes & Flags</div>
-        <div class="fg fw"><label>Flags (one per line · start ✓ green, ⚠ amber, ✗ red)</label>
-          <textarea name="flags_text" rows="4"></textarea>
-        </div>
-      </div>
-    </form>
-    <div class="modal-btns">
-      <button class="btn-s" id="m-cancel">Cancel</button>
-      <button class="btn-p" id="m-confirm">Save to Sheet</button>
-    </div>
-    <div class="save-status" id="save-status"></div>
+  <div class="tab-content">
+    <div class="tab-pane active" id="tab-dashboard"><div class="loading"><span class="spin"></span>Loading offers…</div></div>
+    <div class="tab-pane" id="tab-compare"></div>
+    <!-- offer tab panes injected here -->
+    <div class="tab-pane" id="tab-glossary"></div>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const PW_HASH = '6b3d626bac001b7c3ec9d22b17a78d43fca77157';
-let config = {};
-let offers = [];
-let apiKey = '';
+const IDEAL = { cash: true, noInspRequests: true, freeRentBack: true, closeBeforeJun26: true };
+let cfg = {}, offers = [];
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 async function sha1(s) {
   const b = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(s));
   return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
 }
-function fmt(n) { return '$' + Math.round(+n).toLocaleString(); }
-function cfgNum(k, def) { return parseFloat(config[k]) || def; }
+const fmt   = n => '$' + Math.round(+n).toLocaleString();
+const fmtK  = n => '$' + (Math.round(+n/1000)) + 'K';
+const cfgN  = (k, d) => parseFloat(cfg[k]) || d;
 
 function score(o) {
   const fin  = {cash:100,conv20:85,conv10:70,convlt10:50,fha:35,va:35}[o.fin_code]||50;
   const insp = {none:100,info:80,full:50}[o.insp_code]||50;
   const appr = {waived:100,gap:75,included:50}[o.appr_code]||50;
   const rent = {free:100,modified:70,declined:0}[o.rent_code]||50;
-  const emPct = (+o.em) / (+o.price);
-  const LIST = cfgNum('list_price', 799000);
+  const emPct = +o.em / +o.price;
+  const LIST = cfgN('list_price', 799000);
   return (
     0.50 * Math.min(110, +o.price / LIST * 100) +
     0.15 * fin +
@@ -384,402 +241,405 @@ function score(o) {
     0.05 * rent
   );
 }
-function net(o) {
-  const MORT = cfgNum('mortgage_payoff', 451500);
-  const CLOS = cfgNum('closing_costs', 3650);
-  const TX   = cfgNum('transfer_tax_pct', 0.0045);
+function netProceeds(o) {
   const comm = parseFloat(o.comm_pct) || 0.05;
-  return +o.price - +o.price * comm - +o.price * TX - CLOS - (+o.rent_cost||0) - MORT;
+  return +o.price - +o.price * comm - +o.price * cfgN('transfer_tax_pct', 0.0045) - cfgN('closing_costs', 3650) - (+o.rent_cost||0) - cfgN('mortgage_payoff', 451500);
+}
+function idealChecks(o) {
+  return [
+    { label: 'Cash purchase',          pass: o.fin_code === 'cash',      val: o.financing },
+    { label: 'No inspection requests', pass: o.insp_code !== 'full',     val: o.inspection },
+    { label: 'Appraisal waived/gap',   pass: o.appr_code !== 'included', val: o.appraisal },
+    { label: 'Free rent-back',         pass: o.rent_code === 'free',     val: o.rent_back },
+    { label: 'Close before June 26',   pass: +o.close_days <= 26,        val: o.close_date },
+    { label: 'Strong EM (≥ 3%)',       pass: +o.em / +o.price >= 0.03,   val: fmt(o.em) + ' (' + (+o.em/+o.price*100).toFixed(1) + '%)' },
+  ];
 }
 
 // ── PASSWORD ──────────────────────────────────────────────────────────────────
 document.getElementById('pw-btn').addEventListener('click', tryUnlock);
 document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+if (sessionStorage.getItem('unlocked') === '1') { boot(); }
+
 async function tryUnlock() {
   const h = await sha1(document.getElementById('pw').value.trim().toLowerCase());
-  if (h === PW_HASH) {
-    sessionStorage.setItem('unlocked','1');
-    document.getElementById('lock').classList.add('hidden');
-    showApiScreen();
-  } else {
-    document.getElementById('pw-err').textContent = 'Incorrect password.';
-    document.getElementById('pw').value = '';
-  }
-}
-if (sessionStorage.getItem('unlocked') === '1') {
-  document.getElementById('lock').classList.add('hidden');
-  showApiScreen();
+  if (h === PW_HASH) { sessionStorage.setItem('unlocked','1'); boot(); }
+  else { document.getElementById('lock-err').textContent = 'Incorrect password.'; document.getElementById('pw').value = ''; }
 }
 
-// ── API KEY ───────────────────────────────────────────────────────────────────
-function showApiScreen() {
-  const stored = sessionStorage.getItem('api_key');
-  if (stored) { apiKey = stored; launch(); return; }
-  document.getElementById('api-screen').classList.remove('hidden');
-}
-document.getElementById('api-btn').addEventListener('click', () => {
-  const v = document.getElementById('api-in').value.trim();
-  if (!v.startsWith('sk-ant-')) { document.getElementById('api-err').textContent = 'Key should start with sk-ant-'; return; }
-  apiKey = v; sessionStorage.setItem('api_key', v);
-  document.getElementById('api-screen').classList.add('hidden');
-  launch();
-});
-document.getElementById('api-skip').addEventListener('click', () => {
-  document.getElementById('api-screen').classList.add('hidden');
-  launch();
-});
-document.getElementById('api-in').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('api-btn').click(); });
-
-function launch() {
+function boot() {
+  document.getElementById('lock').classList.add('off');
   document.getElementById('app').classList.add('on');
-  setupApiRow();
-  setupImport();
-  setupModal();
   loadData();
-  document.getElementById('refresh-btn').addEventListener('click', loadData);
 }
 
-function setupApiRow() {
-  const row = document.getElementById('api-row');
-  const ind = document.getElementById('api-ind');
-  row.style.display = 'block';
-  ind.textContent = apiKey ? '✓ Active — click to update' : 'Not set — click to add';
-  row.addEventListener('click', () => {
-    const k = prompt('Anthropic API key (sk-ant-...) or blank to clear:');
-    if (k === null) return;
-    if (!k.trim()) { apiKey = ''; sessionStorage.removeItem('api_key'); ind.textContent = 'Not set — click to add'; }
-    else { apiKey = k.trim(); sessionStorage.setItem('api_key', apiKey); ind.textContent = '✓ Active — click to update'; }
-    updateNoApiNote();
-  });
-  updateNoApiNote();
-  document.getElementById('set-api-link').addEventListener('click', e => { e.stopPropagation(); row.click(); });
-}
-function updateNoApiNote() {
-  document.getElementById('no-api-note').style.display = apiKey ? 'none' : 'block';
-}
-
-// ── LOAD FROM SHEET ───────────────────────────────────────────────────────────
+// ── DATA ──────────────────────────────────────────────────────────────────────
 async function loadData() {
-  document.getElementById('offers-area').innerHTML = '<div class="loading-state">Loading from Google Sheet…</div>';
   try {
-    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') {
-      throw new Error('Apps Script URL not configured. See setup instructions.');
-    }
     const r = await fetch(APPS_SCRIPT_URL);
     const data = await r.json();
-    config = data.config || {};
-    offers = data.offers || [];
-    render();
-    document.getElementById('footer').textContent =
-      'Last updated: ' + (data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '—') +
-      ' · Alyssa & Thomas · 3827 N Greenview Unit 2S';
-  } catch (e) {
-    document.getElementById('offers-area').innerHTML =
-      `<div class="loading-state" style="color:var(--red)">Could not load sheet: ${e.message}</div>`;
+    cfg = data.config || {};
+    offers = (data.offers || []).map(o => ({ ...o, _score: score(o), _net: netProceeds(o) }));
+    offers.sort((a,b) => b._score - a._score);
+    buildOfferTabs();
+    renderDashboard();
+    renderCompare();
+    renderGlossary();
+  } catch(e) {
+    document.getElementById('tab-dashboard').innerHTML = `<div class="loading" style="color:var(--red)">Could not load data. Check Apps Script URL.<br><small>${e.message}</small></div>`;
   }
 }
 
-function render() {
-  const LIST = cfgNum('list_price', 799000);
-  document.getElementById('s-list').textContent = '$' + (LIST/1000).toFixed(0) + 'K';
-  document.getElementById('s-redfin').textContent = config.redfin_estimate ? '$' + (cfgNum('redfin_estimate')/1000).toFixed(0)+'K' : '—';
-  document.getElementById('s-count').textContent = offers.length;
-  document.getElementById('hero-sub').textContent =
-    `MLS #${config.mls||'12652161'} · Listed ${config.listed||''} · ${config.agent||''}`;
-  document.getElementById('offers-label').textContent =
-    `${offers.length} Offer${offers.length !== 1 ? 's' : ''} Received`;
-  renderCards();
-  renderTable();
-}
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function buildOfferTabs() {
+  const nav = document.getElementById('tabnav');
+  const content = document.querySelector('.tab-content');
+  const glossaryBtn = nav.querySelector('[data-tab="glossary"]');
 
-function renderCards() {
-  const el = document.getElementById('offers-area');
-  el.innerHTML = '<div class="offers" id="offer-cards"></div>';
-  const container = document.getElementById('offer-cards');
-  const sorted = [...offers].sort((a,b) => score(b) - score(a));
-  const LIST = cfgNum('list_price', 799000);
+  offers.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn';
+    btn.dataset.tab = `offer-${o.num}`;
+    btn.textContent = `#${o.num} ${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}`;
+    nav.insertBefore(btn, glossaryBtn);
 
-  sorted.forEach((o, idx) => {
-    const sc = score(o), nt = net(o);
-    const delta = +o.price - LIST;
-    const card = document.createElement('div');
-    card.className = 'card' + (idx === 0 ? ' top' : '');
-    card.innerHTML = `
-      <div class="card-hd">
-        <div>
-          <div class="c-num">Offer ${o.num} · ${o.date||''}</div>
-          <div class="c-buyer">${o.buyers}</div>
-          <div class="c-agent">${o.agent||''}</div>
-        </div>
-        ${idx===0 ? '<span class="badge bg-g">★ Top Pick</span>' : ''}
-      </div>
-      <div class="card-price">
-        <div>
-          <div class="price">${fmt(o.price)}</div>
-          <div class="delta">${delta>=0?'+':''}${fmt(delta)} (${(delta/LIST*100).toFixed(1)}% over list)</div>
-        </div>
-        <div class="fin-chip">${o.financing||''}</div>
-      </div>
-      <div class="cgrid">
-        <div class="cc"><div class="cc-l">Total EM</div><div class="cc-v">${fmt(o.em)}</div></div>
-        <div class="cc"><div class="cc-l">Down</div><div class="cc-v">${o.down_pct}%</div></div>
-        <div class="cc"><div class="cc-l">Inspection</div><div class="cc-v" style="${o.insp_code==='full'?'color:var(--red)':''}">${o.inspection||''}</div></div>
-        <div class="cc"><div class="cc-l">Appraisal</div><div class="cc-v" style="${o.appr_code==='included'?'color:var(--amber)':''}">${o.appraisal||''}</div></div>
-        <div class="cc"><div class="cc-l">Close</div><div class="cc-v">${o.close_date||''}</div></div>
-        <div class="cc"><div class="cc-l">Possession</div><div class="cc-v">${o.possession||''}</div></div>
-        <div class="cc fw"><div class="cc-l">Rent-Back</div><div class="cc-v" style="${o.rent_code==='modified'?'color:var(--amber)':''}">${o.rent_back||''}</div></div>
-        <div class="cc fw"><div class="cc-l">EM Schedule</div><div class="cc-v">${o.em_note||'—'}</div></div>
-        ${o.attorney && o.attorney!=='—' ? `<div class="cc fw"><div class="cc-l">Buyer Attorney</div><div class="cc-v">${o.attorney}</div></div>` : ''}
-      </div>
-      <div class="card-net"><div class="net-l">Est. Net Proceeds</div><div class="net-v">${fmt(nt)}</div></div>
-      <div class="card-score">
-        <span class="sc-l">Score</span>
-        <div class="bar-wrap"><div class="bar" style="width:${sc}%"></div></div>
-        <span class="sc-v">${sc.toFixed(1)} / 100</span>
-      </div>
-      <div class="flags">
-        ${(o.flags||[]).map(f=>`<div class="flag flag-${f.type}">${f.text}</div>`).join('')}
-      </div>`;
-    container.appendChild(card);
+    const pane = document.createElement('div');
+    pane.className = 'tab-pane';
+    pane.id = `tab-offer-${o.num}`;
+    content.insertBefore(pane, document.getElementById('tab-glossary'));
+  });
+
+  nav.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 }
 
-function renderTable() {
-  const thr = document.getElementById('thr');
-  const tb  = document.getElementById('tbody');
-  thr.innerHTML = '<th>Field</th>';
-  offers.forEach(o => {
-    const th = document.createElement('th');
-    th.textContent = `#${o.num} ${o.buyers.split('&')[0].trim().split(' ')[0]}`;
-    thr.appendChild(th);
-  });
-  const LIST = cfgNum('list_price', 799000);
-  const rows = [
-    ['Price', o => fmt(o.price), true],
-    ['Financing', o => o.financing||''],
-    ['Total EM', o => `${fmt(o.em)} (${(+o.em/+o.price*100).toFixed(1)}%)`],
-    ['Inspection', o => o.inspection||''],
-    ['Appraisal', o => o.appraisal||''],
-    ['Close Date', o => o.close_date||''],
-    ['Possession', o => o.possession||''],
-    ['Rent-Back', o => o.rent_back||''],
-    ['Commission', o => ((+o.comm_pct||0.05)*100).toFixed(1)+'%'],
-    ['Est. Net', o => fmt(net(o)), true],
-    ['Score', o => score(o).toFixed(1), true],
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === `tab-${id}`));
+  if (id.startsWith('offer-')) {
+    const num = id.replace('offer-', '');
+    const o = offers.find(x => String(x.num) === num);
+    if (o) renderOfferDetail(o);
+  }
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const LIST = cfgN('list_price', 799000);
+  const maxNet = Math.max(...offers.map(o => o._net));
+  const topOffer = offers[0];
+
+  let html = `
+  <div class="ideal-bar">
+    <strong>Your Ideal Scenario</strong>
+    <ul>
+      <li>Highest price · Cash · No contingencies</li>
+      <li>Free rent-back through July 31, 2026</li>
+      <li>Close before June 26 · Buyer commission: 2.5%</li>
+    </ul>
+  </div>
+
+  <div class="section-title">Offer Scores — Ranked</div>
+  <div class="score-cards">
+  ${offers.map((o, i) => `
+    <div class="sc-card ${i===0?'rank-1':''}" onclick="switchTab('offer-${o.num}')">
+      <div class="sc-card-rank ${i===0?'gold':''}">${['★ #1 Top Pick','#2','#3','#4'][i]||'#'+(i+1)}</div>
+      <div class="sc-card-buyers">${o.buyers.replace('&','&amp;')}</div>
+      <div class="sc-card-price">${fmt(o.price)}</div>
+      <div class="sc-card-net">Net: ${fmt(o._net)}</div>
+      <div class="sc-card-fin">${o.financing}</div>
+      <div class="score-bar-row">
+        <div class="score-bar-bg"><div class="score-bar-fill" style="width:${o._score}%"></div></div>
+        <span class="score-num">${o._score.toFixed(1)}</span>
+      </div>
+    </div>
+  `).join('')}
+  </div>
+
+  <div class="section-title">Key Numbers</div>
+  <div class="stats-grid">
+    <div class="stat-box"><div class="stat-box-val">${fmt(topOffer.price)}</div><div class="stat-box-lbl">Top Offer Price</div><div class="stat-box-sub">${fmtK(topOffer.price - LIST)} over list</div></div>
+    <div class="stat-box"><div class="stat-box-val">${fmt(topOffer._net)}</div><div class="stat-box-lbl">Best Est. Net</div><div class="stat-box-sub">${topOffer.buyers.split(' ')[0]}</div></div>
+    <div class="stat-box"><div class="stat-box-val">${fmt(LIST)}</div><div class="stat-box-lbl">List Price</div><div class="stat-box-sub">MLS #${cfg.mls||'12652161'}</div></div>
+    <div class="stat-box"><div class="stat-box-val">${offers.length}</div><div class="stat-box-lbl">Offers</div><div class="stat-box-sub">Received May 31</div></div>
+  </div>
+
+  <div class="section-title">Est. Net Proceeds — All Offers</div>
+  <div class="net-bars">
+  ${offers.map(o => {
+    const pct = Math.round(o._net / maxNet * 100);
+    return `<div class="net-bar-row">
+      <div class="net-bar-label">#${o.num} ${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}</div>
+      <div class="net-bar-track"><div class="net-bar-fill" style="width:${pct}%"><span>${fmt(o._net)}</span></div></div>
+    </div>`;
+  }).join('')}
+  </div>
+
+  <div class="section-title">Flags Across All Offers</div>
+  ${offers.map(o => {
+    const redFlags = (o.flags||[]).filter(f => f.type === 'red');
+    if (!redFlags.length) return '';
+    return `<div style="margin-bottom:.75rem">
+      <div style="font-size:.75rem;font-weight:700;color:var(--navy);margin-bottom:.3rem">#${o.num} ${o.buyers}</div>
+      ${redFlags.map(f => `<div class="flag flag-red">${f.text}</div>`).join('')}
+    </div>`;
+  }).join('')}
+  `;
+
+  document.getElementById('tab-dashboard').innerHTML = html;
+}
+
+// ── COMPARE ───────────────────────────────────────────────────────────────────
+function renderCompare() {
+  const LIST = cfgN('list_price', 799000);
+
+  function cell(o, fn, rankFn) {
+    const vals = offers.map(x => rankFn ? rankFn(x) : null);
+    const max = rankFn ? Math.max(...vals) : null;
+    const min = rankFn ? Math.min(...vals) : null;
+    const v = rankFn ? rankFn(o) : null;
+    const cls = rankFn ? (v === max ? 'c-best' : v === min && offers.length > 1 ? 'c-bad' : '') : '';
+    return `<td class="offer-col ${cls}">${fn(o)}</td>`;
+  }
+
+  function pill(type, text) {
+    const cls = {green:'pill-green',amber:'pill-amber',red:'pill-red'}[type]||'pill-gray';
+    return `<span class="pill ${cls}">${text}</span>`;
+  }
+
+  function inspPill(o) {
+    if (o.insp_code === 'none') return pill('green','No Requests');
+    if (o.insp_code === 'info') return pill('amber','Info Only');
+    return pill('red','With Requests');
+  }
+  function apprPill(o) {
+    if (o.appr_code === 'waived') return pill('green','Waived');
+    if (o.appr_code === 'gap')    return pill('amber','Gap Coverage');
+    return pill('red','Included');
+  }
+  function rentPill(o) {
+    if (o.rent_code === 'free')     return pill('green','Free');
+    if (o.rent_code === 'modified') return pill('amber','Paid');
+    return pill('red','Declined');
+  }
+  function finPill(o) {
+    if (o.fin_code === 'cash')    return pill('green','Cash');
+    if (o.fin_code === 'conv20')  return pill('amber','Conv 20%+');
+    if (o.fin_code === 'conv10')  return pill('amber','Conv 10%');
+    return pill('red',o.financing||o.fin_code);
+  }
+  function check(pass) { return pass ? '✅' : '❌'; }
+
+  const offerHeaders = offers.map(o =>
+    `<th class="offer-col">#${o.num}<br><span style="font-weight:500;font-size:.65rem;color:#94a3b8">${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}</span></th>`
+  ).join('');
+
+  const html = `
+  <div class="compare-table-wrap">
+  <table class="compare-table">
+    <thead><tr><th>Criteria</th>${offerHeaders}</tr></thead>
+    <tbody>
+      <tr class="section-row"><td colspan="${offers.length+1}">Price &amp; Financing</td></tr>
+      <tr>
+        <td class="row-label">Offer Price</td>
+        ${offers.map(o => cell(o, o => `<div class="cval"><div class="cval-main">${fmt(o.price)}</div><div class="cval-sub">+${fmtK(+o.price-LIST)}</div></div>`, o => +o.price)).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Financing</td>
+        ${offers.map(o => `<td class="offer-col">${finPill(o)}</td>`).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Down Payment</td>
+        ${offers.map(o => cell(o, o => o.down_pct + '%', o => +o.down_pct)).join('')}
+      </tr>
+
+      <tr class="section-row"><td colspan="${offers.length+1}">Risk &amp; Contingencies</td></tr>
+      <tr>
+        <td class="row-label">Earnest Money</td>
+        ${offers.map(o => cell(o, o => `<div class="cval"><div class="cval-main">${fmt(o.em)}</div><div class="cval-sub">${(+o.em/+o.price*100).toFixed(1)}%</div></div>`, o => +o.em)).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">EM at Risk Now</td>
+        ${offers.map(o => {
+          const initial = o.em_note ? (o.em_note.match(/\$([\d,]+)\s*initial/i)||[])[1] : null;
+          const amt = initial ? '$'+initial : fmt(o.em);
+          return `<td class="offer-col"><span style="font-size:.82rem;font-weight:600">${amt}</span></td>`;
+        }).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Inspection</td>
+        ${offers.map(o => `<td class="offer-col">${inspPill(o)}</td>`).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Appraisal</td>
+        ${offers.map(o => `<td class="offer-col">${apprPill(o)}</td>`).join('')}
+      </tr>
+
+      <tr class="section-row"><td colspan="${offers.length+1}">Timing &amp; Possession</td></tr>
+      <tr>
+        <td class="row-label">Close Date</td>
+        ${offers.map(o => cell(o, o => `<div class="cval"><div class="cval-main">${(o.close_date||'').replace(/, 2026/,'')}</div><div class="cval-sub">${+o.close_days} days</div></div>`, o => -o.close_days)).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Possession</td>
+        ${offers.map(o => `<td class="offer-col"><span style="font-size:.82rem">${o.possession||'—'}</span></td>`).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Rent-Back</td>
+        ${offers.map(o => `<td class="offer-col">${rentPill(o)}</td>`).join('')}
+      </tr>
+
+      <tr class="section-row"><td colspan="${offers.length+1}">Ideal Scenario Match</td></tr>
+      <tr>
+        <td class="row-label">Cash?</td>
+        ${offers.map(o => `<td class="offer-col" style="font-size:1.1rem">${check(o.fin_code==='cash')}</td>`).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">No Insp. Requests?</td>
+        ${offers.map(o => `<td class="offer-col" style="font-size:1.1rem">${check(o.insp_code!=='full')}</td>`).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Free Rent-Back?</td>
+        ${offers.map(o => `<td class="offer-col" style="font-size:1.1rem">${check(o.rent_code==='free')}</td>`).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Close ≤ Jun 26?</td>
+        ${offers.map(o => `<td class="offer-col" style="font-size:1.1rem">${check(+o.close_days<=26)}</td>`).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Appraisal Waived?</td>
+        ${offers.map(o => `<td class="offer-col" style="font-size:1.1rem">${check(o.appr_code==='waived')}</td>`).join('')}
+      </tr>
+
+      <tr class="section-row"><td colspan="${offers.length+1}">Bottom Line</td></tr>
+      <tr>
+        <td class="row-label">Commission</td>
+        ${offers.map(o => cell(o, o => ((+o.comm_pct||0.05)*100).toFixed(1)+'%', o => -(+o.comm_pct||0.05))).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Est. Net Proceeds</td>
+        ${offers.map(o => cell(o, o => `<strong>${fmt(o._net)}</strong>`, o => o._net)).join('')}
+      </tr>
+      <tr>
+        <td class="row-label">Strength Score</td>
+        ${offers.map(o => cell(o, o => `<strong>${o._score.toFixed(1)}</strong>`, o => o._score)).join('')}
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="font-size:.7rem;color:var(--muted);margin-top:.75rem">Green = best · Red = weakest · Tap a column header to see full offer detail.</p>
+  `;
+
+  document.getElementById('tab-compare').innerHTML = html;
+}
+
+// ── OFFER DETAIL ──────────────────────────────────────────────────────────────
+function renderOfferDetail(o) {
+  const pane = document.getElementById(`tab-offer-${o.num}`);
+  if (pane.dataset.rendered) return;
+  pane.dataset.rendered = '1';
+
+  const checks = idealChecks(o);
+  const comm = parseFloat(o.comm_pct) || 0.05;
+  const commAmt   = +o.price * comm;
+  const txAmt     = +o.price * cfgN('transfer_tax_pct', 0.0045);
+  const closingAmt= cfgN('closing_costs', 3650);
+  const rentAmt   = +o.rent_cost || 0;
+  const mortAmt   = cfgN('mortgage_payoff', 451500);
+
+  const pros  = (o.flags||[]).filter(f => f.type === 'green');
+  const warns = (o.flags||[]).filter(f => f.type === 'amber');
+  const risks = (o.flags||[]).filter(f => f.type === 'red');
+
+  pane.innerHTML = `
+  <div class="offer-hero">
+    <div class="offer-hero-num">Offer #${o.num} · ${o.date||''}</div>
+    <div class="offer-hero-name">${o.buyers}</div>
+    <div class="offer-hero-agent">${o.agent||''}</div>
+    <div class="offer-hero-stats">
+      <div class="ohs"><div class="ohs-v">${fmt(o.price)}</div><div class="ohs-l">Price</div></div>
+      <div class="ohs"><div class="ohs-v">${fmt(o._net)}</div><div class="ohs-l">Est. Net</div></div>
+      <div class="ohs"><div class="ohs-v">${o._score.toFixed(1)}</div><div class="ohs-l">Score</div></div>
+      <div class="ohs"><div class="ohs-v">${o.financing}</div><div class="ohs-l">Financing</div></div>
+      <div class="ohs"><div class="ohs-v">${o.close_date||'—'}</div><div class="ohs-l">Close</div></div>
+      <div class="ohs"><div class="ohs-v">${o.possession||'—'}</div><div class="ohs-l">Possession</div></div>
+    </div>
+  </div>
+
+  <div class="section-title">Ideal Scenario Match</div>
+  <div class="ideal-check-list">
+    ${checks.map(c => `
+    <div class="icl-row">
+      <span class="icl-icon">${c.pass ? '✅' : '❌'}</span>
+      <span class="icl-label">${c.label}</span>
+      <span class="icl-val">${c.val||'—'}</span>
+    </div>`).join('')}
+  </div>
+
+  <div class="section-title">Contract Details</div>
+  <div class="detail-grid">
+    <div class="dg-item"><div class="dg-lbl">Earnest Money</div><div class="dg-val">${fmt(o.em)} (${(+o.em/+o.price*100).toFixed(1)}%)</div></div>
+    <div class="dg-item"><div class="dg-lbl">Down Payment</div><div class="dg-val">${o.down_pct}%</div></div>
+    <div class="dg-item full"><div class="dg-lbl">EM Schedule</div><div class="dg-val">${o.em_note||'—'}</div></div>
+    <div class="dg-item full"><div class="dg-lbl">Inspection</div><div class="dg-val">${o.inspection||'—'}</div></div>
+    <div class="dg-item full"><div class="dg-lbl">Appraisal</div><div class="dg-val">${o.appraisal||'—'}</div></div>
+    <div class="dg-item full"><div class="dg-lbl">Rent-Back Terms</div><div class="dg-val">${o.rent_back||'—'}</div></div>
+    <div class="dg-item"><div class="dg-lbl">Possession Escrow</div><div class="dg-val">${o.escrow||'—'}</div></div>
+    <div class="dg-item"><div class="dg-lbl">Tax Proration</div><div class="dg-val">${o.tax_prorate||'TBD'}</div></div>
+    <div class="dg-item"><div class="dg-lbl">Commission</div><div class="dg-val">${((comm)*100).toFixed(1)}%</div></div>
+    ${o.attorney && o.attorney !== '—' ? `<div class="dg-item"><div class="dg-lbl">Buyer Attorney</div><div class="dg-val">${o.attorney}</div></div>` : ''}
+  </div>
+
+  <div class="section-title">Est. Net Proceeds Breakdown</div>
+  <div class="net-breakdown">
+    <div class="nb-row"><span>Sale Price</span><span class="nb-amt">${fmt(o.price)}</span></div>
+    <div class="nb-row deduct"><span>Commission (${(comm*100).toFixed(1)}%)</span><span class="nb-amt">− ${fmt(commAmt)}</span></div>
+    <div class="nb-row deduct"><span>Transfer Tax (0.45%)</span><span class="nb-amt">− ${fmt(txAmt)}</span></div>
+    <div class="nb-row deduct"><span>Closing Costs (est.)</span><span class="nb-amt">− ${fmt(closingAmt)}</span></div>
+    ${rentAmt ? `<div class="nb-row deduct"><span>Rent-Back Cost (est.)</span><span class="nb-amt">− ${fmt(rentAmt)}</span></div>` : ''}
+    <div class="nb-row deduct"><span>Mortgage Payoff (est.)</span><span class="nb-amt">− ${fmt(mortAmt)}</span></div>
+    <div class="nb-row total"><span>Est. Net to You</span><span class="nb-amt">${fmt(o._net)}</span></div>
+  </div>
+
+  ${pros.length ? `<div class="section-title">Strengths</div>${pros.map(f=>`<div class="flag flag-green">${f.text}</div>`).join('')}` : ''}
+  ${warns.length ? `<div class="section-title">Watch</div>${warns.map(f=>`<div class="flag flag-amber">${f.text}</div>`).join('')}` : ''}
+  ${risks.length ? `<div class="section-title">Risks</div>${risks.map(f=>`<div class="flag flag-red">${f.text}</div>`).join('')}` : ''}
+  `;
+}
+
+// ── GLOSSARY ──────────────────────────────────────────────────────────────────
+function renderGlossary() {
+  const terms = [
+    { term: 'Earnest Money (EM)', def: 'A deposit the buyer puts down to show they\'re serious. It goes toward the purchase price at closing. If the buyer backs out without a valid contingency, you typically keep it.', tip: 'Higher EM = more skin in the game. 3–5% is strong; under 2% is light.' },
+    { term: 'Attorney-Inspection Period (A/I)', def: 'A window (typically 5 business days) after contract signing where both parties can raise legal issues or inspection concerns. Additional earnest money is usually due when this period closes.', tip: 'During A/I, only the initial EM is truly at risk. The "additional" EM hits after A/I closes.' },
+    { term: 'AS-IS (Paragraph 14)', def: 'Buyer agrees to purchase the property in its current condition. They may still inspect, but they cannot ask you to make repairs or give credits.', tip: 'AS-IS + no requests = maximum protection for the seller.' },
+    { term: 'Paragraph 15b — Inspection With Requests', def: 'Buyer can inspect the property AND submit a list of repair requests. You can accept, negotiate, or reject them — but the buyer can also walk away if you don\'t agree.', tip: 'This is the riskiest inspection clause for sellers. It opens the door to renegotiation after you\'ve already accepted.' },
+    { term: 'Paragraph 15c — Inspection, No Requests', def: 'Buyer can inspect for informational purposes only. They cannot ask for repairs or credits. If they don\'t like what they find, they can walk away — but cannot negotiate.', tip: 'Clean middle ground: buyer gets peace of mind, seller has no repair liability.' },
+    { term: 'Appraisal Contingency', def: 'Protects the buyer if the home appraises for less than the offer price. If included, the buyer can renegotiate or walk away if the appraisal comes in low.', tip: 'With offers above list price, appraisal risk is real. Waived appraisal = buyer pays the gap no matter what.' },
+    { term: 'Appraisal Gap Addendum (§1b)', def: 'A separate form where the buyer agrees they have NO right to terminate if the appraisal comes in below the purchase price. They must close at the agreed price regardless.', tip: 'This is significant protection at an elevated price. Offer 4 has this.' },
+    { term: 'LTV (Loan-to-Value)', def: 'The loan amount as a percentage of the purchase price. 90% LTV = 10% down. Lower LTV = more equity = lower appraisal risk for the buyer.', tip: '70% LTV (30% down) is very strong. 90% LTV (10% down) carries more appraisal risk.' },
+    { term: 'Conventional Loan', def: 'A mortgage not backed by the government (not FHA or VA). Generally requires higher credit scores and down payments, but closes more reliably than FHA/VA.', tip: 'Conventional with 20%+ down is the gold standard for non-cash offers.' },
+    { term: 'PITI', def: 'Principal, Interest, Taxes, and Insurance — the four components of a monthly mortgage payment. When Offer 4 says rent-back at "PITI rate," it means you pay the buyer\'s full monthly cost on a daily basis.', tip: 'PITI daily rate is typically $150–200/day for a ~$600K loan at 7%. Always get a dollar figure in the contract.' },
+    { term: 'Possession After Closing', def: 'You continue living in the property after the sale closes. You become a temporary tenant. Terms include the end date, daily rate, and a possession escrow held by the buyer as security.', tip: 'Get the daily rate and end date locked into the contract. "Free" rent-back = buyer charges you $0/day.' },
+    { term: 'Possession Escrow', def: 'A portion of your sale proceeds held in escrow after closing as security for the rent-back period. Released to you when you vacate on time in good condition.', tip: 'Offer 1 has a $50K possession escrow — this is the buyer\'s leverage to ensure you leave on time.' },
+    { term: 'Tax Proration', def: 'Illinois property taxes are paid in arrears. At closing, the buyer gets a credit for the portion of the year\'s taxes that have accrued but not yet been paid. 105% means you credit 105% of last year\'s tax bill.', tip: 'Higher proration % = more money out of your pocket. TBD means it gets negotiated at attorney review.' },
+    { term: 'Transfer Tax', def: 'A tax paid when real estate changes hands. In Chicago, this is typically 0.45% of the sale price (paid by the seller).', tip: 'On an $850K sale, transfer tax = ~$3,825.' },
+    { term: 'Dual Agency', def: 'When the same brokerage (or agent) represents both buyer and seller. Can create conflicts of interest. In this transaction, Offer 4 has both agents from @properties.', tip: 'Dual agency is legal in Illinois but requires disclosure. It can sometimes mean lower total commission.' },
+    { term: 'Highest & Best', def: 'A process where all buyers are asked to submit their best offer by a deadline, knowing there are multiple competing offers. Used to maximize price and terms in a multiple-offer situation.', tip: 'You received 4 offers — you are in a Highest & Best situation.' },
+    { term: 'Strength Score', def: 'A composite 0–100 score used in this tracker to compare offers across 7 dimensions: Price (50%), Financing (15%), Earnest Money (10%), Inspection (10%), Appraisal (5%), Timeline (5%), Rent-Back (5%).', tip: 'Score ≠ net proceeds. A cash offer with lower price can outscore a higher financed offer.' },
+    { term: 'Net Proceeds', def: 'What you actually walk away with after paying off your mortgage, commissions, transfer tax, closing costs, and any rent-back charges. This is the number that matters most.', tip: 'Always compare net proceeds — not gross offer price. A $862K offer can net less than an $850K offer.' },
   ];
-  tb.innerHTML = '';
-  rows.forEach(([lbl, fn, rank]) => {
-    const tr = document.createElement('tr');
-    let cells = `<td><strong>${lbl}</strong></td>`;
-    if (rank) {
-      const vals = offers.map(o => parseFloat(fn(o).replace(/[$,]/g,'')));
-      const mx = Math.max(...vals), mn = Math.min(...vals);
-      offers.forEach((o, i) => { cells += `<td class="${vals[i]===mx?'best':vals[i]===mn&&offers.length>1?'bad':''}">${fn(o)}</td>`; });
-    } else {
-      offers.forEach(o => { cells += `<td>${fn(o)}</td>`; });
-    }
-    tr.innerHTML = cells;
-    tb.appendChild(tr);
-  });
-}
 
-// ── FILE IMPORT ───────────────────────────────────────────────────────────────
-function setupImport() {
-  const dz  = document.getElementById('dz');
-  const fi  = document.getElementById('fi');
-  const err = document.getElementById('dz-err');
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
-  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); if (e.dataTransfer.files[0]) process(e.dataTransfer.files[0]); });
-  fi.addEventListener('change', () => { if (fi.files[0]) process(fi.files[0]); });
-}
-
-async function process(file) {
-  const dz  = document.getElementById('dz');
-  const err = document.getElementById('dz-err');
-  const st  = document.getElementById('dz-status');
-  err.style.display = 'none';
-  dz.classList.add('busy');
-  try {
-    let data;
-    if (!apiKey) {
-      data = blankOffer();
-    } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
-      st.textContent = 'Reading PDF…';
-      const text = await pdfText(file);
-      st.textContent = 'Extracting fields…';
-      data = await aiExtract({ type:'text', content: text });
-    } else {
-      st.textContent = 'Encoding image…';
-      const b64 = await toB64(file);
-      st.textContent = 'Extracting fields…';
-      data = await aiExtract({ type:'image', content: b64, mt: file.type||'image/jpeg' });
-    }
-    dz.classList.remove('busy');
-    openModal(data, !!apiKey);
-  } catch(e) {
-    dz.classList.remove('busy');
-    err.style.display = 'block';
-    err.textContent = e.message || 'Failed. Try again or enter manually.';
-  }
-  fi.value = '';
-}
-
-function blankOffer() {
-  return { buyers:'',agent:'',attorney:'—',date:'',price:'',fin_code:'conv20',financing:'Conv · 80% LTV',
-    down_pct:20,em:'',em_note:'',inspection:'',insp_code:'none',appraisal:'Included',appr_code:'included',
-    close_date:'',close_days:'',possession:'',rent_back:'',rent_code:'free',rent_cost:0,
-    comm_pct:5,escrow:'',tax_prorate:'TBD',flags:[] };
-}
-
-async function pdfText(file) {
-  const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
-  let text = '';
-  for (let i=1; i<=pdf.numPages; i++) {
-    const pg = await pdf.getPage(i);
-    const c = await pg.getTextContent();
-    text += c.items.map(x=>x.str).join(' ') + '\n';
-  }
-  return text.slice(0,40000);
-}
-
-function toB64(file) {
-  return new Promise((res,rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result.split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
-
-async function aiExtract(input) {
-  const sys = `You are extracting Illinois real estate offer data. Today = May 31, 2026. List price = $799,000.
-Return ONLY valid JSON (no markdown) with these keys:
-buyers, agent, attorney, date (M/D/YYYY), price (number), financing (display string), fin_code (cash|conv20|conv10|convlt10|fha|va),
-down_pct (number), em (number), em_note, inspection, insp_code (none|info|full),
-appraisal, appr_code (waived|gap|included), close_date (Month D YYYY), close_days (integer from May 31),
-possession, rent_back, rent_code (free|modified|declined), rent_cost (number, 0 if free),
-comm_pct (decimal, e.g. 0.05), escrow, tax_prorate,
-flags (array of {type:"red|amber|green", text:"..."}).
-Rules: insp_code=none if AS-IS or no requests; full if with requests (Para 15b). appr_code=waived if gap addendum §1b. rent_code=free if $0/day.`;
-
-  const content = input.type === 'text'
-    ? `Extract offer data:\n\n${input.content}`
-    : [{ type:'image', source:{type:'base64',media_type:input.mt,data:input.content}},{type:'text',text:'Extract offer data from this image.'}];
-
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      system: sys,
-      messages: [{ role:'user', content }]
-    })
-  });
-  if (!resp.ok) { const b = await resp.json().catch(()=>({})); throw new Error(b.error?.message||`API ${resp.status}`); }
-  const j = await resp.json();
-  const txt = j.content?.[0]?.text || '';
-  const m = txt.match(/\{[\s\S]*\}/);
-  if (!m) throw new Error('Could not parse AI response.');
-  const d = JSON.parse(m[0]);
-  if (d.comm_pct > 1) d.comm_pct = d.comm_pct / 100;
-  return d;
-}
-
-// ── MODAL ─────────────────────────────────────────────────────────────────────
-function setupModal() {
-  document.getElementById('m-cancel').addEventListener('click', closeModal);
-  document.getElementById('modal-ov').addEventListener('click', e => { if (e.target.id==='modal-ov') closeModal(); });
-  document.getElementById('m-confirm').addEventListener('click', saveOffer);
-}
-
-function openModal(data, aiExtracted) {
-  const form = document.getElementById('rev-form');
-  document.getElementById('ai-tag').style.display = aiExtracted ? 'inline-block' : 'none';
-  document.getElementById('modal-h').textContent = aiExtracted ? 'Review AI-Extracted Offer' : 'Add New Offer';
-  document.getElementById('save-status').textContent = '';
-
-  const map = { buyers:'buyers',agent:'agent',attorney:'attorney',date:'date',price:'price',
-    down_pct:'down_pct',em:'em',em_note:'em_note',inspection:'inspection',appraisal:'appraisal',
-    close_date:'close_date',close_days:'close_days',possession:'possession',rent_back:'rent_back',
-    rent_cost:'rent_cost',escrow:'escrow',tax_prorate:'tax_prorate' };
-  Object.entries(map).forEach(([field, key]) => {
-    const el = form.elements[field]; if (el) el.value = data[key] ?? '';
-  });
-  if (form.elements.finCode) form.elements.finCode.value = data.fin_code || 'conv20';
-  if (form.elements.insp_code) form.elements.insp_code.value = data.insp_code || 'none';
-  if (form.elements.appr_code) form.elements.appr_code.value = data.appr_code || 'included';
-  if (form.elements.rent_code) form.elements.rent_code.value = data.rent_code || 'free';
-  if (form.elements.comm_pct) form.elements.comm_pct.value = data.comm_pct ? (data.comm_pct * 100).toFixed(1) : '5';
-  if (form.elements.flags_text) {
-    form.elements.flags_text.value = (data.flags||[]).map(f => `${f.type==='green'?'✓':'⚠'} ${f.text}`).join('\n');
-  }
-  document.getElementById('modal-ov').classList.remove('hidden');
-}
-
-function closeModal() {
-  document.getElementById('modal-ov').classList.add('hidden');
-}
-
-async function saveOffer() {
-  const form = document.getElementById('rev-form');
-  const status = document.getElementById('save-status');
-  const btn = document.getElementById('m-confirm');
-  const raw = Object.fromEntries(new FormData(form));
-  if (!raw.buyers || !raw.price) { alert('Buyer name and price are required.'); return; }
-
-  const flagLines = (raw.flags_text||'').split('\n').filter(Boolean);
-  const flags = flagLines.map(line => {
-    const type = line.startsWith('✓') ? 'green' : line.startsWith('✗') ? 'red' : 'amber';
-    return { type, text: line.replace(/^[✓⚠✗]\s*/,'') };
-  });
-
-  const finLabels = {cash:'All Cash',conv20:'Conv · ≥20% down',conv10:'Conv · 90% LTV',convlt10:'Conv · <10% down',fha:'FHA',va:'VA'};
-  const offer = {
-    num: offers.length + 1,
-    buyers: raw.buyers, agent: raw.agent||'—', attorney: raw.attorney||'—', date: raw.date||'',
-    price: parseFloat(raw.price),
-    financing: finLabels[raw.finCode] || raw.finCode,
-    fin_code: raw.finCode || 'conv20',
-    down_pct: parseFloat(raw.down_pct)||20,
-    em: parseFloat(raw.em)||0, em_note: raw.em_note||'',
-    inspection: raw.inspection||'', insp_code: raw.insp_code||'none',
-    appraisal: raw.appraisal||'', appr_code: raw.appr_code||'included',
-    close_date: raw.close_date||'', close_days: parseInt(raw.close_days)||30,
-    possession: raw.possession||'', rent_back: raw.rent_back||'',
-    rent_code: raw.rent_code||'free', rent_cost: parseFloat(raw.rent_cost)||0,
-    comm_pct: (parseFloat(raw.comm_pct)||5) / 100,
-    escrow: raw.escrow||'—', tax_prorate: raw.tax_prorate||'TBD',
-    flags
-  };
-
-  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') {
-    status.textContent = '⚠ Apps Script URL not set. Offer added locally only.';
-    offers.push(offer); render(); closeModal();
-    return;
-  }
-
-  btn.disabled = true;
-  status.textContent = 'Saving to Google Sheet…';
-  try {
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(offer),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    status.textContent = '✓ Saved!';
-    setTimeout(() => { closeModal(); loadData(); }, 800);
-  } catch(e) {
-    status.textContent = 'Save failed — offer added locally. Refresh to sync from Sheet.';
-    offers.push(offer); render();
-  } finally { btn.disabled = false; }
+  document.getElementById('tab-glossary').innerHTML = `
+    <div class="glossary-list">
+      ${terms.map(t => `
+      <div class="gl-item">
+        <div class="gl-term">${t.term}</div>
+        <div class="gl-def">${t.def}</div>
+        ${t.tip ? `<div class="gl-tip">💡 ${t.tip}</div>` : ''}
+      </div>`).join('')}
+    </div>`;
 }
 </script>
 </body>
