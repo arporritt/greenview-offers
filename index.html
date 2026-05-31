@@ -4,172 +4,306 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3827 N Greenview — Offer Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --navy: #1a2744; --gold: #c9a84c; --green: #2e7d52; --green-lt: #ecfdf5;
-  --amber: #b45309; --amber-lt: #fffbeb; --red: #b91c1c; --red-lt: #fef2f2;
-  --light: #f8f7f4; --white: #ffffff; --border: #e2ddd6;
-  --text: #1c1917; --muted: #6b7280; --navy-lt: #eef1f8;
+  --bg: #f4f4f5;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --border-subtle: #f0f0f1;
+  --text: #18181b;
+  --text-2: #52525b;
+  --text-3: #a1a1aa;
+  --ink: #09090b;
+
+  --accent: #18181b;
+  --accent-fg: #ffffff;
+
+  --emerald: #059669;
+  --emerald-lt: #ecfdf5;
+  --emerald-border: #a7f3d0;
+
+  --amber: #d97706;
+  --amber-lt: #fffbeb;
+  --amber-border: #fde68a;
+
+  --rose: #e11d48;
+  --rose-lt: #fff1f2;
+  --rose-border: #fecdd3;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04);
 }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--light); color: var(--text); font-size: 15px; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
 
-/* ── LOCK SCREEN ── */
-#lock { position: fixed; inset: 0; background: var(--navy); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; padding: 2rem; }
+/* ── LOCK ── */
+#lock {
+  position: fixed; inset: 0;
+  background: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999; padding: 2rem;
+}
 #lock.off { display: none; }
-#lock h1 { color: var(--gold); font-size: 1.3rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .25rem; }
-#lock p { color: #94a3b8; font-size: .85rem; margin-bottom: 1.5rem; }
-#lock input { width: 100%; max-width: 300px; padding: .75rem 1rem; border: 1.5px solid #334155; border-radius: 8px; background: #0f172a; color: #f1f5f9; font-size: 1rem; text-align: center; outline: none; letter-spacing: .1em; }
-#lock input:focus { border-color: var(--gold); }
-#lock button { margin-top: .6rem; width: 100%; max-width: 300px; padding: .75rem; background: var(--gold); color: var(--navy); font-weight: 700; font-size: .95rem; border: none; border-radius: 8px; cursor: pointer; }
-#lock-err { color: #f87171; font-size: .8rem; margin-top: .4rem; min-height: 1em; }
+.lock-logo {
+  width: 44px; height: 44px; background: var(--ink); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem; margin-bottom: 1.5rem;
+}
+#lock h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+#lock p { color: var(--text-3); font-size: .82rem; margin: .3rem 0 1.5rem; }
+#lock input {
+  width: 100%; max-width: 280px;
+  padding: .7rem 1rem; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-family: inherit;
+  font-size: .9rem; text-align: center; outline: none; color: var(--ink);
+  letter-spacing: .05em; transition: border-color .15s;
+}
+#lock input:focus { border-color: var(--ink); }
+#lock button {
+  margin-top: .5rem; width: 100%; max-width: 280px;
+  padding: .7rem; background: var(--ink); color: #fff;
+  font-family: inherit; font-weight: 600; font-size: .88rem;
+  border: none; border-radius: var(--radius-sm); cursor: pointer;
+  transition: opacity .15s;
+}
+#lock button:hover { opacity: .85; }
+#lock-err { color: var(--rose); font-size: .78rem; margin-top: .4rem; min-height: 1em; }
 
-/* ── APP SHELL ── */
+/* ── APP ── */
 #app { display: none; height: 100%; flex-direction: column; }
 #app.on { display: flex; }
 
 /* ── TOP BAR ── */
-.topbar { background: var(--navy); padding: .75rem 1.25rem; flex-shrink: 0; }
-.topbar-addr { color: var(--gold); font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
-.topbar-title { color: #fff; font-size: 1rem; font-weight: 700; margin-top: .1rem; }
+.topbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: .875rem 1.25rem; flex-shrink: 0;
+  display: flex; align-items: center; gap: .875rem;
+}
+.topbar-icon {
+  width: 32px; height: 32px; background: var(--ink); border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; flex-shrink: 0;
+}
+.topbar-text {}
+.topbar-addr { font-size: .68rem; font-weight: 500; color: var(--text-3); letter-spacing: .02em; }
+.topbar-title { font-size: .95rem; font-weight: 700; color: var(--ink); letter-spacing: -.02em; line-height: 1.2; }
 
 /* ── TAB NAV ── */
-.tabnav { background: var(--white); border-bottom: 2px solid var(--border); display: flex; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; position: sticky; top: 0; z-index: 100; }
+.tabnav {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; overflow-x: auto; flex-shrink: 0;
+  scrollbar-width: none; padding: 0 .5rem;
+  position: sticky; top: 0; z-index: 100;
+}
 .tabnav::-webkit-scrollbar { display: none; }
-.tab-btn { padding: .7rem 1rem; font-size: .78rem; font-weight: 600; color: var(--muted); border: none; background: none; cursor: pointer; white-space: nowrap; border-bottom: 2.5px solid transparent; margin-bottom: -2px; transition: all .15s; flex-shrink: 0; }
-.tab-btn:hover { color: var(--navy); }
-.tab-btn.active { color: var(--navy); border-bottom-color: var(--gold); font-weight: 700; }
+.tab-btn {
+  padding: .7rem .875rem; font-family: inherit;
+  font-size: .78rem; font-weight: 500; color: var(--text-3);
+  border: none; background: none; cursor: pointer; white-space: nowrap;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color .15s; flex-shrink: 0;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
 
-/* ── TAB CONTENT ── */
+/* ── CONTENT ── */
 .tab-content { flex: 1; overflow-y: auto; }
-.tab-pane { display: none; padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
+.tab-pane { display: none; padding: 1.25rem; max-width: 1080px; margin: 0 auto; }
 .tab-pane.active { display: block; }
 
-/* ── SHARED COMPONENTS ── */
-.section-title { font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .75rem; margin-top: 1.5rem; padding-bottom: .4rem; border-bottom: 1px solid var(--border); }
+/* ── SHARED ── */
+.section-title {
+  font-size: .68rem; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .08em;
+  margin: 1.5rem 0 .75rem; padding-bottom: .5rem;
+  border-bottom: 1px solid var(--border);
+}
 .section-title:first-child { margin-top: 0; }
 
-.pill { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15rem .5rem; border-radius: 99px; }
-.pill-green { background: #d1fae5; color: var(--green); }
-.pill-amber { background: #fef3c7; color: var(--amber); }
-.pill-red   { background: #fee2e2; color: var(--red); }
-.pill-navy  { background: var(--navy); color: #fff; }
-.pill-gray  { background: #f3f4f6; color: #374151; }
+.card {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); box-shadow: var(--shadow);
+}
 
-.flag { font-size: .78rem; padding: .35rem .7rem; border-radius: 6px; margin-bottom: .3rem; line-height: 1.4; }
-.flag-red   { background: var(--red-lt); color: var(--red); }
-.flag-amber { background: var(--amber-lt); color: var(--amber); }
-.flag-green { background: var(--green-lt); color: var(--green); }
+.tag {
+  display: inline-flex; align-items: center;
+  font-size: .68rem; font-weight: 600; padding: .2rem .55rem;
+  border-radius: 99px; white-space: nowrap;
+}
+.tag-green  { background: var(--emerald-lt); color: var(--emerald); }
+.tag-amber  { background: var(--amber-lt); color: var(--amber); }
+.tag-rose   { background: var(--rose-lt); color: var(--rose); }
+.tag-slate  { background: #f4f4f5; color: var(--text-2); }
+.tag-dark   { background: var(--ink); color: #fff; }
+
+.flag { font-size: .8rem; padding: .4rem .75rem; border-radius: 8px; margin-bottom: .3rem; line-height: 1.45; }
+.flag-rose  { background: var(--rose-lt); color: #9f1239; border: 1px solid var(--rose-border); }
+.flag-amber { background: var(--amber-lt); color: #92400e; border: 1px solid var(--amber-border); }
+.flag-green { background: var(--emerald-lt); color: #065f46; border: 1px solid var(--emerald-border); }
 
 /* ── DASHBOARD ── */
-.ideal-bar { background: var(--green-lt); border-left: 4px solid var(--green); border-radius: 0 8px 8px 0; padding: .75rem 1rem; margin-bottom: 1.25rem; }
-.ideal-bar strong { color: var(--green); font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; display: block; margin-bottom: .3rem; }
-.ideal-bar ul { font-size: .82rem; color: #1a3a2a; padding-left: 1.1rem; }
-.ideal-bar li { margin-bottom: .1rem; }
+.ideal-banner {
+  background: var(--surface); border: 1px solid var(--emerald-border);
+  border-left: 3px solid var(--emerald); border-radius: var(--radius);
+  padding: .875rem 1rem; margin-bottom: 1.25rem;
+}
+.ideal-banner strong {
+  font-size: .68rem; font-weight: 700; color: var(--emerald);
+  text-transform: uppercase; letter-spacing: .08em; display: block; margin-bottom: .4rem;
+}
+.ideal-banner ul { font-size: .82rem; color: var(--text-2); padding-left: 1.1rem; }
+.ideal-banner li { margin-bottom: .15rem; }
 
-.score-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: .875rem; margin-bottom: 1.25rem; }
-.sc-card { background: var(--white); border-radius: 12px; border: 1.5px solid var(--border); padding: .875rem 1rem; cursor: pointer; transition: box-shadow .15s; }
-.sc-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); }
-.sc-card.rank-1 { border-color: var(--green); }
-.sc-card-rank { font-size: .62rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .2rem; }
-.sc-card-rank.gold { color: var(--green); }
-.sc-card-buyers { font-size: .88rem; font-weight: 700; line-height: 1.2; margin-bottom: .35rem; }
-.sc-card-price { font-size: 1.3rem; font-weight: 800; color: var(--text); }
-.sc-card-net { font-size: .78rem; color: var(--green); font-weight: 600; margin-top: .1rem; }
-.sc-card-fin { font-size: .72rem; color: var(--muted); margin-top: .2rem; }
-.score-bar-row { display: flex; align-items: center; gap: .5rem; margin-top: .6rem; }
-.score-bar-bg { flex: 1; background: #e5e7eb; border-radius: 99px; height: 5px; }
-.score-bar-fill { height: 5px; border-radius: 99px; background: var(--gold); }
-.score-num { font-size: .75rem; font-weight: 700; color: var(--navy); white-space: nowrap; }
+.score-cards { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1.25rem; }
+.sc-card {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); padding: 1rem;
+  cursor: pointer; transition: box-shadow .15s, transform .1s;
+  box-shadow: var(--shadow);
+}
+.sc-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.sc-card.rank-1 { border-color: var(--emerald); }
+.rank-label { font-size: .65rem; font-weight: 600; color: var(--text-3); letter-spacing: .06em; margin-bottom: .35rem; }
+.rank-label.top { color: var(--emerald); }
+.sc-buyers { font-size: .85rem; font-weight: 700; line-height: 1.25; margin-bottom: .6rem; color: var(--ink); }
+.sc-price { font-size: 1.35rem; font-weight: 800; color: var(--ink); letter-spacing: -.03em; }
+.sc-net { font-size: .75rem; font-weight: 500; color: var(--emerald); margin-top: .1rem; }
+.sc-fin { font-size: .72rem; color: var(--text-3); margin-top: .4rem; }
+.score-row { display: flex; align-items: center; gap: .5rem; margin-top: .75rem; }
+.score-track { flex: 1; background: var(--border); border-radius: 99px; height: 4px; }
+.score-fill { height: 4px; border-radius: 99px; background: var(--ink); }
+.score-num { font-size: .72rem; font-weight: 700; color: var(--ink); }
 
-.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin-bottom: 1.25rem; }
-.stat-box { background: var(--white); border-radius: 10px; border: 1px solid var(--border); padding: .75rem 1rem; }
-.stat-box-val { font-size: 1.25rem; font-weight: 800; color: var(--navy); }
-.stat-box-lbl { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .15rem; }
-.stat-box-sub { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1.25rem; }
+.kpi {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); padding: .875rem 1rem;
+  box-shadow: var(--shadow);
+}
+.kpi-val { font-size: 1.35rem; font-weight: 800; color: var(--ink); letter-spacing: -.03em; }
+.kpi-lbl { font-size: .68rem; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; margin-top: .2rem; }
+.kpi-sub { font-size: .72rem; color: var(--text-3); margin-top: .15rem; }
 
-.net-bars { display: flex; flex-direction: column; gap: .6rem; }
-.net-bar-row { display: flex; align-items: center; gap: .75rem; }
-.net-bar-label { font-size: .78rem; font-weight: 600; width: 120px; flex-shrink: 0; }
-.net-bar-track { flex: 1; background: #e5e7eb; border-radius: 6px; height: 22px; position: relative; overflow: hidden; }
-.net-bar-fill { height: 100%; border-radius: 6px; background: var(--navy); display: flex; align-items: center; padding-left: .5rem; transition: width .5s ease; }
-.net-bar-fill span { font-size: .7rem; font-weight: 700; color: #fff; white-space: nowrap; }
+.net-bars { display: flex; flex-direction: column; gap: .65rem; }
+.nb-row { display: flex; align-items: center; gap: .875rem; }
+.nb-label { font-size: .78rem; font-weight: 500; width: 110px; flex-shrink: 0; color: var(--text-2); }
+.nb-track { flex: 1; background: var(--border); border-radius: 6px; height: 26px; overflow: hidden; }
+.nb-fill {
+  height: 100%; border-radius: 6px; background: var(--ink);
+  display: flex; align-items: center; padding: 0 .6rem;
+  transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+.nb-fill span { font-size: .72rem; font-weight: 600; color: #fff; white-space: nowrap; }
 
-/* ── COMPARE TAB ── */
-.compare-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border); }
-.compare-table { width: 100%; border-collapse: collapse; min-width: 580px; }
-.compare-table th { background: var(--navy); color: var(--gold); padding: .6rem .875rem; text-align: left; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; font-weight: 700; }
-.compare-table th.offer-col { text-align: center; min-width: 120px; }
-.compare-table th:first-child { border-radius: 12px 0 0 0; width: 130px; }
-.compare-table th:last-child { border-radius: 0 12px 0 0; }
-.compare-table td { padding: .55rem .875rem; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: .82rem; }
+/* ── COMPARE ── */
+.compare-wrap { border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; box-shadow: var(--shadow); }
+.compare-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.compare-table th {
+  background: var(--ink); color: rgba(255,255,255,.6);
+  padding: .65rem .875rem; text-align: left;
+  font-size: .65rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .08em; white-space: nowrap;
+}
+.compare-table th.offer-col { text-align: center; min-width: 120px; color: #fff; }
+.compare-table th:first-child { width: 140px; }
+.compare-table td {
+  padding: .55rem .875rem; border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle; font-size: .82rem; background: var(--surface);
+}
 .compare-table td.offer-col { text-align: center; }
 .compare-table tr:last-child td { border-bottom: none; }
-.compare-table tr:hover td { background: #fafaf9; }
-.compare-table .row-label { font-size: .75rem; font-weight: 600; color: var(--muted); }
-.compare-table .section-row td { background: var(--light); font-size: .65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding: .35rem .875rem; }
-.cval { display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+.compare-table tr:hover td { background: #fafafa; }
+.row-label { font-size: .75rem; font-weight: 500; color: var(--text-2); }
+.section-row td {
+  background: var(--bg) !important;
+  font-size: .65rem; font-weight: 700; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .08em;
+  padding: .4rem .875rem;
+}
+.cval { display: flex; flex-direction: column; align-items: center; gap: .15rem; }
 .cval-main { font-size: .82rem; font-weight: 600; }
-.cval-sub { font-size: .68rem; color: var(--muted); }
-.c-best { background: #f0fdf4 !important; }
-.c-mid  { background: #fffbeb !important; }
-.c-bad  { background: #fef2f2 !important; }
-.ideal-check { font-size: .9rem; }
+.cval-sub { font-size: .68rem; color: var(--text-3); }
+.c-best td { background: var(--emerald-lt) !important; }
+.c-mid  td { background: var(--amber-lt) !important; }
+.c-bad  td { background: var(--rose-lt) !important; }
 
-/* ── OFFER DETAIL TAB ── */
-.offer-hero { background: var(--navy); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
-.offer-hero-num { color: var(--gold); font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .2rem; }
-.offer-hero-name { color: #fff; font-size: 1.25rem; font-weight: 700; }
-.offer-hero-agent { color: #94a3b8; font-size: .82rem; margin-top: .2rem; }
-.offer-hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-top: 1rem; }
-.ohs { background: rgba(255,255,255,.08); border-radius: 8px; padding: .5rem .75rem; }
-.ohs-v { color: var(--gold); font-size: 1rem; font-weight: 700; }
-.ohs-l { color: #94a3b8; font-size: .65rem; text-transform: uppercase; letter-spacing: .05em; margin-top: .1rem; }
+/* ── OFFER DETAIL ── */
+.offer-hero {
+  background: var(--ink); border-radius: var(--radius);
+  padding: 1.25rem; margin-bottom: 1.25rem;
+}
+.oh-num { font-size: .65rem; font-weight: 600; color: rgba(255,255,255,.45); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .25rem; }
+.oh-name { font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -.02em; }
+.oh-agent { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: .2rem; }
+.oh-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-top: 1rem; }
+.ohs { background: rgba(255,255,255,.07); border-radius: var(--radius-sm); padding: .55rem .75rem; }
+.ohs-v { font-size: .92rem; font-weight: 700; color: #fff; letter-spacing: -.01em; }
+.ohs-l { font-size: .62rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .06em; margin-top: .1rem; }
 
-.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-bottom: .875rem; }
-.dg-item { background: var(--white); border-radius: 8px; border: 1px solid var(--border); padding: .6rem .875rem; }
-.dg-item.full { grid-column: 1/-1; }
-.dg-lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .2rem; }
-.dg-val { font-size: .88rem; font-weight: 600; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: 1rem; }
+.dg {
+  background: var(--surface); border-radius: var(--radius-sm);
+  border: 1px solid var(--border); padding: .65rem .875rem;
+}
+.dg.full { grid-column: 1/-1; }
+.dg-l { font-size: .63rem; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .25rem; }
+.dg-v { font-size: .85rem; font-weight: 500; color: var(--ink); }
 
-.net-breakdown { background: var(--white); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
-.nb-row { display: flex; justify-content: space-between; align-items: center; padding: .55rem 1rem; border-bottom: 1px solid var(--border); font-size: .82rem; }
-.nb-row:last-child { border-bottom: none; background: var(--navy-lt); font-weight: 700; }
-.nb-row.deduct { color: var(--muted); }
-.nb-row.deduct .nb-amt { color: var(--red); }
-.nb-row.total .nb-amt { color: var(--green); font-size: 1rem; }
+.nb-table { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+.nbt-row { display: flex; justify-content: space-between; align-items: center; padding: .6rem 1rem; border-bottom: 1px solid var(--border-subtle); font-size: .82rem; }
+.nbt-row:last-child { border-bottom: none; background: #fafafa; }
+.nbt-row.sub { color: var(--text-2); }
+.nbt-row.sub .nbt-amt { color: var(--rose); font-weight: 500; }
+.nbt-row.total .nbt-lbl { font-weight: 700; color: var(--ink); }
+.nbt-row.total .nbt-amt { font-weight: 800; color: var(--emerald); font-size: .95rem; }
 
-.ideal-check-list { background: var(--white); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
-.icl-row { display: flex; align-items: center; gap: .75rem; padding: .55rem 1rem; border-bottom: 1px solid var(--border); font-size: .82rem; }
+.icl { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+.icl-row { display: flex; align-items: center; gap: .75rem; padding: .6rem 1rem; border-bottom: 1px solid var(--border-subtle); font-size: .82rem; }
 .icl-row:last-child { border-bottom: none; }
-.icl-icon { font-size: 1rem; flex-shrink: 0; }
-.icl-label { flex: 1; }
-.icl-val { font-size: .78rem; color: var(--muted); text-align: right; }
+.icl-icon { font-size: .95rem; flex-shrink: 0; }
+.icl-lbl { flex: 1; font-weight: 500; }
+.icl-val { font-size: .75rem; color: var(--text-3); text-align: right; max-width: 45%; }
 
 /* ── GLOSSARY ── */
-.glossary-list { display: flex; flex-direction: column; gap: .6rem; }
-.gl-item { background: var(--white); border-radius: 10px; border: 1px solid var(--border); padding: .875rem 1rem; }
-.gl-term { font-size: .9rem; font-weight: 700; color: var(--navy); margin-bottom: .3rem; }
-.gl-def { font-size: .82rem; color: #374151; line-height: 1.5; }
-.gl-tip { font-size: .75rem; color: var(--muted); margin-top: .3rem; font-style: italic; }
+.gl-grid { display: flex; flex-direction: column; gap: .5rem; }
+.gl-item {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); padding: 1rem 1.1rem;
+  box-shadow: var(--shadow);
+}
+.gl-term { font-size: .88rem; font-weight: 700; color: var(--ink); margin-bottom: .3rem; letter-spacing: -.01em; }
+.gl-def { font-size: .8rem; color: var(--text-2); line-height: 1.55; }
+.gl-tip { font-size: .75rem; color: var(--text-3); margin-top: .4rem; padding-top: .4rem; border-top: 1px solid var(--border-subtle); }
 
 /* ── LOADING ── */
-.loading { padding: 3rem; text-align: center; color: var(--muted); font-size: .85rem; }
-.spin { display: inline-block; width: 20px; height: 20px; border: 2.5px solid #ddd; border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin-right: .5rem; vertical-align: middle; }
+.empty { padding: 3rem; text-align: center; color: var(--text-3); font-size: .85rem; }
+.spin { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--ink); border-radius: 50%; animation: spin .7s linear infinite; margin-right: .4rem; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── RESPONSIVE ── */
 @media (min-width: 640px) {
   .score-cards { grid-template-columns: repeat(4, 1fr); }
-  .stats-grid { grid-template-columns: repeat(4, 1fr); }
-  .offer-hero-stats { grid-template-columns: repeat(6, 1fr); }
+  .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+  .oh-stats { grid-template-columns: repeat(6, 1fr); }
 }
 @media (min-width: 768px) {
-  .tab-btn { padding: .75rem 1.25rem; font-size: .82rem; }
-  .topbar { padding: 1rem 2rem; }
-  .tab-pane { padding: 1.75rem 2rem; }
-  .net-bar-label { width: 160px; }
+  .topbar { padding: 1rem 1.75rem; }
+  .tab-pane { padding: 1.75rem; }
+  .nb-label { width: 150px; }
 }
 </style>
 </head>
@@ -181,39 +315,39 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 <!-- LOCK -->
 <div id="lock">
+  <div class="lock-logo">🏠</div>
   <h1>3827 N Greenview</h1>
-  <p>Offer Analyzer · Sellers Only</p>
-  <input id="pw" type="password" placeholder="Password" autocomplete="off">
-  <button id="pw-btn">Unlock</button>
+  <p>Offer Analyzer · Private</p>
+  <input id="pw" type="password" placeholder="Enter password" autocomplete="off">
+  <button id="pw-btn">Continue</button>
   <div id="lock-err"></div>
 </div>
 
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-addr">3827 N Greenview Ave Unit 2S · Chicago IL 60613</div>
-    <div class="topbar-title">Offer Analyzer</div>
+    <div class="topbar-icon">🏠</div>
+    <div class="topbar-text">
+      <div class="topbar-addr">3827 N Greenview Ave Unit 2S · Chicago IL 60613</div>
+      <div class="topbar-title">Offer Analyzer</div>
+    </div>
   </div>
 
   <nav class="tabnav" id="tabnav">
-    <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
-    <button class="tab-btn" data-tab="compare">⚖️ Compare</button>
-    <!-- offer tabs injected here -->
-    <button class="tab-btn" data-tab="glossary">📖 Glossary</button>
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="compare">Compare</button>
+    <button class="tab-btn" data-tab="glossary">Glossary</button>
   </nav>
 
   <div class="tab-content">
-    <div class="tab-pane active" id="tab-dashboard"><div class="loading"><span class="spin"></span>Loading offers…</div></div>
+    <div class="tab-pane active" id="tab-dashboard"><div class="empty"><span class="spin"></span>Loading…</div></div>
     <div class="tab-pane" id="tab-compare"></div>
-    <!-- offer tab panes injected here -->
     <div class="tab-pane" id="tab-glossary"></div>
   </div>
 </div>
 
 <script>
-// ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const PW_HASH = '6b3d626bac001b7c3ec9d22b17a78d43fca77157';
-const IDEAL = { cash: true, noInspRequests: true, freeRentBack: true, closeBeforeJun26: true };
 let cfg = {}, offers = [];
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
@@ -221,45 +355,49 @@ async function sha1(s) {
   const b = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(s));
   return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
 }
-const fmt   = n => '$' + Math.round(+n).toLocaleString();
-const fmtK  = n => '$' + (Math.round(+n/1000)) + 'K';
-const cfgN  = (k, d) => parseFloat(cfg[k]) || d;
+const fmt  = n => '$' + Math.round(+n).toLocaleString();
+const fmtK = n => '$' + Math.round(+n / 1000) + 'K';
+const cfgN = (k, d) => parseFloat(cfg[k]) || d;
 
-function score(o) {
-  const fin  = {cash:100,conv20:85,conv10:70,convlt10:50,fha:35,va:35}[o.fin_code]||50;
-  const insp = {none:100,info:80,full:50}[o.insp_code]||50;
-  const appr = {waived:100,gap:75,included:50}[o.appr_code]||50;
-  const rent = {free:100,modified:70,declined:0}[o.rent_code]||50;
-  const emPct = +o.em / +o.price;
+function calcScore(o) {
+  const fin  = {cash:100,conv20:85,conv10:70,convlt10:50,fha:35,va:35}[o.fin_code] || 50;
+  const insp = {none:100,info:80,full:50}[o.insp_code] || 50;
+  const appr = {waived:100,gap:75,included:50}[o.appr_code] || 50;
+  const rent = {free:100,modified:70,declined:0}[o.rent_code] || 50;
   const LIST = cfgN('list_price', 799000);
   return (
     0.50 * Math.min(110, +o.price / LIST * 100) +
     0.15 * fin +
-    0.10 * Math.min(100, emPct / 0.05 * 100) +
+    0.10 * Math.min(100, (+o.em / +o.price) / 0.05 * 100) +
     0.10 * insp + 0.05 * appr +
     0.05 * Math.max(0, 100 - Math.abs(+o.close_days - 30) * 2) +
     0.05 * rent
   );
 }
-function netProceeds(o) {
+function calcNet(o) {
   const comm = parseFloat(o.comm_pct) || 0.05;
-  return +o.price - +o.price * comm - +o.price * cfgN('transfer_tax_pct', 0.0045) - cfgN('closing_costs', 3650) - (+o.rent_cost||0) - cfgN('mortgage_payoff', 451500);
+  return +o.price
+    - +o.price * comm
+    - +o.price * cfgN('transfer_tax_pct', 0.0045)
+    - cfgN('closing_costs', 3650)
+    - (+o.rent_cost || 0)
+    - cfgN('mortgage_payoff', 451500);
 }
 function idealChecks(o) {
   return [
-    { label: 'Cash purchase',          pass: o.fin_code === 'cash',      val: o.financing },
-    { label: 'No inspection requests', pass: o.insp_code !== 'full',     val: o.inspection },
-    { label: 'Appraisal waived/gap',   pass: o.appr_code !== 'included', val: o.appraisal },
-    { label: 'Free rent-back',         pass: o.rent_code === 'free',     val: o.rent_back },
-    { label: 'Close before June 26',   pass: +o.close_days <= 26,        val: o.close_date },
-    { label: 'Strong EM (≥ 3%)',       pass: +o.em / +o.price >= 0.03,   val: fmt(o.em) + ' (' + (+o.em/+o.price*100).toFixed(1) + '%)' },
+    { label: 'Cash purchase',           pass: o.fin_code === 'cash',       val: o.financing },
+    { label: 'No inspection requests',  pass: o.insp_code !== 'full',      val: o.inspection },
+    { label: 'Appraisal waived / gap',  pass: o.appr_code !== 'included',  val: o.appraisal },
+    { label: 'Free rent-back',          pass: o.rent_code === 'free',      val: o.rent_back },
+    { label: 'Close before June 26',    pass: +o.close_days <= 26,         val: o.close_date },
+    { label: 'Strong EM (≥ 3%)',        pass: +o.em / +o.price >= 0.03,    val: fmt(o.em) + ' (' + (+o.em/+o.price*100).toFixed(1) + '%)' },
   ];
 }
 
 // ── PASSWORD ──────────────────────────────────────────────────────────────────
 document.getElementById('pw-btn').addEventListener('click', tryUnlock);
 document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
-if (sessionStorage.getItem('unlocked') === '1') { boot(); }
+if (sessionStorage.getItem('unlocked') === '1') boot();
 
 async function tryUnlock() {
   const h = await sha1(document.getElementById('pw').value.trim().toLowerCase());
@@ -279,14 +417,15 @@ async function loadData() {
     const r = await fetch(APPS_SCRIPT_URL);
     const data = await r.json();
     cfg = data.config || {};
-    offers = (data.offers || []).map(o => ({ ...o, _score: score(o), _net: netProceeds(o) }));
-    offers.sort((a,b) => b._score - a._score);
+    offers = (data.offers || []).map(o => ({ ...o, _score: calcScore(o), _net: calcNet(o) }));
+    offers.sort((a, b) => b._score - a._score);
     buildOfferTabs();
     renderDashboard();
     renderCompare();
     renderGlossary();
   } catch(e) {
-    document.getElementById('tab-dashboard').innerHTML = `<div class="loading" style="color:var(--red)">Could not load data. Check Apps Script URL.<br><small>${e.message}</small></div>`;
+    document.getElementById('tab-dashboard').innerHTML =
+      `<div class="empty" style="color:var(--rose)">Could not load data.<br><small>${e.message}</small></div>`;
   }
 }
 
@@ -296,11 +435,12 @@ function buildOfferTabs() {
   const content = document.querySelector('.tab-content');
   const glossaryBtn = nav.querySelector('[data-tab="glossary"]');
 
-  offers.forEach((o, i) => {
+  // Insert offer tabs before Glossary
+  offers.forEach(o => {
     const btn = document.createElement('button');
     btn.className = 'tab-btn';
     btn.dataset.tab = `offer-${o.num}`;
-    btn.textContent = `#${o.num} ${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}`;
+    btn.textContent = `Offer ${o.num} · ${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}`;
     nav.insertBefore(btn, glossaryBtn);
 
     const pane = document.createElement('div');
@@ -320,324 +460,290 @@ function switchTab(id) {
   if (id.startsWith('offer-')) {
     const num = id.replace('offer-', '');
     const o = offers.find(x => String(x.num) === num);
-    if (o) renderOfferDetail(o);
+    if (o && !document.getElementById(`tab-offer-${o.num}`).dataset.rendered) renderOfferDetail(o);
   }
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard() {
-  const LIST = cfgN('list_price', 799000);
+  const LIST   = cfgN('list_price', 799000);
+  const top    = offers[0];
   const maxNet = Math.max(...offers.map(o => o._net));
-  const topOffer = offers[0];
 
-  let html = `
-  <div class="ideal-bar">
-    <strong>Your Ideal Scenario</strong>
-    <ul>
-      <li>Highest price · Cash · No contingencies</li>
-      <li>Free rent-back through July 31, 2026</li>
-      <li>Close before June 26 · Buyer commission: 2.5%</li>
-    </ul>
-  </div>
+  const rankLabels = ['★ Top Pick', '#2', '#3', '#4', '#5'];
 
-  <div class="section-title">Offer Scores — Ranked</div>
-  <div class="score-cards">
-  ${offers.map((o, i) => `
-    <div class="sc-card ${i===0?'rank-1':''}" onclick="switchTab('offer-${o.num}')">
-      <div class="sc-card-rank ${i===0?'gold':''}">${['★ #1 Top Pick','#2','#3','#4'][i]||'#'+(i+1)}</div>
-      <div class="sc-card-buyers">${o.buyers.replace('&','&amp;')}</div>
-      <div class="sc-card-price">${fmt(o.price)}</div>
-      <div class="sc-card-net">Net: ${fmt(o._net)}</div>
-      <div class="sc-card-fin">${o.financing}</div>
-      <div class="score-bar-row">
-        <div class="score-bar-bg"><div class="score-bar-fill" style="width:${o._score}%"></div></div>
-        <span class="score-num">${o._score.toFixed(1)}</span>
-      </div>
+  document.getElementById('tab-dashboard').innerHTML = `
+    <div class="ideal-banner">
+      <strong>Ideal Scenario</strong>
+      <ul>
+        <li>Highest price · Cash · No contingencies</li>
+        <li>Free rent-back through July 31, 2026</li>
+        <li>Close before June 26 · Buyer commission 2.5%</li>
+      </ul>
     </div>
-  `).join('')}
-  </div>
 
-  <div class="section-title">Key Numbers</div>
-  <div class="stats-grid">
-    <div class="stat-box"><div class="stat-box-val">${fmt(topOffer.price)}</div><div class="stat-box-lbl">Top Offer Price</div><div class="stat-box-sub">${fmtK(topOffer.price - LIST)} over list</div></div>
-    <div class="stat-box"><div class="stat-box-val">${fmt(topOffer._net)}</div><div class="stat-box-lbl">Best Est. Net</div><div class="stat-box-sub">${topOffer.buyers.split(' ')[0]}</div></div>
-    <div class="stat-box"><div class="stat-box-val">${fmt(LIST)}</div><div class="stat-box-lbl">List Price</div><div class="stat-box-sub">MLS #${cfg.mls||'12652161'}</div></div>
-    <div class="stat-box"><div class="stat-box-val">${offers.length}</div><div class="stat-box-lbl">Offers</div><div class="stat-box-sub">Received May 31</div></div>
-  </div>
+    <div class="section-title">Offers Ranked by Score</div>
+    <div class="score-cards">
+      ${offers.map((o, i) => `
+      <div class="sc-card ${i===0?'rank-1':''}" onclick="switchTab('offer-${o.num}')">
+        <div class="rank-label ${i===0?'top':''}">${rankLabels[i]||'#'+(i+1)}</div>
+        <div class="sc-buyers">${o.buyers.replace('&','&amp;')}</div>
+        <div class="sc-price">${fmt(o.price)}</div>
+        <div class="sc-net">Net ${fmt(o._net)}</div>
+        <div class="sc-fin">${o.financing}</div>
+        <div class="score-row">
+          <div class="score-track"><div class="score-fill" style="width:${o._score}%"></div></div>
+          <span class="score-num">${o._score.toFixed(1)}</span>
+        </div>
+      </div>`).join('')}
+    </div>
 
-  <div class="section-title">Est. Net Proceeds — All Offers</div>
-  <div class="net-bars">
-  ${offers.map(o => {
-    const pct = Math.round(o._net / maxNet * 100);
-    return `<div class="net-bar-row">
-      <div class="net-bar-label">#${o.num} ${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}</div>
-      <div class="net-bar-track"><div class="net-bar-fill" style="width:${pct}%"><span>${fmt(o._net)}</span></div></div>
-    </div>`;
-  }).join('')}
-  </div>
+    <div class="section-title">Key Numbers</div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val">${fmt(top.price)}</div><div class="kpi-lbl">Top Offer</div><div class="kpi-sub">+${fmtK(+top.price - LIST)} over list</div></div>
+      <div class="kpi"><div class="kpi-val">${fmt(top._net)}</div><div class="kpi-lbl">Best Net</div><div class="kpi-sub">${top.buyers.split(' ')[0]}</div></div>
+      <div class="kpi"><div class="kpi-val">${fmt(LIST)}</div><div class="kpi-lbl">List Price</div><div class="kpi-sub">MLS #${cfg.mls||'12652161'}</div></div>
+      <div class="kpi"><div class="kpi-val">${offers.length}</div><div class="kpi-lbl">Offers</div><div class="kpi-sub">Received May 31</div></div>
+    </div>
 
-  <div class="section-title">Flags Across All Offers</div>
-  ${offers.map(o => {
-    const redFlags = (o.flags||[]).filter(f => f.type === 'red');
-    if (!redFlags.length) return '';
-    return `<div style="margin-bottom:.75rem">
-      <div style="font-size:.75rem;font-weight:700;color:var(--navy);margin-bottom:.3rem">#${o.num} ${o.buyers}</div>
-      ${redFlags.map(f => `<div class="flag flag-red">${f.text}</div>`).join('')}
-    </div>`;
-  }).join('')}
+    <div class="section-title">Estimated Net Proceeds</div>
+    <div class="net-bars">
+      ${offers.map(o => `
+      <div class="nb-row">
+        <div class="nb-label">#${o.num} ${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}</div>
+        <div class="nb-track">
+          <div class="nb-fill" style="width:${Math.round(o._net/maxNet*100)}%">
+            <span>${fmt(o._net)}</span>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>
+
+    <div class="section-title">Risk Flags</div>
+    ${offers.map(o => {
+      const reds = (o.flags||[]).filter(f => f.type==='red');
+      return reds.length ? `
+        <div style="margin-bottom:.875rem">
+          <div style="font-size:.75rem;font-weight:600;color:var(--text-2);margin-bottom:.35rem">
+            Offer ${o.num} · ${o.buyers}
+          </div>
+          ${reds.map(f=>`<div class="flag flag-rose">${f.text}</div>`).join('')}
+        </div>` : '';
+    }).join('')}
   `;
-
-  document.getElementById('tab-dashboard').innerHTML = html;
 }
 
 // ── COMPARE ───────────────────────────────────────────────────────────────────
 function renderCompare() {
-  const LIST = cfgN('list_price', 799000);
+  function tagHtml(code, map) {
+    const [cls, label] = map[code] || ['slate', code];
+    return `<span class="tag tag-${cls}">${label}</span>`;
+  }
+  const finTag  = o => tagHtml(o.fin_code,   {cash:['green','Cash'],conv20:['amber','Conv 20%+'],conv10:['amber','Conv 10%'],convlt10:['rose','Conv <10%'],fha:['rose','FHA'],va:['rose','VA']});
+  const inspTag = o => tagHtml(o.insp_code,  {none:['green','No Requests'],info:['amber','Info Only'],full:['rose','With Requests']});
+  const apprTag = o => tagHtml(o.appr_code,  {waived:['green','Waived'],gap:['amber','Gap Coverage'],included:['rose','Included']});
+  const rentTag = o => tagHtml(o.rent_code,  {free:['green','Free'],modified:['amber','Paid'],declined:['rose','Declined']});
 
-  function cell(o, fn, rankFn) {
-    const vals = offers.map(x => rankFn ? rankFn(x) : null);
-    const max = rankFn ? Math.max(...vals) : null;
-    const min = rankFn ? Math.min(...vals) : null;
-    const v = rankFn ? rankFn(o) : null;
-    const cls = rankFn ? (v === max ? 'c-best' : v === min && offers.length > 1 ? 'c-bad' : '') : '';
-    return `<td class="offer-col ${cls}">${fn(o)}</td>`;
+  function rank(fn, high=true) {
+    const vals = offers.map(fn);
+    const best = high ? Math.max(...vals) : Math.min(...vals);
+    const worst = high ? Math.min(...vals) : Math.max(...vals);
+    return o => {
+      const v = fn(o);
+      if (v === best) return 'c-best';
+      if (v === worst && offers.length > 1) return 'c-bad';
+      return '';
+    };
   }
 
-  function pill(type, text) {
-    const cls = {green:'pill-green',amber:'pill-amber',red:'pill-red'}[type]||'pill-gray';
-    return `<span class="pill ${cls}">${text}</span>`;
-  }
+  const priceCls  = rank(o => +o.price);
+  const downCls   = rank(o => +o.down_pct);
+  const emCls     = rank(o => +o.em);
+  const closeCls  = rank(o => -o.close_days);
+  const commCls   = rank(o => -(+o.comm_pct||0.05));
+  const netCls    = rank(o => o._net);
+  const scoreCls  = rank(o => o._score);
 
-  function inspPill(o) {
-    if (o.insp_code === 'none') return pill('green','No Requests');
-    if (o.insp_code === 'info') return pill('amber','Info Only');
-    return pill('red','With Requests');
-  }
-  function apprPill(o) {
-    if (o.appr_code === 'waived') return pill('green','Waived');
-    if (o.appr_code === 'gap')    return pill('amber','Gap Coverage');
-    return pill('red','Included');
-  }
-  function rentPill(o) {
-    if (o.rent_code === 'free')     return pill('green','Free');
-    if (o.rent_code === 'modified') return pill('amber','Paid');
-    return pill('red','Declined');
-  }
-  function finPill(o) {
-    if (o.fin_code === 'cash')    return pill('green','Cash');
-    if (o.fin_code === 'conv20')  return pill('amber','Conv 20%+');
-    if (o.fin_code === 'conv10')  return pill('amber','Conv 10%');
-    return pill('red',o.financing||o.fin_code);
-  }
-  function check(pass) { return pass ? '✅' : '❌'; }
+  const offerCols = offers.map(o =>
+    `<th class="offer-col">
+      Offer ${o.num}<br>
+      <span style="font-weight:500;font-size:.65rem;color:rgba(255,255,255,.55)">${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}</span>
+    </th>`).join('');
 
-  const offerHeaders = offers.map(o =>
-    `<th class="offer-col">#${o.num}<br><span style="font-weight:500;font-size:.65rem;color:#94a3b8">${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}</span></th>`
-  ).join('');
+  const check = pass => pass ? '<span style="font-size:1rem">✅</span>' : '<span style="font-size:1rem">❌</span>';
+  const span  = n => `<div class="cval"><div class="cval-main">${n}</div></div>`;
 
-  const html = `
-  <div class="compare-table-wrap">
-  <table class="compare-table">
-    <thead><tr><th>Criteria</th>${offerHeaders}</tr></thead>
-    <tbody>
-      <tr class="section-row"><td colspan="${offers.length+1}">Price &amp; Financing</td></tr>
-      <tr>
-        <td class="row-label">Offer Price</td>
-        ${offers.map(o => cell(o, o => `<div class="cval"><div class="cval-main">${fmt(o.price)}</div><div class="cval-sub">+${fmtK(+o.price-LIST)}</div></div>`, o => +o.price)).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Financing</td>
-        ${offers.map(o => `<td class="offer-col">${finPill(o)}</td>`).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Down Payment</td>
-        ${offers.map(o => cell(o, o => o.down_pct + '%', o => +o.down_pct)).join('')}
-      </tr>
+  document.getElementById('tab-compare').innerHTML = `
+    <div class="compare-wrap">
+    <table class="compare-table">
+      <thead><tr><th>Criteria</th>${offerCols}</tr></thead>
+      <tbody>
+        <tr class="section-row"><td colspan="${offers.length+1}">Price &amp; Financing</td></tr>
+        <tr>
+          <td class="row-label">Offer Price</td>
+          ${offers.map(o => `<td class="offer-col ${priceCls(o)}">
+            <div class="cval"><div class="cval-main">${fmt(o.price)}</div>
+            <div class="cval-sub">+${fmtK(+o.price - cfgN('list_price',799000))}</div></div>
+          </td>`).join('')}
+        </tr>
+        <tr><td class="row-label">Financing</td>${offers.map(o=>`<td class="offer-col">${finTag(o)}</td>`).join('')}</tr>
+        <tr>
+          <td class="row-label">Down Payment</td>
+          ${offers.map(o => `<td class="offer-col ${downCls(o)}">${span(o.down_pct + '%')}</td>`).join('')}
+        </tr>
 
-      <tr class="section-row"><td colspan="${offers.length+1}">Risk &amp; Contingencies</td></tr>
-      <tr>
-        <td class="row-label">Earnest Money</td>
-        ${offers.map(o => cell(o, o => `<div class="cval"><div class="cval-main">${fmt(o.em)}</div><div class="cval-sub">${(+o.em/+o.price*100).toFixed(1)}%</div></div>`, o => +o.em)).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">EM at Risk Now</td>
-        ${offers.map(o => {
-          const initial = o.em_note ? (o.em_note.match(/\$([\d,]+)\s*initial/i)||[])[1] : null;
-          const amt = initial ? '$'+initial : fmt(o.em);
-          return `<td class="offer-col"><span style="font-size:.82rem;font-weight:600">${amt}</span></td>`;
-        }).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Inspection</td>
-        ${offers.map(o => `<td class="offer-col">${inspPill(o)}</td>`).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Appraisal</td>
-        ${offers.map(o => `<td class="offer-col">${apprPill(o)}</td>`).join('')}
-      </tr>
+        <tr class="section-row"><td colspan="${offers.length+1}">Risk &amp; Contingencies</td></tr>
+        <tr>
+          <td class="row-label">Earnest Money</td>
+          ${offers.map(o => `<td class="offer-col ${emCls(o)}">
+            <div class="cval"><div class="cval-main">${fmt(o.em)}</div>
+            <div class="cval-sub">${(+o.em/+o.price*100).toFixed(1)}%</div></div>
+          </td>`).join('')}
+        </tr>
+        <tr><td class="row-label">Inspection</td>${offers.map(o=>`<td class="offer-col">${inspTag(o)}</td>`).join('')}</tr>
+        <tr><td class="row-label">Appraisal</td>${offers.map(o=>`<td class="offer-col">${apprTag(o)}</td>`).join('')}</tr>
 
-      <tr class="section-row"><td colspan="${offers.length+1}">Timing &amp; Possession</td></tr>
-      <tr>
-        <td class="row-label">Close Date</td>
-        ${offers.map(o => cell(o, o => `<div class="cval"><div class="cval-main">${(o.close_date||'').replace(/, 2026/,'')}</div><div class="cval-sub">${+o.close_days} days</div></div>`, o => -o.close_days)).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Possession</td>
-        ${offers.map(o => `<td class="offer-col"><span style="font-size:.82rem">${o.possession||'—'}</span></td>`).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Rent-Back</td>
-        ${offers.map(o => `<td class="offer-col">${rentPill(o)}</td>`).join('')}
-      </tr>
+        <tr class="section-row"><td colspan="${offers.length+1}">Timing &amp; Possession</td></tr>
+        <tr>
+          <td class="row-label">Close Date</td>
+          ${offers.map(o => `<td class="offer-col ${closeCls(o)}">
+            <div class="cval"><div class="cval-main">${(o.close_date||'').replace(', 2026','')}</div>
+            <div class="cval-sub">${o.close_days} days out</div></div>
+          </td>`).join('')}
+        </tr>
+        <tr><td class="row-label">Possession</td>${offers.map(o=>`<td class="offer-col">${span(o.possession||'—')}</td>`).join('')}</tr>
+        <tr><td class="row-label">Rent-Back</td>${offers.map(o=>`<td class="offer-col">${rentTag(o)}</td>`).join('')}</tr>
 
-      <tr class="section-row"><td colspan="${offers.length+1}">Ideal Scenario Match</td></tr>
-      <tr>
-        <td class="row-label">Cash?</td>
-        ${offers.map(o => `<td class="offer-col" style="font-size:1.1rem">${check(o.fin_code==='cash')}</td>`).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">No Insp. Requests?</td>
-        ${offers.map(o => `<td class="offer-col" style="font-size:1.1rem">${check(o.insp_code!=='full')}</td>`).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Free Rent-Back?</td>
-        ${offers.map(o => `<td class="offer-col" style="font-size:1.1rem">${check(o.rent_code==='free')}</td>`).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Close ≤ Jun 26?</td>
-        ${offers.map(o => `<td class="offer-col" style="font-size:1.1rem">${check(+o.close_days<=26)}</td>`).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Appraisal Waived?</td>
-        ${offers.map(o => `<td class="offer-col" style="font-size:1.1rem">${check(o.appr_code==='waived')}</td>`).join('')}
-      </tr>
+        <tr class="section-row"><td colspan="${offers.length+1}">Ideal Scenario ✓</td></tr>
+        <tr><td class="row-label">Cash?</td>${offers.map(o=>`<td class="offer-col">${check(o.fin_code==='cash')}</td>`).join('')}</tr>
+        <tr><td class="row-label">No Insp. Requests?</td>${offers.map(o=>`<td class="offer-col">${check(o.insp_code!=='full')}</td>`).join('')}</tr>
+        <tr><td class="row-label">Free Rent-Back?</td>${offers.map(o=>`<td class="offer-col">${check(o.rent_code==='free')}</td>`).join('')}</tr>
+        <tr><td class="row-label">Close ≤ Jun 26?</td>${offers.map(o=>`<td class="offer-col">${check(+o.close_days<=26)}</td>`).join('')}</tr>
+        <tr><td class="row-label">Appraisal Waived?</td>${offers.map(o=>`<td class="offer-col">${check(o.appr_code==='waived')}</td>`).join('')}</tr>
 
-      <tr class="section-row"><td colspan="${offers.length+1}">Bottom Line</td></tr>
-      <tr>
-        <td class="row-label">Commission</td>
-        ${offers.map(o => cell(o, o => ((+o.comm_pct||0.05)*100).toFixed(1)+'%', o => -(+o.comm_pct||0.05))).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Est. Net Proceeds</td>
-        ${offers.map(o => cell(o, o => `<strong>${fmt(o._net)}</strong>`, o => o._net)).join('')}
-      </tr>
-      <tr>
-        <td class="row-label">Strength Score</td>
-        ${offers.map(o => cell(o, o => `<strong>${o._score.toFixed(1)}</strong>`, o => o._score)).join('')}
-      </tr>
-    </tbody>
-  </table>
-  </div>
-  <p style="font-size:.7rem;color:var(--muted);margin-top:.75rem">Green = best · Red = weakest · Tap a column header to see full offer detail.</p>
+        <tr class="section-row"><td colspan="${offers.length+1}">Bottom Line</td></tr>
+        <tr>
+          <td class="row-label">Commission</td>
+          ${offers.map(o => `<td class="offer-col ${commCls(o)}">${span(((+o.comm_pct||0.05)*100).toFixed(1)+'%')}</td>`).join('')}
+        </tr>
+        <tr>
+          <td class="row-label">Est. Net Proceeds</td>
+          ${offers.map(o => `<td class="offer-col ${netCls(o)}"><strong>${fmt(o._net)}</strong></td>`).join('')}
+        </tr>
+        <tr>
+          <td class="row-label">Strength Score</td>
+          ${offers.map(o => `<td class="offer-col ${scoreCls(o)}"><strong>${o._score.toFixed(1)}</strong></td>`).join('')}
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="font-size:.7rem;color:var(--text-3);margin-top:.75rem">Green shading = best · Red shading = weakest · Tap offer tabs above for full detail.</p>
   `;
-
-  document.getElementById('tab-compare').innerHTML = html;
 }
 
 // ── OFFER DETAIL ──────────────────────────────────────────────────────────────
 function renderOfferDetail(o) {
   const pane = document.getElementById(`tab-offer-${o.num}`);
-  if (pane.dataset.rendered) return;
   pane.dataset.rendered = '1';
 
-  const checks = idealChecks(o);
-  const comm = parseFloat(o.comm_pct) || 0.05;
-  const commAmt   = +o.price * comm;
-  const txAmt     = +o.price * cfgN('transfer_tax_pct', 0.0045);
-  const closingAmt= cfgN('closing_costs', 3650);
-  const rentAmt   = +o.rent_cost || 0;
-  const mortAmt   = cfgN('mortgage_payoff', 451500);
+  const comm     = parseFloat(o.comm_pct) || 0.05;
+  const commAmt  = +o.price * comm;
+  const txAmt    = +o.price * cfgN('transfer_tax_pct', 0.0045);
+  const closAmt  = cfgN('closing_costs', 3650);
+  const rentAmt  = +o.rent_cost || 0;
+  const mortAmt  = cfgN('mortgage_payoff', 451500);
 
-  const pros  = (o.flags||[]).filter(f => f.type === 'green');
-  const warns = (o.flags||[]).filter(f => f.type === 'amber');
-  const risks = (o.flags||[]).filter(f => f.type === 'red');
+  const pros  = (o.flags||[]).filter(f => f.type==='green');
+  const warns = (o.flags||[]).filter(f => f.type==='amber');
+  const risks = (o.flags||[]).filter(f => f.type==='red');
+  const checks = idealChecks(o);
 
   pane.innerHTML = `
-  <div class="offer-hero">
-    <div class="offer-hero-num">Offer #${o.num} · ${o.date||''}</div>
-    <div class="offer-hero-name">${o.buyers}</div>
-    <div class="offer-hero-agent">${o.agent||''}</div>
-    <div class="offer-hero-stats">
-      <div class="ohs"><div class="ohs-v">${fmt(o.price)}</div><div class="ohs-l">Price</div></div>
-      <div class="ohs"><div class="ohs-v">${fmt(o._net)}</div><div class="ohs-l">Est. Net</div></div>
-      <div class="ohs"><div class="ohs-v">${o._score.toFixed(1)}</div><div class="ohs-l">Score</div></div>
-      <div class="ohs"><div class="ohs-v">${o.financing}</div><div class="ohs-l">Financing</div></div>
-      <div class="ohs"><div class="ohs-v">${o.close_date||'—'}</div><div class="ohs-l">Close</div></div>
-      <div class="ohs"><div class="ohs-v">${o.possession||'—'}</div><div class="ohs-l">Possession</div></div>
+    <div class="offer-hero">
+      <div class="oh-num">Offer #${o.num} · ${o.date||''}</div>
+      <div class="oh-name">${o.buyers}</div>
+      <div class="oh-agent">${o.agent||''}</div>
+      <div class="oh-stats">
+        <div class="ohs"><div class="ohs-v">${fmt(o.price)}</div><div class="ohs-l">Price</div></div>
+        <div class="ohs"><div class="ohs-v">${fmt(o._net)}</div><div class="ohs-l">Est. Net</div></div>
+        <div class="ohs"><div class="ohs-v">${o._score.toFixed(1)}</div><div class="ohs-l">Score</div></div>
+        <div class="ohs"><div class="ohs-v">${o.financing}</div><div class="ohs-l">Financing</div></div>
+        <div class="ohs"><div class="ohs-v">${(o.close_date||'—').replace(', 2026','')}</div><div class="ohs-l">Close</div></div>
+        <div class="ohs"><div class="ohs-v">${(o.possession||'—').replace(', 2026','')}</div><div class="ohs-l">Possession</div></div>
+      </div>
     </div>
-  </div>
 
-  <div class="section-title">Ideal Scenario Match</div>
-  <div class="ideal-check-list">
-    ${checks.map(c => `
-    <div class="icl-row">
-      <span class="icl-icon">${c.pass ? '✅' : '❌'}</span>
-      <span class="icl-label">${c.label}</span>
-      <span class="icl-val">${c.val||'—'}</span>
-    </div>`).join('')}
-  </div>
+    <div class="section-title">Ideal Scenario Match</div>
+    <div class="icl">
+      ${checks.map(c => `
+      <div class="icl-row">
+        <span class="icl-icon">${c.pass?'✅':'❌'}</span>
+        <span class="icl-lbl">${c.label}</span>
+        <span class="icl-val">${c.val||'—'}</span>
+      </div>`).join('')}
+    </div>
 
-  <div class="section-title">Contract Details</div>
-  <div class="detail-grid">
-    <div class="dg-item"><div class="dg-lbl">Earnest Money</div><div class="dg-val">${fmt(o.em)} (${(+o.em/+o.price*100).toFixed(1)}%)</div></div>
-    <div class="dg-item"><div class="dg-lbl">Down Payment</div><div class="dg-val">${o.down_pct}%</div></div>
-    <div class="dg-item full"><div class="dg-lbl">EM Schedule</div><div class="dg-val">${o.em_note||'—'}</div></div>
-    <div class="dg-item full"><div class="dg-lbl">Inspection</div><div class="dg-val">${o.inspection||'—'}</div></div>
-    <div class="dg-item full"><div class="dg-lbl">Appraisal</div><div class="dg-val">${o.appraisal||'—'}</div></div>
-    <div class="dg-item full"><div class="dg-lbl">Rent-Back Terms</div><div class="dg-val">${o.rent_back||'—'}</div></div>
-    <div class="dg-item"><div class="dg-lbl">Possession Escrow</div><div class="dg-val">${o.escrow||'—'}</div></div>
-    <div class="dg-item"><div class="dg-lbl">Tax Proration</div><div class="dg-val">${o.tax_prorate||'TBD'}</div></div>
-    <div class="dg-item"><div class="dg-lbl">Commission</div><div class="dg-val">${((comm)*100).toFixed(1)}%</div></div>
-    ${o.attorney && o.attorney !== '—' ? `<div class="dg-item"><div class="dg-lbl">Buyer Attorney</div><div class="dg-val">${o.attorney}</div></div>` : ''}
-  </div>
+    <div class="section-title">Contract Details</div>
+    <div class="detail-grid">
+      <div class="dg"><div class="dg-l">Earnest Money</div><div class="dg-v">${fmt(o.em)} (${(+o.em/+o.price*100).toFixed(1)}%)</div></div>
+      <div class="dg"><div class="dg-l">Down Payment</div><div class="dg-v">${o.down_pct}%</div></div>
+      <div class="dg full"><div class="dg-l">EM Schedule</div><div class="dg-v">${o.em_note||'—'}</div></div>
+      <div class="dg full"><div class="dg-l">Inspection</div><div class="dg-v">${o.inspection||'—'}</div></div>
+      <div class="dg full"><div class="dg-l">Appraisal</div><div class="dg-v">${o.appraisal||'—'}</div></div>
+      <div class="dg full"><div class="dg-l">Rent-Back Terms</div><div class="dg-v">${o.rent_back||'—'}</div></div>
+      <div class="dg"><div class="dg-l">Possession Escrow</div><div class="dg-v">${o.escrow||'—'}</div></div>
+      <div class="dg"><div class="dg-l">Tax Proration</div><div class="dg-v">${o.tax_prorate||'TBD'}</div></div>
+      <div class="dg"><div class="dg-l">Commission</div><div class="dg-v">${(comm*100).toFixed(1)}%</div></div>
+      ${o.attorney&&o.attorney!=='—'?`<div class="dg"><div class="dg-l">Buyer Attorney</div><div class="dg-v">${o.attorney}</div></div>`:''}
+    </div>
 
-  <div class="section-title">Est. Net Proceeds Breakdown</div>
-  <div class="net-breakdown">
-    <div class="nb-row"><span>Sale Price</span><span class="nb-amt">${fmt(o.price)}</span></div>
-    <div class="nb-row deduct"><span>Commission (${(comm*100).toFixed(1)}%)</span><span class="nb-amt">− ${fmt(commAmt)}</span></div>
-    <div class="nb-row deduct"><span>Transfer Tax (0.45%)</span><span class="nb-amt">− ${fmt(txAmt)}</span></div>
-    <div class="nb-row deduct"><span>Closing Costs (est.)</span><span class="nb-amt">− ${fmt(closingAmt)}</span></div>
-    ${rentAmt ? `<div class="nb-row deduct"><span>Rent-Back Cost (est.)</span><span class="nb-amt">− ${fmt(rentAmt)}</span></div>` : ''}
-    <div class="nb-row deduct"><span>Mortgage Payoff (est.)</span><span class="nb-amt">− ${fmt(mortAmt)}</span></div>
-    <div class="nb-row total"><span>Est. Net to You</span><span class="nb-amt">${fmt(o._net)}</span></div>
-  </div>
+    <div class="section-title">Net Proceeds Breakdown</div>
+    <div class="nb-table">
+      <div class="nbt-row"><span class="nbt-lbl">Sale Price</span><span class="nbt-amt">${fmt(o.price)}</span></div>
+      <div class="nbt-row sub"><span class="nbt-lbl">Commission (${(comm*100).toFixed(1)}%)</span><span class="nbt-amt">− ${fmt(commAmt)}</span></div>
+      <div class="nbt-row sub"><span class="nbt-lbl">Transfer Tax (0.45%)</span><span class="nbt-amt">− ${fmt(txAmt)}</span></div>
+      <div class="nbt-row sub"><span class="nbt-lbl">Closing Costs (est.)</span><span class="nbt-amt">− ${fmt(closAmt)}</span></div>
+      ${rentAmt?`<div class="nbt-row sub"><span class="nbt-lbl">Rent-Back Cost (est.)</span><span class="nbt-amt">− ${fmt(rentAmt)}</span></div>`:''}
+      <div class="nbt-row sub"><span class="nbt-lbl">Mortgage Payoff (est.)</span><span class="nbt-amt">− ${fmt(mortAmt)}</span></div>
+      <div class="nbt-row total"><span class="nbt-lbl">Estimated Net to You</span><span class="nbt-amt">${fmt(o._net)}</span></div>
+    </div>
 
-  ${pros.length ? `<div class="section-title">Strengths</div>${pros.map(f=>`<div class="flag flag-green">${f.text}</div>`).join('')}` : ''}
-  ${warns.length ? `<div class="section-title">Watch</div>${warns.map(f=>`<div class="flag flag-amber">${f.text}</div>`).join('')}` : ''}
-  ${risks.length ? `<div class="section-title">Risks</div>${risks.map(f=>`<div class="flag flag-red">${f.text}</div>`).join('')}` : ''}
+    ${pros.length?`<div class="section-title">Strengths</div>${pros.map(f=>`<div class="flag flag-green">${f.text}</div>`).join('')}`:''}
+    ${warns.length?`<div class="section-title">Watch</div>${warns.map(f=>`<div class="flag flag-amber">${f.text}</div>`).join('')}`:''}
+    ${risks.length?`<div class="section-title">Risks</div>${risks.map(f=>`<div class="flag flag-rose">${f.text}</div>`).join('')}`:''}
   `;
 }
 
 // ── GLOSSARY ──────────────────────────────────────────────────────────────────
 function renderGlossary() {
   const terms = [
-    { term: 'Earnest Money (EM)', def: 'A deposit the buyer puts down to show they\'re serious. It goes toward the purchase price at closing. If the buyer backs out without a valid contingency, you typically keep it.', tip: 'Higher EM = more skin in the game. 3–5% is strong; under 2% is light.' },
-    { term: 'Attorney-Inspection Period (A/I)', def: 'A window (typically 5 business days) after contract signing where both parties can raise legal issues or inspection concerns. Additional earnest money is usually due when this period closes.', tip: 'During A/I, only the initial EM is truly at risk. The "additional" EM hits after A/I closes.' },
-    { term: 'AS-IS (Paragraph 14)', def: 'Buyer agrees to purchase the property in its current condition. They may still inspect, but they cannot ask you to make repairs or give credits.', tip: 'AS-IS + no requests = maximum protection for the seller.' },
-    { term: 'Paragraph 15b — Inspection With Requests', def: 'Buyer can inspect the property AND submit a list of repair requests. You can accept, negotiate, or reject them — but the buyer can also walk away if you don\'t agree.', tip: 'This is the riskiest inspection clause for sellers. It opens the door to renegotiation after you\'ve already accepted.' },
-    { term: 'Paragraph 15c — Inspection, No Requests', def: 'Buyer can inspect for informational purposes only. They cannot ask for repairs or credits. If they don\'t like what they find, they can walk away — but cannot negotiate.', tip: 'Clean middle ground: buyer gets peace of mind, seller has no repair liability.' },
-    { term: 'Appraisal Contingency', def: 'Protects the buyer if the home appraises for less than the offer price. If included, the buyer can renegotiate or walk away if the appraisal comes in low.', tip: 'With offers above list price, appraisal risk is real. Waived appraisal = buyer pays the gap no matter what.' },
-    { term: 'Appraisal Gap Addendum (§1b)', def: 'A separate form where the buyer agrees they have NO right to terminate if the appraisal comes in below the purchase price. They must close at the agreed price regardless.', tip: 'This is significant protection at an elevated price. Offer 4 has this.' },
-    { term: 'LTV (Loan-to-Value)', def: 'The loan amount as a percentage of the purchase price. 90% LTV = 10% down. Lower LTV = more equity = lower appraisal risk for the buyer.', tip: '70% LTV (30% down) is very strong. 90% LTV (10% down) carries more appraisal risk.' },
-    { term: 'Conventional Loan', def: 'A mortgage not backed by the government (not FHA or VA). Generally requires higher credit scores and down payments, but closes more reliably than FHA/VA.', tip: 'Conventional with 20%+ down is the gold standard for non-cash offers.' },
-    { term: 'PITI', def: 'Principal, Interest, Taxes, and Insurance — the four components of a monthly mortgage payment. When Offer 4 says rent-back at "PITI rate," it means you pay the buyer\'s full monthly cost on a daily basis.', tip: 'PITI daily rate is typically $150–200/day for a ~$600K loan at 7%. Always get a dollar figure in the contract.' },
-    { term: 'Possession After Closing', def: 'You continue living in the property after the sale closes. You become a temporary tenant. Terms include the end date, daily rate, and a possession escrow held by the buyer as security.', tip: 'Get the daily rate and end date locked into the contract. "Free" rent-back = buyer charges you $0/day.' },
-    { term: 'Possession Escrow', def: 'A portion of your sale proceeds held in escrow after closing as security for the rent-back period. Released to you when you vacate on time in good condition.', tip: 'Offer 1 has a $50K possession escrow — this is the buyer\'s leverage to ensure you leave on time.' },
-    { term: 'Tax Proration', def: 'Illinois property taxes are paid in arrears. At closing, the buyer gets a credit for the portion of the year\'s taxes that have accrued but not yet been paid. 105% means you credit 105% of last year\'s tax bill.', tip: 'Higher proration % = more money out of your pocket. TBD means it gets negotiated at attorney review.' },
-    { term: 'Transfer Tax', def: 'A tax paid when real estate changes hands. In Chicago, this is typically 0.45% of the sale price (paid by the seller).', tip: 'On an $850K sale, transfer tax = ~$3,825.' },
-    { term: 'Dual Agency', def: 'When the same brokerage (or agent) represents both buyer and seller. Can create conflicts of interest. In this transaction, Offer 4 has both agents from @properties.', tip: 'Dual agency is legal in Illinois but requires disclosure. It can sometimes mean lower total commission.' },
-    { term: 'Highest & Best', def: 'A process where all buyers are asked to submit their best offer by a deadline, knowing there are multiple competing offers. Used to maximize price and terms in a multiple-offer situation.', tip: 'You received 4 offers — you are in a Highest & Best situation.' },
-    { term: 'Strength Score', def: 'A composite 0–100 score used in this tracker to compare offers across 7 dimensions: Price (50%), Financing (15%), Earnest Money (10%), Inspection (10%), Appraisal (5%), Timeline (5%), Rent-Back (5%).', tip: 'Score ≠ net proceeds. A cash offer with lower price can outscore a higher financed offer.' },
-    { term: 'Net Proceeds', def: 'What you actually walk away with after paying off your mortgage, commissions, transfer tax, closing costs, and any rent-back charges. This is the number that matters most.', tip: 'Always compare net proceeds — not gross offer price. A $862K offer can net less than an $850K offer.' },
+    ['Earnest Money (EM)', 'A deposit the buyer puts down to show they\'re serious. It goes toward the purchase price at closing. If the buyer backs out without a valid contingency, you typically keep it.', 'Higher EM = more skin in the game. 3–5% is strong; under 2% is light.'],
+    ['Attorney-Inspection Period (A/I)', 'A window — typically 5 business days after signing — where both parties can raise legal or inspection concerns. The bulk of earnest money is usually due when this period closes.', 'During A/I, only the initial EM is at risk. The "additional" deposit hits after A/I closes.'],
+    ['AS-IS (Paragraph 14)', 'Buyer agrees to purchase the property in its current condition. They may still inspect, but they cannot ask you to make repairs or give credits.', 'AS-IS + no requests = maximum protection for you as the seller.'],
+    ['Paragraph 15b — Inspection With Requests', 'Buyer can inspect AND submit a list of repair requests. You can accept, negotiate, or reject — but the buyer can walk away if you don\'t agree.', 'Riskiest inspection clause for sellers. Opens the door to renegotiation after you\'ve already accepted.'],
+    ['Paragraph 15c — Inspection, No Requests', 'Buyer can inspect for informational purposes only. They cannot ask for repairs or credits. They can walk away, but cannot negotiate on condition.', 'Clean middle ground: buyer gets peace of mind, you have no repair liability.'],
+    ['Appraisal Contingency', 'Protects the buyer if the home appraises for less than the offer price. If included, the buyer can renegotiate or walk if appraisal comes in low.', 'Above-list offers carry real appraisal risk. A waived appraisal means the buyer pays the gap no matter what.'],
+    ['Appraisal Gap Addendum (§1b)', 'A separate form where the buyer agrees they have NO right to terminate if the appraisal comes in below the purchase price. They must close at the agreed price regardless.', 'Offer 4 (Devey/Lim) has this — significant protection at an elevated price.'],
+    ['LTV (Loan-to-Value)', 'The loan amount as a percentage of the purchase price. 90% LTV = 10% down. Lower LTV = more equity and less appraisal risk for the buyer.', '70% LTV (30% down) is very strong. 90% LTV (10% down) carries more appraisal and financing risk.'],
+    ['Conventional Loan', 'A mortgage not backed by the government. Generally requires higher credit scores and down payments but closes more reliably than FHA or VA.', 'Conventional with 20%+ down is the gold standard for non-cash offers.'],
+    ['PITI', 'Principal, Interest, Taxes, and Insurance — the four components of a monthly mortgage payment. When Offer 4 says rent-back at "PITI rate," you pay the buyer\'s full monthly cost on a per-day basis.', 'At ~$600K loan at 7%, PITI runs $175–200/day. Always get a hard dollar amount in the contract.'],
+    ['Possession After Closing', 'You continue living in the property after the sale closes, becoming a temporary tenant. Terms include end date, daily rate, and possession escrow held as security.', 'Free rent-back means the buyer charges you $0/day. Lock the daily rate and end date into the contract.'],
+    ['Possession Escrow', 'A portion of your sale proceeds held in escrow after closing as security during the rent-back. Released when you vacate on time in good condition.', 'Offer 1 includes a $50K possession escrow — this is the buyer\'s leverage to ensure you leave as agreed.'],
+    ['Tax Proration', 'Illinois property taxes are paid in arrears. At closing, the buyer gets a credit for taxes that have accrued but not yet been paid. 105% means you credit 105% of last year\'s tax bill.', 'Higher proration = more out of your pocket. TBD means it gets negotiated at attorney review — push for 100%.'],
+    ['Transfer Tax', 'A tax paid when real estate changes hands. In Chicago, approximately 0.45% of the sale price, paid by the seller.', 'On an $850K sale: ~$3,825.'],
+    ['Dual Agency', 'When the same brokerage (or agent) represents both buyer and seller. Can create conflicts of interest and sometimes results in reduced total commission.', 'Offer 4 has both agents at @properties — worth asking Haylee how that affects her representation of you.'],
+    ['Highest & Best', 'A process where all buyers submit their best offer by a deadline, knowing they\'re competing. Used to maximize price and terms in a multiple-offer situation.', 'With 4 offers in hand, you are in a Highest & Best situation. Deadline creates urgency and prevents back-and-forth.'],
+    ['Strength Score', 'A composite 0–100 score comparing offers across 7 dimensions: Price (50%), Financing (15%), Earnest Money (10%), Inspection (10%), Appraisal (5%), Timeline (5%), Rent-Back (5%).', 'Score ≠ net proceeds. A cash offer with a lower price can outscore a higher financed offer.'],
+    ['Net Proceeds', 'What you actually walk away with after paying off your mortgage, commissions, transfer tax, closing costs, and any rent-back charges.', 'Always compare net, not gross. A $862K offer can net you less than an $850K offer.'],
   ];
 
   document.getElementById('tab-glossary').innerHTML = `
-    <div class="glossary-list">
-      ${terms.map(t => `
+    <div class="gl-grid">
+      ${terms.map(([term, def, tip]) => `
       <div class="gl-item">
-        <div class="gl-term">${t.term}</div>
-        <div class="gl-def">${t.def}</div>
-        ${t.tip ? `<div class="gl-tip">💡 ${t.tip}</div>` : ''}
+        <div class="gl-term">${term}</div>
+        <div class="gl-def">${def}</div>
+        ${tip ? `<div class="gl-tip">💡 ${tip}</div>` : ''}
       </div>`).join('')}
     </div>`;
 }
