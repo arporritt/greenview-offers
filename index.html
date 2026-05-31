@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3827 N Greenview — Offer Tracker</title>
+<style>
+  :root {
+    --navy: #1a2744;
+    --gold: #c9a84c;
+    --green: #2e7d52;
+    --amber: #b45309;
+    --red: #b91c1c;
+    --light: #f8f7f4;
+    --border: #e2ddd6;
+    --text: #1c1917;
+    --muted: #6b7280;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--light); color: var(--text); line-height: 1.5; }
+
+  /* ── PASSWORD SCREEN ── */
+  #lock-screen {
+    position: fixed; inset: 0; background: var(--navy);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 9999; padding: 2rem;
+  }
+  #lock-screen.hidden { display: none; }
+  #lock-screen h1 { color: var(--gold); font-size: 1.4rem; font-weight: 600; margin-bottom: .25rem; letter-spacing: .05em; text-transform: uppercase; }
+  #lock-screen p { color: #94a3b8; font-size: .85rem; margin-bottom: 1.75rem; }
+  #pw-input {
+    width: 100%; max-width: 320px; padding: .75rem 1rem; border: 1.5px solid #334155;
+    border-radius: 8px; background: #0f172a; color: #f1f5f9; font-size: 1rem;
+    text-align: center; letter-spacing: .15em; outline: none;
+  }
+  #pw-input:focus { border-color: var(--gold); }
+  #pw-btn {
+    margin-top: .75rem; width: 100%; max-width: 320px; padding: .75rem;
+    background: var(--gold); color: var(--navy); font-weight: 700; font-size: .95rem;
+    border: none; border-radius: 8px; cursor: pointer; letter-spacing: .05em;
+  }
+  #pw-err { color: #f87171; font-size: .8rem; margin-top: .5rem; min-height: 1em; }
+
+  /* ── MAIN ── */
+  #app { display: none; }
+  #app.visible { display: block; }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--navy);
+    padding: 1.5rem 1.25rem 1.25rem;
+  }
+  .hero-address { color: var(--gold); font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .25rem; }
+  .hero-title { color: #fff; font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+  .hero-sub { color: #94a3b8; font-size: .85rem; margin-top: .4rem; }
+  .hero-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem;
+    margin-top: 1.25rem;
+  }
+  .hero-stat { background: rgba(255,255,255,.07); border-radius: 8px; padding: .6rem .75rem; }
+  .hero-stat-val { color: var(--gold); font-size: 1.1rem; font-weight: 700; }
+  .hero-stat-lbl { color: #94a3b8; font-size: .7rem; margin-top: .1rem; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* ── IDEAL SCENARIO BANNER ── */
+  .ideal-banner {
+    background: #ecfdf5; border-left: 4px solid var(--green);
+    margin: 1rem; border-radius: 0 8px 8px 0; padding: .75rem 1rem;
+  }
+  .ideal-banner strong { color: var(--green); font-size: .8rem; text-transform: uppercase; letter-spacing: .07em; display: block; margin-bottom: .25rem; }
+  .ideal-banner p { font-size: .8rem; color: #374151; }
+  .ideal-banner ul { font-size: .8rem; color: #374151; margin-top: .25rem; padding-left: 1rem; }
+  .ideal-banner li { margin-bottom: .15rem; }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    padding: .5rem 1rem .25rem; font-size: .7rem; font-weight: 700;
+    color: var(--muted); text-transform: uppercase; letter-spacing: .1em;
+    border-bottom: 1px solid var(--border); margin-bottom: .75rem;
+  }
+
+  /* ── OFFER CARDS ── */
+  .offers { padding: 0 1rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  .offer-card {
+    background: #fff; border-radius: 12px; border: 1.5px solid var(--border);
+    overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .offer-card.top-pick { border-color: var(--green); }
+
+  .offer-header {
+    padding: .875rem 1rem .75rem;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .offer-num { font-size: .65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .offer-buyer { font-size: .95rem; font-weight: 700; color: var(--text); margin-top: .1rem; line-height: 1.2; }
+  .offer-agent { font-size: .75rem; color: var(--muted); margin-top: .15rem; }
+  .offer-badge {
+    font-size: .65rem; font-weight: 700; padding: .2rem .5rem; border-radius: 99px;
+    white-space: nowrap; flex-shrink: 0; margin-left: .5rem;
+  }
+  .badge-green { background: #d1fae5; color: var(--green); }
+  .badge-amber { background: #fef3c7; color: var(--amber); }
+  .badge-blue  { background: #dbeafe; color: #1d4ed8; }
+  .badge-gray  { background: #f3f4f6; color: #374151; }
+
+  .offer-price-row {
+    padding: .75rem 1rem;
+    display: flex; align-items: center; gap: .75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .offer-price { font-size: 1.5rem; font-weight: 800; color: var(--text); }
+  .offer-price-meta { display: flex; flex-direction: column; }
+  .offer-vs-list { font-size: .75rem; font-weight: 600; color: var(--green); }
+  .offer-financing-chip {
+    margin-left: auto; font-size: .7rem; font-weight: 700; padding: .2rem .55rem;
+    border-radius: 6px; background: var(--navy); color: #fff; white-space: nowrap;
+  }
+
+  .offer-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .offer-cell {
+    padding: .55rem 1rem; border-right: 1px solid var(--border);
+  }
+  .offer-cell:nth-child(even) { border-right: none; }
+  .offer-cell-lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .offer-cell-val { font-size: .85rem; font-weight: 600; color: var(--text); margin-top: .1rem; }
+
+  .offer-net-row {
+    padding: .75rem 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #f9f8f6;
+    border-bottom: 1px solid var(--border);
+  }
+  .offer-net-lbl { font-size: .75rem; color: var(--muted); }
+  .offer-net-val { font-size: 1.15rem; font-weight: 800; color: var(--green); }
+
+  .offer-score-row {
+    padding: .6rem 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .score-bar-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 6px; margin: 0 .75rem; }
+  .score-bar { height: 6px; border-radius: 99px; background: var(--gold); }
+  .score-val { font-size: .8rem; font-weight: 700; color: var(--navy); white-space: nowrap; }
+  .score-lbl { font-size: .7rem; color: var(--muted); white-space: nowrap; }
+
+  /* ── FLAGS ── */
+  .offer-flags { padding: .5rem 1rem .75rem; display: flex; flex-direction: column; gap: .3rem; }
+  .flag {
+    font-size: .72rem; padding: .3rem .6rem; border-radius: 6px;
+    display: flex; align-items: flex-start; gap: .4rem;
+  }
+  .flag-icon { flex-shrink: 0; margin-top: .05rem; }
+  .flag-red { background: #fef2f2; color: var(--red); }
+  .flag-amber { background: #fffbeb; color: var(--amber); }
+  .flag-green { background: #f0fdf4; color: var(--green); }
+
+  /* ── COMPARISON TABLE ── */
+  .comp-section { padding: 0 1rem 1.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: .78rem; min-width: 500px; }
+  th { background: var(--navy); color: var(--gold); padding: .5rem .6rem; text-align: left; font-size: .65rem; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
+  th:first-child { border-radius: 8px 0 0 0; }
+  th:last-child { border-radius: 0 8px 0 0; }
+  td { padding: .45rem .6rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f9f8f6; }
+  td.best { color: var(--green); font-weight: 700; }
+  td.warn { color: var(--amber); font-weight: 600; }
+  td.bad { color: var(--red); font-weight: 600; }
+
+  /* ── METHODOLOGY ── */
+  .methodology { margin: 0 1rem 2rem; background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 1rem; }
+  .methodology h3 { font-size: .8rem; font-weight: 700; color: var(--navy); margin-bottom: .5rem; }
+  .methodology ul { font-size: .75rem; color: #374151; padding-left: 1rem; display: flex; flex-direction: column; gap: .2rem; }
+
+  /* ── FOOTER ── */
+  .footer { padding: 1rem; text-align: center; font-size: .7rem; color: var(--muted); border-top: 1px solid var(--border); }
+
+  /* ── DESKTOP ── */
+  @media (min-width: 768px) {
+    .hero { padding: 2rem 2rem 1.75rem; }
+    .hero-title { font-size: 2rem; }
+    .hero-stats { grid-template-columns: repeat(6, 1fr); }
+    .ideal-banner { margin: 1.25rem 2rem; }
+    .section-header { padding: .5rem 2rem .25rem; }
+    .offers { padding: 0 2rem; display: grid; grid-template-columns: repeat(2, 1fr); }
+    .comp-section { padding: 0 2rem 1.5rem; }
+    .methodology { margin: 0 2rem 2rem; }
+    .footer { padding: 1.5rem 2rem; }
+  }
+
+  @media (min-width: 1200px) {
+    .offers { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOCK SCREEN ── -->
+<div id="lock-screen">
+  <h1>3827 N Greenview</h1>
+  <p>Offer Tracker · Sellers Only</p>
+  <input id="pw-input" type="password" placeholder="Enter password" autocomplete="off" />
+  <button id="pw-btn">Unlock</button>
+  <div id="pw-err"></div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-address">3827 N Greenview Ave Unit 2S · Chicago IL 60613</div>
+    <div class="hero-title">Offer Tracker</div>
+    <div class="hero-sub">MLS #12652161 · Listed May 28, 2026 · Haylee Stone, @properties Christie's</div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-val">$799K</div><div class="hero-stat-lbl">List Price</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">1,533</div><div class="hero-stat-lbl">Sq Ft</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">3 / 2</div><div class="hero-stat-lbl">Bed / Bath</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">$254</div><div class="hero-stat-lbl">HOA / mo</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">$834K</div><div class="hero-stat-lbl">Redfin Est.</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">4</div><div class="hero-stat-lbl">Offers</div></div>
+    </div>
+  </div>
+
+  <!-- IDEAL SCENARIO -->
+  <div class="ideal-banner">
+    <strong>Your Ideal Scenario</strong>
+    <ul>
+      <li>Highest possible price</li>
+      <li>Cash buyer, no contingencies</li>
+      <li>Free rent-back through July 31, 2026</li>
+      <li>Close before June 26, 2026</li>
+    </ul>
+  </div>
+
+  <!-- OFFER CARDS -->
+  <div class="section-header" style="margin-top:.5rem">4 Offers Received · May 31, 2026</div>
+  <div class="offers" id="offer-cards"></div>
+
+  <!-- COMPARISON TABLE -->
+  <div class="section-header" style="margin-top:1.5rem">Side-by-Side Comparison</div>
+  <div class="comp-section">
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>#1 Hilbrich</th>
+          <th>#2 Yeager/Cruz</th>
+          <th>#3 Patel/Pandya</th>
+          <th>#4 Devey/Lim</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Price</strong></td><td>$850,000</td><td>$851,000 <span style="font-size:.7em;color:#6b7280">(revised)</span></td><td>$799,000</td><td class="best">$862,000</td></tr>
+        <tr><td><strong>Financing</strong></td><td class="best">All Cash</td><td class="warn">Conv 90% LTV</td><td>Conv 80% LTV</td><td>Conv 70% LTV</td></tr>
+        <tr><td><strong>Total EM</strong></td><td class="best">$34,000 (4.0%)</td><td class="bad">$15,000 (1.8%)</td><td class="bad">$17,000 (2.1%)</td><td>$30,000 (3.5%)</td></tr>
+        <tr><td><strong>EM at Risk Now</strong></td><td class="best">$24K immediately</td><td class="warn">$15K immediately</td><td class="bad">$1K only</td><td class="bad">$1K only</td></tr>
+        <tr><td><strong>Inspection</strong></td><td class="best">No requests (15c)</td><td class="best">AS-IS + no requests</td><td class="best">AS-IS + no requests</td><td class="bad">WITH requests (15b)</td></tr>
+        <tr><td><strong>Appraisal</strong></td><td class="best">N/A (cash)</td><td class="bad">Included</td><td class="bad">Included</td><td class="best">Gap waived (no termination)</td></tr>
+        <tr><td><strong>Close Date</strong></td><td>June 15</td><td class="best">June 26</td><td class="warn">July 2 (+6 days)</td><td class="best">June 25</td></tr>
+        <tr><td><strong>Possession</strong></td><td class="best">July 31 · FREE</td><td class="warn">Aug 1 · Free</td><td class="best">July 31 · FREE</td><td class="warn">July 31 · PITI/day</td></tr>
+        <tr><td><strong>Buyer Broker Fee</strong></td><td class="best">1.5%</td><td>2.5%</td><td>2.5%</td><td>2.5%</td></tr>
+        <tr><td><strong>Total Commission</strong></td><td class="best">4.0%</td><td>5.0%</td><td>5.0%</td><td>5.0%</td></tr>
+        <tr><td><strong>Est. Net Proceeds</strong></td><td class="best">$357,025</td><td>$349,470</td><td class="bad">$300,304</td><td>~$353,211</td></tr>
+        <tr><td><strong>Strength Score</strong></td><td class="best">99.7</td><td>89.4</td><td>89.3</td><td>91.7</td></tr>
+        <tr><td><strong>Attorney</strong></td><td>Joe Robinson</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td><strong>Pre-Approval</strong></td><td class="best">POF (cash)</td><td class="warn">Rocket Mortgage</td><td class="bad">Mismatch (jumbo ARM)</td><td class="warn">No amount stated</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- METHODOLOGY -->
+  <div class="section-header">Score Methodology</div>
+  <div class="methodology">
+    <h3>Strength Score Components (100-point scale)</h3>
+    <ul>
+      <li><strong>Price (50%)</strong> — Min(110, offer ÷ list × 100)</li>
+      <li><strong>Financing (15%)</strong> — Cash=100 · Conv 20%+=85 · Conv 10–20%=70 · Conv &lt;10%=50 · FHA/VA=35</li>
+      <li><strong>Earnest Money (10%)</strong> — Min(100, EM% ÷ 5% × 100)</li>
+      <li><strong>Inspection (10%)</strong> — None/AS-IS=100 · Info Only=80 · With Requests=50</li>
+      <li><strong>Appraisal (5%)</strong> — Waived/No-termination=100 · Gap coverage=75 · Included=50</li>
+      <li><strong>Timeline (5%)</strong> — Max(0, 100 − |close days − 30| × 2)</li>
+      <li><strong>Rent-Back (5%)</strong> — Free/Accepted=100 · Modified=70 · Declined=0</li>
+    </ul>
+    <p style="font-size:.72rem;color:#6b7280;margin-top:.5rem">Net Proceeds = Price − Commission − Transfer Tax (0.45%) − Closing Costs ($3,650) − Rent-Back Cost − Mortgage Payoff ($451,500)</p>
+  </div>
+
+  <div class="footer">
+    Last updated: May 31, 2026 · Alyssa &amp; Thomas · 3827 N Greenview Unit 2S
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ── PASSWORD ──────────────────────────────────────────────────────────────────
+(function() {
+  const HASH = '6b3d626bac001b7c3ec9d22b17a78d43fca77157'; // SHA1 of "southport"
+  function sha1(str) {
+    // simple async-free SHA1 via SubtleCrypto not available sync; use stored hash comparison
+    // We'll use a pre-computed check approach
+    return str;
+  }
+  // Use sessionStorage so refresh doesn't re-prompt
+  if (sessionStorage.getItem('unlocked') === '1') { unlock(); return; }
+
+  const lockEl = document.getElementById('lock-screen');
+  const appEl = document.getElementById('app');
+  const input = document.getElementById('pw-input');
+  const btn = document.getElementById('pw-btn');
+  const err = document.getElementById('pw-err');
+
+  function unlock() {
+    document.getElementById('lock-screen').classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+  }
+
+  async function check() {
+    const val = input.value.trim().toLowerCase();
+    if (!val) return;
+    const msgBuffer = new TextEncoder().encode(val);
+    const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+    if (hashHex === HASH) {
+      sessionStorage.setItem('unlocked', '1');
+      unlock();
+    } else {
+      err.textContent = 'Incorrect password.';
+      input.value = '';
+      input.focus();
+    }
+  }
+
+  btn.addEventListener('click', check);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+})();
+
+// ── OFFER DATA ────────────────────────────────────────────────────────────────
+const LIST_PRICE = 799000;
+const MORTGAGE   = 451500;
+const CLOSING    = 3650;
+const TX_TAX     = 0.0045;
+
+const offers = [
+  {
+    num: 1,
+    buyers: 'John & Rebecca Hilbrich',
+    agent: 'Amy Chowaniec · Keller Williams Experience',
+    date: '5/29/2026',
+    price: 850000,
+    financing: 'All Cash',
+    finCode: 'cash',
+    downPct: 100,
+    em: 34000,
+    emNote: '$24K (3 bus days) + $10K at close A/I',
+    inspection: 'No Requests (Para 15c)',
+    inspCode: 'none',
+    appraisal: 'N/A — Cash',
+    apprCode: 'waived',
+    closeDate: 'June 15, 2026',
+    closeDays: 15,
+    possession: 'July 31, 2026',
+    rentBack: 'FREE · $0/day',
+    rentCode: 'free',
+    rentCost: 0,
+    commPct: 0.04,  // 1.5% BA + 2.5% listing
+    escrow: '$50,000',
+    taxProrate: '105%',
+    topPick: true,
+    attorney: 'Joe Robinson (jrobinson@lilliglaw.com)',
+    flags: [
+      { type: 'red',   text: '⚠ POF in name of Joseph M. Sanders / Genoa Group — not Hilbrich. Clarify before accepting.' },
+      { type: 'green', text: '✓ Cash: no appraisal or financing contingency.' },
+      { type: 'green', text: '✓ Lowest total commission (4.0%) — highest net.' },
+      { type: 'green', text: '✓ Free rent-back to July 31 + $50K possession escrow.' },
+    ]
+  },
+  {
+    num: 2,
+    buyers: 'Ailis Yeager & Diego Cruz',
+    agent: 'Jacob Reiner · Redfin Corporation',
+    date: '5/30/2026',
+    price: 851000,
+    financing: 'Conv · 90% LTV',
+    finCode: 'conv10',
+    downPct: 10,
+    em: 15000,
+    emNote: '$15K initial (2 bus days) — no additional EM',
+    inspection: 'AS-IS + No Requests (Para 14 + 15c)',
+    inspCode: 'none',
+    appraisal: 'Included',
+    apprCode: 'included',
+    closeDate: 'June 26, 2026',
+    closeDays: 26,
+    possession: 'August 1, 2026',
+    rentBack: 'Free (N/A per contract)',
+    rentCode: 'free',
+    rentCost: 0,
+    commPct: 0.05,
+    escrow: 'N/A',
+    taxProrate: 'TBD',
+    topPick: false,
+    attorney: '—',
+    flags: [
+      { type: 'red',   text: '⚠ Pre-approval expires 06/22/2026 — 4 days BEFORE June 26 close. Must be renewed.' },
+      { type: 'red',   text: '⚠ Diego Cruz not on pre-approval letter (Rocket Mortgage, Ailis Yeager only).' },
+      { type: 'amber', text: '⚠ Original contract price $810,500 — revised to $851,000 verbally. No updated contract yet.' },
+      { type: 'amber', text: '⚠ Possession August 1 — 1 day past July 31 target.' },
+      { type: 'green', text: '✓ AS-IS inspection — no repair requests.' },
+    ]
+  },
+  {
+    num: 3,
+    buyers: 'Jay Patel & Ami Pandya',
+    agent: 'Dan Nelson · Compass',
+    date: '5/31/2026',
+    price: 799000,
+    financing: 'Conv · 80% LTV',
+    finCode: 'conv20',
+    downPct: 20,
+    em: 17000,
+    emNote: '$1K initial (1 bus day) + $16K after A/I',
+    inspection: 'AS-IS + No Requests (Para 14 + 15c)',
+    inspCode: 'none',
+    appraisal: 'Included',
+    apprCode: 'included',
+    closeDate: 'July 2, 2026',
+    closeDays: 32,
+    possession: 'July 31, 2026',
+    rentBack: 'FREE · $0/day',
+    rentCode: 'free',
+    rentCost: 0,
+    commPct: 0.05,
+    escrow: '2% default (~$15,980)',
+    taxProrate: 'TBD',
+    topPick: false,
+    attorney: '—',
+    flags: [
+      { type: 'red',   text: '⚠ Pre-approval mismatch: Fifth Third Bank letter is for $1M jumbo ARM at $1.25M purchase — does NOT match this $799K fixed conventional offer.' },
+      { type: 'red',   text: '⚠ Only $1,000 EM at risk during attorney-inspection period.' },
+      { type: 'amber', text: '⚠ Close July 2 — 6 days past June 26 target.' },
+      { type: 'green', text: '✓ AS-IS inspection — no repair requests.' },
+    ]
+  },
+  {
+    num: 4,
+    buyers: 'Cate Devey & Adam Lim',
+    agent: 'James Fredian · @properties',
+    date: '5/31/2026',
+    price: 862000,
+    financing: 'Conv · 70% LTV',
+    finCode: 'conv20',
+    downPct: 30,
+    em: 30000,
+    emNote: '$1K initial (2 bus days) + $29K after A/I',
+    inspection: 'With Requests (Para 15b)',
+    inspCode: 'full',
+    appraisal: 'Gap Waived — No Right to Terminate (Addendum §1b)',
+    apprCode: 'waived',
+    closeDate: 'June 25, 2026',
+    closeDays: 25,
+    possession: 'July 31, 2026',
+    rentBack: "Buyer's PITI & HOA/day (~$175–190/day est.)",
+    rentCode: 'modified',
+    rentCost: 6660,  // ~$185/day × 36 days (June 25 → July 31), estimated
+    commPct: 0.05,
+    escrow: '2% default (~$17,240)',
+    taxProrate: 'TBD',
+    topPick: false,
+    attorney: '—',
+    flags: [
+      { type: 'amber', text: '⚠ Full inspection WITH requests — buyer can negotiate repairs after signing.' },
+      { type: 'red',   text: '⚠ Only $1,000 EM at risk during attorney-inspection period ($29K only after A/I closes).' },
+      { type: 'amber', text: '⚠ Rent-back at PITI rate, not free. No dollar amount in contract. Est. ~$175–190/day × 36 days ≈ $6,660.' },
+      { type: 'red',   text: '⚠ Pre-approval (Federal Savings Bank) has no loan amount, rate, or LTV stated.' },
+      { type: 'green', text: '✓ Appraisal gap addendum: buyer cannot terminate if appraisal comes in low.' },
+      { type: 'green', text: '✓ Strongest gross price at $862,000.' },
+    ]
+  }
+];
+
+// ── SCORE CALCULATOR ─────────────────────────────────────────────────────────
+function calcScore(o) {
+  const finScore = { cash:100, conv20:85, conv10:70, convlt10:50, fha:35, va:35 }[o.finCode] || 50;
+  const inspScore = { none:100, info:80, full:50 }[o.inspCode] || 50;
+  const apprScore = { waived:100, gap:75, included:50 }[o.apprCode] || 50;
+  const rentScore = { free:100, modified:70, declined:0 }[o.rentCode] || 50;
+  const emPct = o.em / o.price;
+  const timePenalty = Math.abs(o.closeDays - 30) * 2;
+
+  return (
+    0.50 * Math.min(110, o.price / LIST_PRICE * 100) +
+    0.15 * finScore +
+    0.10 * Math.min(100, emPct / 0.05 * 100) +
+    0.10 * inspScore +
+    0.05 * apprScore +
+    0.05 * Math.max(0, 100 - timePenalty) +
+    0.05 * rentScore
+  );
+}
+
+function calcNet(o) {
+  return o.price
+    - o.price * o.commPct
+    - o.price * TX_TAX
+    - CLOSING
+    - o.rentCost
+    - MORTGAGE;
+}
+
+function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+function pct(n) { return (n * 100).toFixed(1) + '%'; }
+
+// ── RENDER CARDS ─────────────────────────────────────────────────────────────
+const container = document.getElementById('offer-cards');
+
+offers.forEach(o => {
+  const score = calcScore(o);
+  const net = calcNet(o);
+  const vsListDollar = o.price - LIST_PRICE;
+  const vsListPct = (vsListDollar / LIST_PRICE * 100).toFixed(1);
+  const isTop = o.topPick;
+
+  const card = document.createElement('div');
+  card.className = 'offer-card' + (isTop ? ' top-pick' : '');
+
+  card.innerHTML = `
+    <div class="offer-header">
+      <div>
+        <div class="offer-num">Offer ${o.num} · ${o.date}</div>
+        <div class="offer-buyer">${o.buyers}</div>
+        <div class="offer-agent">${o.agent}</div>
+      </div>
+      ${isTop ? '<span class="offer-badge badge-green">★ Top Pick</span>' : ''}
+    </div>
+
+    <div class="offer-price-row">
+      <div>
+        <div class="offer-price">${fmt(o.price)}</div>
+        <div class="offer-price-meta">
+          <span class="offer-vs-list">+${fmt(vsListDollar)} (${vsListPct}% over list)</span>
+        </div>
+      </div>
+      <div class="offer-financing-chip">${o.financing}</div>
+    </div>
+
+    <div class="offer-grid">
+      <div class="offer-cell"><div class="offer-cell-lbl">Total EM</div><div class="offer-cell-val">${fmt(o.em)}</div></div>
+      <div class="offer-cell"><div class="offer-cell-lbl">Down Payment</div><div class="offer-cell-val">${o.downPct}%</div></div>
+      <div class="offer-cell"><div class="offer-cell-lbl">Inspection</div><div class="offer-cell-val" style="${o.inspCode==='full'?'color:var(--red)':''}">${o.inspection}</div></div>
+      <div class="offer-cell"><div class="offer-cell-lbl">Appraisal</div><div class="offer-cell-val" style="${o.apprCode==='included'?'color:var(--amber)':''}">${o.appraisal}</div></div>
+      <div class="offer-cell"><div class="offer-cell-lbl">Close Date</div><div class="offer-cell-val">${o.closeDate}</div></div>
+      <div class="offer-cell"><div class="offer-cell-lbl">Possession</div><div class="offer-cell-val">${o.possession}</div></div>
+      <div class="offer-cell" style="grid-column: 1/-1"><div class="offer-cell-lbl">Rent-Back</div><div class="offer-cell-val" style="${o.rentCode==='modified'?'color:var(--amber)':''}">${o.rentBack}</div></div>
+      <div class="offer-cell" style="grid-column: 1/-1"><div class="offer-cell-lbl">Earnest Money Schedule</div><div class="offer-cell-val">${o.emNote}</div></div>
+      ${o.attorney !== '—' ? `<div class="offer-cell" style="grid-column: 1/-1"><div class="offer-cell-lbl">Buyer Attorney</div><div class="offer-cell-val">${o.attorney}</div></div>` : ''}
+    </div>
+
+    <div class="offer-net-row">
+      <div class="offer-net-lbl">Est. Net Proceeds</div>
+      <div class="offer-net-val">${fmt(net)}</div>
+    </div>
+
+    <div class="offer-score-row">
+      <span class="score-lbl">Score</span>
+      <div class="score-bar-wrap"><div class="score-bar" style="width:${score}%"></div></div>
+      <span class="score-val">${score.toFixed(1)} / 100</span>
+    </div>
+
+    <div class="offer-flags">
+      ${o.flags.map(f => `<div class="flag flag-${f.type}"><span class="flag-icon"></span><span>${f.text}</span></div>`).join('')}
+    </div>
+  `;
+
+  container.appendChild(card);
+});
+</script>
+</body>
+</html>

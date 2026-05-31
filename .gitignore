@@ -1,0 +1,13 @@
+# Excel files (keep locally, not in GitHub)
+*.xlsx
+*.xls
+
+# PDFs and contracts (sensitive — keep locally)
+Offer 1/
+Offer 2/
+Offer 3/
+Offer 4/
+3827 MLS/
+
+# macOS
+.DS_Store
