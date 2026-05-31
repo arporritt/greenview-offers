@@ -358,6 +358,7 @@ async function sha1(s) {
 const fmt  = n => '$' + Math.round(+n).toLocaleString();
 const fmtK = n => '$' + Math.round(+n / 1000) + 'K';
 const cfgN = (k, d) => parseFloat(cfg[k]) || d;
+const PURCHASE_PRICE = 615000;
 
 function calcScore(o) {
   const fin  = {cash:100,conv20:85,conv10:70,convlt10:50,fha:35,va:35}[o.fin_code] || 50;
@@ -516,6 +517,57 @@ function renderDashboard() {
       <div class="kpi"><div class="kpi-val">${fmt(top._net)}</div><div class="kpi-lbl">Best Net</div><div class="kpi-sub">${top.buyers.split(' ')[0]}</div></div>
       <div class="kpi"><div class="kpi-val">${fmt(LIST)}</div><div class="kpi-lbl">List Price</div><div class="kpi-sub">MLS #${cfg.mls||'12652161'}</div></div>
       <div class="kpi"><div class="kpi-val">${offers.length}</div><div class="kpi-lbl">Offers</div><div class="kpi-sub">Received May 31</div></div>
+    </div>
+
+    <div class="section-title">Your Return — Bought June 2021 at $615,000</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.25rem" id="return-grid">
+      ${offers.map((o, i) => {
+        const priceGain = +o.price - PURCHASE_PRICE;
+        const priceGainPct = (priceGain / PURCHASE_PRICE * 100).toFixed(1);
+        const holdYears = 5;
+        return `
+        <div class="kpi" style="${i===0?'border-color:var(--emerald)':''}">
+          <div style="font-size:.65rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem">
+            Offer ${o.num} · ${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <div style="display:flex;justify-content:space-between;font-size:.82rem">
+              <span style="color:var(--text-2)">Sale price</span>
+              <span style="font-weight:600">${fmt(o.price)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.82rem">
+              <span style="color:var(--text-2)">Purchase price</span>
+              <span style="font-weight:600;color:var(--text-3)">− ${fmt(PURCHASE_PRICE)}</span>
+            </div>
+            <div style="height:1px;background:var(--border-subtle);margin:.1rem 0"></div>
+            <div style="display:flex;justify-content:space-between;font-size:.88rem">
+              <span style="font-weight:600">Price appreciation</span>
+              <span style="font-weight:700;color:var(--emerald)">+${fmt(priceGain)} <span style="font-size:.72rem">(+${priceGainPct}%)</span></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-top:.1rem">
+              <span style="color:var(--text-2)">Est. net proceeds</span>
+              <span style="font-weight:700;color:var(--emerald)">${fmt(o._net)}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:.875rem 1rem;margin-bottom:1.25rem;box-shadow:var(--shadow)">
+      <div style="font-size:.72rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">5-Year Appreciation Summary</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;text-align:center">
+        <div>
+          <div style="font-size:1.1rem;font-weight:800;color:var(--ink)">$615K → ${fmtK(offers[0].price)}</div>
+          <div style="font-size:.72rem;color:var(--text-3);margin-top:.15rem">Best offer price</div>
+        </div>
+        <div>
+          <div style="font-size:1.1rem;font-weight:800;color:var(--emerald)">+${((+offers[0].price - PURCHASE_PRICE)/PURCHASE_PRICE*100).toFixed(0)}%</div>
+          <div style="font-size:.72rem;color:var(--text-3);margin-top:.15rem">Price appreciation</div>
+        </div>
+        <div>
+          <div style="font-size:1.1rem;font-weight:800;color:var(--ink)">${((Math.pow(+offers[0].price/PURCHASE_PRICE, 1/5)-1)*100).toFixed(1)}% / yr</div>
+          <div style="font-size:.72rem;color:var(--text-3);margin-top:.15rem">Annualized (CAGR)</div>
+        </div>
+      </div>
     </div>
 
     <div class="section-title">Estimated Net Proceeds</div>
@@ -722,6 +774,15 @@ function renderOfferDetail(o) {
       <div class="nbt-row sub"><span class="nbt-lbl">Tax Proration (${taxProrPct}%${taxProrNote})</span><span class="nbt-amt">− ${fmt(taxProrAmt)}</span></div>
       <div class="nbt-row sub"><span class="nbt-lbl">Mortgage Payoff</span><span class="nbt-amt">− ${fmt(mortAmt)}</span></div>
       <div class="nbt-row total"><span class="nbt-lbl">Estimated Net to You</span><span class="nbt-amt">${fmt(o._net)}</span></div>
+    </div>
+
+    <div class="section-title">Your Return on This Offer</div>
+    <div class="nb-table">
+      <div class="nbt-row"><span class="nbt-lbl">Sale Price</span><span class="nbt-amt">${fmt(o.price)}</span></div>
+      <div class="nbt-row sub"><span class="nbt-lbl">Purchase Price (Jun 2021)</span><span class="nbt-amt" style="color:var(--text-2)">− ${fmt(PURCHASE_PRICE)}</span></div>
+      <div class="nbt-row" style="background:#f0fdf4"><span class="nbt-lbl" style="font-weight:700">Price Appreciation</span><span class="nbt-amt" style="color:var(--emerald);font-weight:800">+${fmt(+o.price - PURCHASE_PRICE)} <span style="font-size:.78rem;font-weight:600">(+${((+o.price - PURCHASE_PRICE)/PURCHASE_PRICE*100).toFixed(1)}%)</span></span></div>
+      <div class="nbt-row sub" style="border-top:1px solid var(--border)"><span class="nbt-lbl">Annualized (5-yr CAGR)</span><span class="nbt-amt" style="color:var(--text-2)">${((Math.pow(+o.price/PURCHASE_PRICE,0.2)-1)*100).toFixed(1)}% / yr</span></div>
+      <div class="nbt-row sub"><span class="nbt-lbl">Est. Net Proceeds (cash out)</span><span class="nbt-amt" style="color:var(--emerald)">${fmt(o._net)}</span></div>
     </div>
 
     ${pros.length?`<div class="section-title">Strengths</div>${pros.map(f=>`<div class="flag flag-green">${f.text}</div>`).join('')}`:''}
