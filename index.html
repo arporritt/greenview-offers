@@ -374,6 +374,17 @@ function calcScore(o) {
     0.05 * rent
   );
 }
+function parseTaxPct(s) {
+  if (!s || String(s).toUpperCase() === 'TBD') return 1.05; // assume 105% if TBD
+  const m = String(s).match(/(\d+\.?\d*)/);
+  return m ? parseFloat(m[1]) / 100 : 1.05;
+}
+function taxProrationAmt(o) {
+  // Days from Jan 1 to close: May 31 is day 151, so days = 150 + close_days
+  const days = 150 + +o.close_days;
+  const annual = cfgN('tax_annual', 13700);
+  return (days / 365) * annual * parseTaxPct(o.tax_prorate);
+}
 function calcNet(o) {
   const comm = parseFloat(o.comm_pct) || 0.05;
   return +o.price
@@ -381,7 +392,8 @@ function calcNet(o) {
     - +o.price * cfgN('transfer_tax_pct', 0.0045)
     - cfgN('closing_costs', 3650)
     - (+o.rent_cost || 0)
-    - cfgN('mortgage_payoff', 451500);
+    - taxProrationAmt(o)
+    - cfgN('mortgage_payoff', 486311.79);
 }
 function idealChecks(o) {
   return [
@@ -651,7 +663,10 @@ function renderOfferDetail(o) {
   const txAmt    = +o.price * cfgN('transfer_tax_pct', 0.0045);
   const closAmt  = cfgN('closing_costs', 3650);
   const rentAmt  = +o.rent_cost || 0;
-  const mortAmt  = cfgN('mortgage_payoff', 451500);
+  const taxProrAmt = taxProrationAmt(o);
+  const taxProrPct = Math.round(parseTaxPct(o.tax_prorate) * 100);
+  const taxProrNote = String(o.tax_prorate||'').toUpperCase() === 'TBD' ? ' (assumed)' : '';
+  const mortAmt  = cfgN('mortgage_payoff', 486311.79);
 
   const pros  = (o.flags||[]).filter(f => f.type==='green');
   const warns = (o.flags||[]).filter(f => f.type==='amber');
@@ -704,7 +719,8 @@ function renderOfferDetail(o) {
       <div class="nbt-row sub"><span class="nbt-lbl">Transfer Tax (0.45%)</span><span class="nbt-amt">− ${fmt(txAmt)}</span></div>
       <div class="nbt-row sub"><span class="nbt-lbl">Closing Costs (est.)</span><span class="nbt-amt">− ${fmt(closAmt)}</span></div>
       ${rentAmt?`<div class="nbt-row sub"><span class="nbt-lbl">Rent-Back Cost (est.)</span><span class="nbt-amt">− ${fmt(rentAmt)}</span></div>`:''}
-      <div class="nbt-row sub"><span class="nbt-lbl">Mortgage Payoff (est.)</span><span class="nbt-amt">− ${fmt(mortAmt)}</span></div>
+      <div class="nbt-row sub"><span class="nbt-lbl">Tax Proration (${taxProrPct}%${taxProrNote})</span><span class="nbt-amt">− ${fmt(taxProrAmt)}</span></div>
+      <div class="nbt-row sub"><span class="nbt-lbl">Mortgage Payoff</span><span class="nbt-amt">− ${fmt(mortAmt)}</span></div>
       <div class="nbt-row total"><span class="nbt-lbl">Estimated Net to You</span><span class="nbt-amt">${fmt(o._net)}</span></div>
     </div>
 
