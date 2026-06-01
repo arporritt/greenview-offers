@@ -136,12 +136,17 @@ body {
 
 /* ── SHARED ── */
 .section-title {
-  font-size: .68rem; font-weight: 600; color: var(--text-3);
+  font-size: .66rem; font-weight: 600; color: var(--text-3);
   text-transform: uppercase; letter-spacing: .08em;
-  margin: 1.5rem 0 .75rem; padding-bottom: .5rem;
+  margin: 1rem 0 .55rem; padding-bottom: .4rem;
   border-bottom: 1px solid var(--border);
 }
 .section-title:first-child { margin-top: 0; }
+
+/* Two-column layout on wider screens to cut scrolling */
+.cols2 { display: grid; gap: 0 1.5rem; align-items: start; }
+.cols2 > div { min-width: 0; }
+@media (min-width: 860px) { .cols2 { grid-template-columns: 1fr 1fr; } }
 
 .card {
   background: var(--surface); border-radius: var(--radius);
@@ -297,7 +302,8 @@ body {
 .icl-val { font-size: .75rem; color: var(--text-3); text-align: right; max-width: 45%; }
 
 /* ── GLOSSARY ── */
-.gl-grid { display: flex; flex-direction: column; gap: .5rem; }
+.gl-grid { display: grid; grid-template-columns: 1fr; gap: .5rem; align-items: start; }
+@media (min-width: 860px) { .gl-grid { grid-template-columns: 1fr 1fr; } }
 .gl-item {
   background: var(--surface); border-radius: var(--radius);
   border: 1px solid var(--border); padding: 1rem 1.1rem;
@@ -645,6 +651,8 @@ function renderDashboard() {
       <div class="kpi"><div class="kpi-val">${cagr}%/yr</div><div class="kpi-lbl">Annualized</div><div class="kpi-sub">5-yr CAGR</div></div>
     </div>
 
+    <div class="cols2">
+    <div>
     <!-- IDEAL SCENARIO MATCH -->
     <div class="section-title">How Each Offer Matches Your Ideal</div>
     <div class="compare-wrap">
@@ -668,7 +676,9 @@ function renderDashboard() {
         </tbody>
       </table>
     </div>
+    </div>
 
+    <div>
     <!-- RISK FLAGS -->
     <div class="section-title">Watch-Outs</div>
     ${sorted.map(o => {
@@ -679,6 +689,8 @@ function renderDashboard() {
           ${reds.map(f=>`<div class="flag flag-rose">${f.text}</div>`).join('')}
         </div>` : '';
     }).join('') || '<div class="empty" style="padding:1rem">No red-flag items.</div>'}
+    </div>
+    </div>
   `;
 }
 
@@ -825,54 +837,59 @@ function renderOfferDetail(o) {
       </div>
     </div>
 
-    <div class="section-title">Ideal Scenario Match</div>
-    <div class="icl">
-      ${checks.map(c => `
-      <div class="icl-row">
-        <span class="icl-icon">${c.pass?'✅':'❌'}</span>
-        <span class="icl-lbl">${c.label}</span>
-        <span class="icl-val">${c.val||'—'}</span>
-      </div>`).join('')}
-    </div>
+    <div class="cols2">
+      <div>
+        <div class="section-title">Ideal Scenario Match</div>
+        <div class="icl">
+          ${checks.map(c => `
+          <div class="icl-row">
+            <span class="icl-icon">${c.pass?'✅':'❌'}</span>
+            <span class="icl-lbl">${c.label}</span>
+            <span class="icl-val">${c.val||'—'}</span>
+          </div>`).join('')}
+        </div>
 
-    <div class="section-title">Contract Details</div>
-    <div class="detail-grid">
-      <div class="dg"><div class="dg-l">Earnest Money</div><div class="dg-v">${fmt(o.em)} (${(+o.em/+o.price*100).toFixed(1)}%)</div></div>
-      <div class="dg"><div class="dg-l">Down Payment</div><div class="dg-v">${o.down_pct}%</div></div>
-      <div class="dg full"><div class="dg-l">EM Schedule</div><div class="dg-v">${o.em_note||'—'}</div></div>
-      <div class="dg full"><div class="dg-l">Inspection</div><div class="dg-v">${o.inspection||'—'}</div></div>
-      <div class="dg full"><div class="dg-l">Appraisal</div><div class="dg-v">${o.appraisal||'—'}</div></div>
-      <div class="dg full"><div class="dg-l">Rent-Back Terms</div><div class="dg-v">${o.rent_back||'—'}</div></div>
-      <div class="dg"><div class="dg-l">Possession Escrow</div><div class="dg-v">${o.escrow||'—'}</div></div>
-      <div class="dg"><div class="dg-l">Tax Proration</div><div class="dg-v">${o.tax_prorate||'TBD'}</div></div>
-      <div class="dg"><div class="dg-l">Commission</div><div class="dg-v">${(comm*100).toFixed(1)}%</div></div>
-      ${o.attorney&&o.attorney!=='—'?`<div class="dg"><div class="dg-l">Buyer Attorney</div><div class="dg-v">${o.attorney}</div></div>`:''}
-    </div>
+        <div class="section-title">Net Proceeds Breakdown</div>
+        <div class="nb-table">
+          <div class="nbt-row"><span class="nbt-lbl">Sale Price</span><span class="nbt-amt">${fmt(o.price)}</span></div>
+          <div class="nbt-row sub"><span class="nbt-lbl">Commission (${(comm*100).toFixed(1)}%)</span><span class="nbt-amt">− ${fmt(commAmt)}</span></div>
+          <div class="nbt-row sub"><span class="nbt-lbl">Transfer Tax (0.45%)</span><span class="nbt-amt">− ${fmt(txAmt)}</span></div>
+          <div class="nbt-row sub"><span class="nbt-lbl">Closing Costs (est.)</span><span class="nbt-amt">− ${fmt(closAmt)}</span></div>
+          ${rentAmt?`<div class="nbt-row sub"><span class="nbt-lbl">Rent-Back Cost (est.)</span><span class="nbt-amt">− ${fmt(rentAmt)}</span></div>`:''}
+          <div class="nbt-row sub"><span class="nbt-lbl">Tax Proration (${taxProrPct}%${taxProrNote})</span><span class="nbt-amt">− ${fmt(taxProrAmt)}</span></div>
+          <div class="nbt-row sub"><span class="nbt-lbl">Mortgage Payoff</span><span class="nbt-amt">− ${fmt(mortAmt)}</span></div>
+          <div class="nbt-row total"><span class="nbt-lbl">Estimated Net to You</span><span class="nbt-amt">${fmt(o._net)}</span></div>
+        </div>
 
-    <div class="section-title">Net Proceeds Breakdown</div>
-    <div class="nb-table">
-      <div class="nbt-row"><span class="nbt-lbl">Sale Price</span><span class="nbt-amt">${fmt(o.price)}</span></div>
-      <div class="nbt-row sub"><span class="nbt-lbl">Commission (${(comm*100).toFixed(1)}%)</span><span class="nbt-amt">− ${fmt(commAmt)}</span></div>
-      <div class="nbt-row sub"><span class="nbt-lbl">Transfer Tax (0.45%)</span><span class="nbt-amt">− ${fmt(txAmt)}</span></div>
-      <div class="nbt-row sub"><span class="nbt-lbl">Closing Costs (est.)</span><span class="nbt-amt">− ${fmt(closAmt)}</span></div>
-      ${rentAmt?`<div class="nbt-row sub"><span class="nbt-lbl">Rent-Back Cost (est.)</span><span class="nbt-amt">− ${fmt(rentAmt)}</span></div>`:''}
-      <div class="nbt-row sub"><span class="nbt-lbl">Tax Proration (${taxProrPct}%${taxProrNote})</span><span class="nbt-amt">− ${fmt(taxProrAmt)}</span></div>
-      <div class="nbt-row sub"><span class="nbt-lbl">Mortgage Payoff</span><span class="nbt-amt">− ${fmt(mortAmt)}</span></div>
-      <div class="nbt-row total"><span class="nbt-lbl">Estimated Net to You</span><span class="nbt-amt">${fmt(o._net)}</span></div>
-    </div>
+        <div class="section-title">Your Return</div>
+        <div class="nb-table">
+          <div class="nbt-row"><span class="nbt-lbl">Sale Price</span><span class="nbt-amt">${fmt(o.price)}</span></div>
+          <div class="nbt-row sub"><span class="nbt-lbl">Purchase Price (Jun 2021)</span><span class="nbt-amt" style="color:var(--text-2)">− ${fmt(PURCHASE_PRICE)}</span></div>
+          <div class="nbt-row" style="background:#f0fdf4"><span class="nbt-lbl" style="font-weight:700">Price Appreciation</span><span class="nbt-amt" style="color:var(--emerald);font-weight:800">+${fmt(+o.price - PURCHASE_PRICE)} <span style="font-size:.78rem;font-weight:600">(+${((+o.price - PURCHASE_PRICE)/PURCHASE_PRICE*100).toFixed(1)}%)</span></span></div>
+          <div class="nbt-row sub" style="border-top:1px solid var(--border)"><span class="nbt-lbl">Annualized (5-yr CAGR)</span><span class="nbt-amt" style="color:var(--text-2)">${((Math.pow(+o.price/PURCHASE_PRICE,0.2)-1)*100).toFixed(1)}% / yr</span></div>
+        </div>
+      </div>
 
-    <div class="section-title">Your Return on This Offer</div>
-    <div class="nb-table">
-      <div class="nbt-row"><span class="nbt-lbl">Sale Price</span><span class="nbt-amt">${fmt(o.price)}</span></div>
-      <div class="nbt-row sub"><span class="nbt-lbl">Purchase Price (Jun 2021)</span><span class="nbt-amt" style="color:var(--text-2)">− ${fmt(PURCHASE_PRICE)}</span></div>
-      <div class="nbt-row" style="background:#f0fdf4"><span class="nbt-lbl" style="font-weight:700">Price Appreciation</span><span class="nbt-amt" style="color:var(--emerald);font-weight:800">+${fmt(+o.price - PURCHASE_PRICE)} <span style="font-size:.78rem;font-weight:600">(+${((+o.price - PURCHASE_PRICE)/PURCHASE_PRICE*100).toFixed(1)}%)</span></span></div>
-      <div class="nbt-row sub" style="border-top:1px solid var(--border)"><span class="nbt-lbl">Annualized (5-yr CAGR)</span><span class="nbt-amt" style="color:var(--text-2)">${((Math.pow(+o.price/PURCHASE_PRICE,0.2)-1)*100).toFixed(1)}% / yr</span></div>
-      <div class="nbt-row sub"><span class="nbt-lbl">Est. Net Proceeds (cash out)</span><span class="nbt-amt" style="color:var(--emerald)">${fmt(o._net)}</span></div>
-    </div>
+      <div>
+        <div class="section-title">Contract Details</div>
+        <div class="detail-grid">
+          <div class="dg"><div class="dg-l">Earnest Money</div><div class="dg-v">${fmt(o.em)} (${(+o.em/+o.price*100).toFixed(1)}%)</div></div>
+          <div class="dg"><div class="dg-l">Down Payment</div><div class="dg-v">${o.down_pct}%</div></div>
+          <div class="dg full"><div class="dg-l">EM Schedule</div><div class="dg-v">${o.em_note||'—'}</div></div>
+          <div class="dg full"><div class="dg-l">Inspection</div><div class="dg-v">${o.inspection||'—'}</div></div>
+          <div class="dg full"><div class="dg-l">Appraisal</div><div class="dg-v">${o.appraisal||'—'}</div></div>
+          <div class="dg full"><div class="dg-l">Rent-Back Terms</div><div class="dg-v">${o.rent_back||'—'}</div></div>
+          <div class="dg"><div class="dg-l">Possession Escrow</div><div class="dg-v">${o.escrow||'—'}</div></div>
+          <div class="dg"><div class="dg-l">Tax Proration</div><div class="dg-v">${o.tax_prorate||'TBD'}</div></div>
+          <div class="dg"><div class="dg-l">Commission</div><div class="dg-v">${(comm*100).toFixed(1)}%</div></div>
+          ${o.attorney&&o.attorney!=='—'?`<div class="dg"><div class="dg-l">Buyer Attorney</div><div class="dg-v">${o.attorney}</div></div>`:''}
+        </div>
 
-    ${pros.length?`<div class="section-title">Strengths</div>${pros.map(f=>`<div class="flag flag-green">${f.text}</div>`).join('')}`:''}
-    ${warns.length?`<div class="section-title">Watch</div>${warns.map(f=>`<div class="flag flag-amber">${f.text}</div>`).join('')}`:''}
-    ${risks.length?`<div class="section-title">Risks</div>${risks.map(f=>`<div class="flag flag-rose">${f.text}</div>`).join('')}`:''}
+        ${pros.length?`<div class="section-title">Strengths</div>${pros.map(f=>`<div class="flag flag-green">${f.text}</div>`).join('')}`:''}
+        ${warns.length?`<div class="section-title">Watch</div>${warns.map(f=>`<div class="flag flag-amber">${f.text}</div>`).join('')}`:''}
+        ${risks.length?`<div class="section-title">Risks</div>${risks.map(f=>`<div class="flag flag-rose">${f.text}</div>`).join('')}`:''}
+      </div>
+    </div>
   `;
 }
 
