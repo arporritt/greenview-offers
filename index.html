@@ -1679,14 +1679,14 @@ function renderNego(num) {
           <input type="checkbox" class="sugg-check" onchange="toggleSugg('${sg.id}')">
           <div class="sugg-body">
             <div style="display:flex;justify-content:space-between;gap:.5rem">
-              <span class="sugg-lever"><span class="term-cat">${sg.cat}</span>${sg.sug}</span>
-              <span class="sugg-impact ${Math.abs(dl)<1?'neg':''}">${impact}</span>
+              <span class="sugg-lever"><span class="term-cat">${sg.cat}</span><span id="sugg-lbl-${sg.id}">${sg.sug}</span></span>
+              <span class="sugg-impact ${Math.abs(dl)<1?'neg':''}" id="sugg-impact-${sg.id}">${impact}</span>
             </div>
-            <div class="sugg-flow"><span class="cur">${sg.cur}</span><span class="arr">→</span><span class="new">${sg.sug}</span></div>
+            <div class="sugg-flow"><span class="cur">${sg.cur}</span><span class="arr">→</span><span class="new" id="sugg-new-${sg.id}">${sg.sug}</span></div>
             <div class="sugg-why">${sg.why}</div>
             <div class="sugg-edit">
               ${sg.type==='num'
-                ? `<input id="sugg-val-${sg.id}" type="number" value="${sg.applyVal}" data-id="${sg.id}">`
+                ? `<input id="sugg-val-${sg.id}" type="number" value="${sg.applyVal}" data-id="${sg.id}" oninput="recalcSugg('${sg.id}')">`
                 : `<input id="sugg-val-${sg.id}" value="${sg.sug}" data-id="${sg.id}" readonly style="background:var(--bg)">`}
             </div>
           </div>
@@ -1729,6 +1729,35 @@ function renderNego(num) {
 function toggleSugg(id) {
   const el = document.getElementById('sugg-' + id);
   el.classList.toggle('on', el.querySelector('.sugg-check').checked);
+}
+
+// Human label for a suggestion's entered value (date for close, % for commission, $ otherwise)
+function suggValLabel(sg, val) {
+  if (sg.field === 'close_days') {
+    const d = new Date(2026, 4, 31); d.setDate(d.getDate() + (+val));
+    return `Close ${d.toLocaleDateString('en-US', { month:'short', day:'numeric' })} (${+val}d)`;
+  }
+  if (sg.field === 'comm_pct') return `${(+val * 100).toFixed(1)}% commission`;
+  if (sg.type === 'num') return fmt(val);
+  return sg.sug;
+}
+
+// Recompute a suggestion's net impact + label live as the value box changes
+function recalcSugg(id) {
+  const sg = window._negoSugg[id]; if (!sg) return;
+  const o = offers.find(x => String(x.num) === String(_negoOffer)); if (!o) return;
+  const inp = document.getElementById('sugg-val-' + id);
+  const val = sg.type === 'num' ? (inp.value === '' ? sg.applyVal : +inp.value) : sg.applyVal;
+  const oc = Object.assign({}, o); applyTerm(oc, sg.field, val);
+  const dl = calcNet(oc) - o._net;
+  const label = suggValLabel(sg, val);
+  const impEl = document.getElementById('sugg-impact-' + id);
+  if (impEl) {
+    impEl.textContent = Math.abs(dl) >= 1 ? `${dl>=0?'+':'−'}${fmt(Math.abs(dl))} net` : 'risk / terms';
+    impEl.classList.toggle('neg', Math.abs(dl) < 1);
+  }
+  const lblEl = document.getElementById('sugg-lbl-' + id); if (lblEl) lblEl.textContent = label;
+  const newEl = document.getElementById('sugg-new-' + id); if (newEl) newEl.textContent = label;
 }
 function setNegoBy(who) {
   _negoBy = who;
