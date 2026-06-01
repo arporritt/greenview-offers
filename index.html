@@ -405,6 +405,48 @@ body {
   .tab-pane { padding: 1.75rem; }
   .nb-label { width: 150px; }
 }
+
+/* ── PHONE (≤520px) ── */
+@media (max-width: 520px) {
+  body { overflow-x: hidden; }
+  .tab-pane { padding: 1rem .9rem; }
+
+  /* Recommendation hero: stack the three figures, smaller type */
+  .rec-hero { padding: 1.1rem; }
+  .rec-figures { gap: 0; justify-content: space-between; }
+  .rec-fig-v { font-size: 1.25rem; }
+  .rec-fig-l { font-size: .58rem; }
+  .rec-name { font-size: 1rem; }
+  .rec-chip { font-size: .66rem; padding: .25rem .55rem; }
+
+  /* Net leaderboard: narrower name column, value below bar if tight */
+  .lb-name { width: 78px; font-size: .72rem; }
+  .lb-fill span { font-size: .68rem; }
+
+  /* KPI: 2 per row, a touch smaller */
+  .kpi-val { font-size: 1.15rem; }
+  .kpi-lbl { font-size: .62rem; }
+  .kpi-sub { font-size: .66rem; }
+
+  /* Offer hero stats: 2 per row reads better than 3 cramped */
+  .oh-stats { grid-template-columns: repeat(2, 1fr); }
+  .oh-name { font-size: 1.05rem; }
+  .ohs-v { font-size: .85rem; }
+
+  /* Compare + dashboard match tables: tighter cells, smaller min-width */
+  .compare-table { min-width: 460px; }
+  .compare-table th, .compare-table td { padding: .45rem .5rem; }
+  .cval-main { font-size: .76rem; }
+
+  /* Detail grid single column so values aren't squished */
+  .detail-grid { grid-template-columns: 1fr; }
+
+  /* Section headings a bit tighter */
+  .section-title { margin: .9rem 0 .5rem; }
+
+  /* Glossary readability */
+  .gl-def { font-size: .82rem; }
+}
 </style>
 </head>
 <body>
