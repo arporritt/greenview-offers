@@ -33,22 +33,28 @@
   --rose-lt: #fff1f2;
   --rose-border: #fecdd3;
 
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(16,24,40,.05);
+  --shadow-md: 0 4px 12px -2px rgba(16,24,40,.08), 0 2px 6px -2px rgba(16,24,40,.05);
+  --shadow-lg: 0 12px 28px -6px rgba(16,24,40,.12), 0 4px 10px -4px rgba(16,24,40,.06);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg);
+  background:
+    radial-gradient(1200px 600px at 100% -10%, #fafafa 0%, rgba(250,250,250,0) 60%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
 }
+.tab-pane :is(.kpi-val, .sc-price, .ohs-v, .nbt-amt, .score-num, .cval-main) { font-variant-numeric: tabular-nums; }
 
 /* ── LOCK ── */
 #lock {
@@ -89,41 +95,44 @@ body {
 
 /* ── TOP BAR ── */
 .topbar {
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  padding: .875rem 1.25rem; flex-shrink: 0;
+  background: linear-gradient(180deg, #1a1a1f 0%, #09090b 100%);
+  padding: 1rem 1.25rem; flex-shrink: 0;
   display: flex; align-items: center; gap: .875rem;
 }
 .topbar-icon {
-  width: 32px; height: 32px; background: var(--ink); border-radius: 7px;
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,.1); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.12); border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: .85rem; flex-shrink: 0;
+  font-size: .9rem; flex-shrink: 0;
 }
-.topbar-text {}
-.topbar-addr { font-size: .68rem; font-weight: 500; color: var(--text-3); letter-spacing: .02em; }
-.topbar-title { font-size: .95rem; font-weight: 700; color: var(--ink); letter-spacing: -.02em; line-height: 1.2; }
+.topbar-addr { font-size: .68rem; font-weight: 500; color: rgba(255,255,255,.5); letter-spacing: .02em; }
+.topbar-title { font-size: 1rem; font-weight: 700; color: #fff; letter-spacing: -.02em; line-height: 1.2; }
 
-/* ── TAB NAV ── */
+/* ── TAB NAV (segmented pills) ── */
 .tabnav {
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  display: flex; overflow-x: auto; flex-shrink: 0;
-  scrollbar-width: none; padding: 0 .5rem;
+  background: rgba(255,255,255,.8); backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: .25rem; overflow-x: auto; flex-shrink: 0;
+  scrollbar-width: none; padding: .5rem .625rem;
   position: sticky; top: 0; z-index: 100;
 }
 .tabnav::-webkit-scrollbar { display: none; }
 .tab-btn {
-  padding: .7rem .875rem; font-family: inherit;
-  font-size: .78rem; font-weight: 500; color: var(--text-3);
+  padding: .45rem .85rem; font-family: inherit;
+  font-size: .78rem; font-weight: 500; color: var(--text-2);
   border: none; background: none; cursor: pointer; white-space: nowrap;
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
-  transition: color .15s; flex-shrink: 0;
+  border-radius: 99px; flex-shrink: 0;
+  transition: background .18s, color .18s;
 }
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
+.tab-btn:hover { background: var(--bg); color: var(--text); }
+.tab-btn.active { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--shadow-md); }
 
 /* ── CONTENT ── */
 .tab-content { flex: 1; overflow-y: auto; }
 .tab-pane { display: none; padding: 1.25rem; max-width: 1080px; margin: 0 auto; }
-.tab-pane.active { display: block; }
+.tab-pane.active { display: block; animation: paneIn .32s cubic-bezier(.16,1,.3,1); }
+@keyframes paneIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* ── SHARED ── */
 .section-title {
@@ -175,8 +184,8 @@ body {
   cursor: pointer; transition: box-shadow .15s, transform .1s;
   box-shadow: var(--shadow);
 }
-.sc-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
-.sc-card.rank-1 { border-color: var(--emerald); }
+.sc-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+.sc-card.rank-1 { border-color: var(--emerald-border); background: linear-gradient(180deg, #f6fefb 0%, #ffffff 55%); box-shadow: 0 0 0 1px var(--emerald-border), var(--shadow-md); }
 .rank-label { font-size: .65rem; font-weight: 600; color: var(--text-3); letter-spacing: .06em; margin-bottom: .35rem; }
 .rank-label.top { color: var(--emerald); }
 .sc-buyers { font-size: .85rem; font-weight: 700; line-height: 1.25; margin-bottom: .6rem; color: var(--ink); }
@@ -184,8 +193,8 @@ body {
 .sc-net { font-size: .75rem; font-weight: 500; color: var(--emerald); margin-top: .1rem; }
 .sc-fin { font-size: .72rem; color: var(--text-3); margin-top: .4rem; }
 .score-row { display: flex; align-items: center; gap: .5rem; margin-top: .75rem; }
-.score-track { flex: 1; background: var(--border); border-radius: 99px; height: 4px; }
-.score-fill { height: 4px; border-radius: 99px; background: var(--ink); }
+.score-track { flex: 1; background: var(--border); border-radius: 99px; height: 5px; }
+.score-fill { height: 5px; border-radius: 99px; background: linear-gradient(90deg, #34d399, #059669); }
 .score-num { font-size: .72rem; font-weight: 700; color: var(--ink); }
 
 .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1.25rem; }
@@ -203,9 +212,10 @@ body {
 .nb-label { font-size: .78rem; font-weight: 500; width: 110px; flex-shrink: 0; color: var(--text-2); }
 .nb-track { flex: 1; background: var(--border); border-radius: 6px; height: 26px; overflow: hidden; }
 .nb-fill {
-  height: 100%; border-radius: 6px; background: var(--ink);
+  height: 100%; border-radius: 6px;
+  background: linear-gradient(90deg, #3f3f46, #18181b);
   display: flex; align-items: center; padding: 0 .6rem;
-  transition: width .6s cubic-bezier(.4,0,.2,1);
+  transition: width .7s cubic-bezier(.16,1,.3,1);
 }
 .nb-fill span { font-size: .72rem; font-weight: 600; color: #fff; white-space: nowrap; }
 
@@ -243,8 +253,16 @@ body {
 
 /* ── OFFER DETAIL ── */
 .offer-hero {
-  background: var(--ink); border-radius: var(--radius);
-  padding: 1.25rem; margin-bottom: 1.25rem;
+  background: linear-gradient(145deg, #27272a 0%, #09090b 70%);
+  border-radius: var(--radius);
+  padding: 1.4rem; margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-lg);
+  position: relative; overflow: hidden;
+}
+.offer-hero::after {
+  content: ''; position: absolute; top: -40%; right: -10%;
+  width: 240px; height: 240px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(52,211,153,.18), transparent 70%);
 }
 .oh-num { font-size: .65rem; font-weight: 600; color: rgba(255,255,255,.45); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .25rem; }
 .oh-name { font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -.02em; }
@@ -288,6 +306,48 @@ body {
 .gl-term { font-size: .88rem; font-weight: 700; color: var(--ink); margin-bottom: .3rem; letter-spacing: -.01em; }
 .gl-def { font-size: .8rem; color: var(--text-2); line-height: 1.55; }
 .gl-tip { font-size: .75rem; color: var(--text-3); margin-top: .4rem; padding-top: .4rem; border-top: 1px solid var(--border-subtle); }
+
+/* ── LISTING ── */
+.listing-hero {
+  background: linear-gradient(145deg, #1c1c20 0%, #09090b 70%);
+  border-radius: var(--radius); padding: 1.4rem; margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-lg); position: relative; overflow: hidden;
+}
+.listing-hero::after {
+  content: ''; position: absolute; top: -50%; right: -5%;
+  width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(96,165,250,.15), transparent 70%);
+}
+.lh-status { display: inline-flex; align-items: center; gap: .35rem; font-size: .62rem; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem; }
+.lh-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.25); }
+.lh-price { font-size: 2rem; font-weight: 800; color: #fff; letter-spacing: -.03em; }
+.lh-psf { font-size: .8rem; color: rgba(255,255,255,.55); margin-top: .15rem; }
+.lh-specs { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-top: 1.1rem; position: relative; z-index: 1; }
+.lh-spec { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius-sm); padding: .55rem .7rem; }
+.lh-spec-v { font-size: .95rem; font-weight: 700; color: #fff; }
+.lh-spec-l { font-size: .6rem; color: rgba(255,255,255,.45); text-transform: uppercase; letter-spacing: .05em; margin-top: .1rem; }
+
+.desc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem; box-shadow: var(--shadow); font-size: .85rem; line-height: 1.65; color: var(--text-2); }
+
+.feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.feature-col { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .9rem 1rem; box-shadow: var(--shadow); }
+.feature-col h4 { font-size: .72rem; font-weight: 700; color: var(--ink); margin-bottom: .5rem; letter-spacing: -.01em; }
+.feature-col ul { list-style: none; display: flex; flex-direction: column; gap: .3rem; }
+.feature-col li { font-size: .8rem; color: var(--text-2); padding-left: 1.1rem; position: relative; }
+.feature-col li::before { content: '·'; position: absolute; left: .3rem; color: var(--emerald); font-weight: 700; }
+
+.timeline { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.tl-row { display: flex; align-items: center; gap: .875rem; padding: .65rem 1rem; border-bottom: 1px solid var(--border-subtle); }
+.tl-row:last-child { border-bottom: none; }
+.tl-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.tl-row.active .tl-dot { background: var(--emerald); box-shadow: 0 0 0 3px var(--emerald-lt); }
+.tl-date { font-size: .72rem; color: var(--text-3); width: 90px; flex-shrink: 0; }
+.tl-event { font-size: .82rem; font-weight: 500; flex: 1; }
+.tl-price { font-size: .82rem; font-weight: 700; color: var(--ink); }
+
+.score-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.score-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 99px; padding: .35rem .7rem; font-size: .75rem; box-shadow: var(--shadow); }
+.score-chip b { color: var(--ink); }
 
 /* ── LOADING ── */
 .empty { padding: 3rem; text-align: center; color: var(--text-3); font-size: .85rem; }
@@ -336,12 +396,14 @@ body {
   <nav class="tabnav" id="tabnav">
     <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
     <button class="tab-btn" data-tab="compare">Compare</button>
+    <button class="tab-btn" data-tab="listing">Listing</button>
     <button class="tab-btn" data-tab="glossary">Glossary</button>
   </nav>
 
   <div class="tab-content">
     <div class="tab-pane active" id="tab-dashboard"><div class="empty"><span class="spin"></span>Loading…</div></div>
     <div class="tab-pane" id="tab-compare"></div>
+    <div class="tab-pane" id="tab-listing"></div>
     <div class="tab-pane" id="tab-glossary"></div>
   </div>
 </div>
@@ -435,6 +497,7 @@ async function loadData() {
     buildOfferTabs();
     renderDashboard();
     renderCompare();
+    renderListing();
     renderGlossary();
   } catch(e) {
     document.getElementById('tab-dashboard').innerHTML =
@@ -792,6 +855,89 @@ function renderOfferDetail(o) {
 }
 
 // ── GLOSSARY ──────────────────────────────────────────────────────────────────
+// ── LISTING (MLS) ─────────────────────────────────────────────────────────────
+function renderListing() {
+  const features = {
+    'Interior': ['Open floorplan', 'Crown molding & gracious ceilings', 'Hardwood floors throughout', 'Gas log fireplace (living room)', 'Juliet balcony', 'Custom walk-in closet', '6 total rooms'],
+    'Kitchen': ['White cabinetry, pull-out shelving', 'Oversized granite peninsula', 'Stainless steel appliances', 'West Elm lighting', 'Breakfast bar / eating area'],
+    'Primary Suite': ['Serena & Lily wallpaper', 'Shell-strand chandelier', 'Dual vanity', 'Separate tub & shower', 'Custom walk-in closet'],
+    'Baths & More': ['2 full baths, fully renovated', 'Williams Sonoma fixtures', 'In-unit laundry', 'Central A/C + forced-air heat', 'East-facing outdoor space', '1-car garage + storage'],
+  };
+
+  const priceHistory = [
+    { date: 'May 28, 2026', event: 'Listed for sale', price: '$799,000', active: true },
+    { date: 'Jun 30, 2021', event: 'Sold', price: '$615,000', active: false },
+    { date: 'Apr 28, 2021', event: 'Listed', price: '$615,000', active: false },
+  ];
+
+  const scores = [
+    ['Walk Score', '9.2'], ['Bike Score', '8.5'], ['Transit', '7.4'],
+    ['Quiet', '8.4'], ['Blaine Elementary', '9/10'], ['Flood Risk', '1/10'],
+  ];
+
+  document.getElementById('tab-listing').innerHTML = `
+    <div class="listing-hero">
+      <div class="lh-status">Active · MLS #12652161</div>
+      <div class="lh-price">$799,000</div>
+      <div class="lh-psf">$521 / sq ft · Southport Corridor · Listed May 28, 2026</div>
+      <div class="lh-specs">
+        <div class="lh-spec"><div class="lh-spec-v">3</div><div class="lh-spec-l">Bedrooms</div></div>
+        <div class="lh-spec"><div class="lh-spec-v">2</div><div class="lh-spec-l">Full Baths</div></div>
+        <div class="lh-spec"><div class="lh-spec-v">1,533</div><div class="lh-spec-l">Sq Ft</div></div>
+        <div class="lh-spec"><div class="lh-spec-v">2002</div><div class="lh-spec-l">Year Built</div></div>
+        <div class="lh-spec"><div class="lh-spec-v">$254</div><div class="lh-spec-l">HOA / mo</div></div>
+        <div class="lh-spec"><div class="lh-spec-v">1-Car</div><div class="lh-spec-l">Garage</div></div>
+      </div>
+    </div>
+
+    <div class="section-title">Listing Description</div>
+    <div class="desc-card">
+      Thoughtfully designed home on a tree-lined street just steps from Lakeview's best shops and
+      restaurants in the highly desired Southport Corridor — in the acclaimed Blaine School District.
+      Sunlight pours into the extra-wide interiors from oversized windows with treetop views. Open
+      floorplan with stylish updates throughout: gracious ceilings, crown molding, and hardwood floors.
+      The living room is anchored by a stone fireplace with a Juliet balcony, leading into separate
+      dining and an open kitchen with white cabinetry, an oversized granite peninsula, West Elm lighting,
+      and stainless appliances. The primary en-suite offers a custom walk-in closet, dual vanity, and
+      separate tub & shower. Both baths fully renovated with Williams Sonoma fixtures. Enjoy the oversized
+      east-facing outdoor space, additional storage, and garage parking. Steps to Tango Sur, Southport
+      Grocery, Crosby's Kitchen, the Brown Line, and more.
+    </div>
+
+    <div class="section-title">Features</div>
+    <div class="feature-grid">
+      ${Object.entries(features).map(([title, items]) => `
+        <div class="feature-col">
+          <h4>${title}</h4>
+          <ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>
+        </div>`).join('')}
+    </div>
+
+    <div class="section-title">Price History</div>
+    <div class="timeline">
+      ${priceHistory.map(p => `
+        <div class="tl-row ${p.active?'active':''}">
+          <span class="tl-dot"></span>
+          <span class="tl-date">${p.date}</span>
+          <span class="tl-event">${p.event}</span>
+          <span class="tl-price">${p.price}</span>
+        </div>`).join('')}
+    </div>
+
+    <div class="section-title">Neighborhood & Ratings</div>
+    <div class="score-chips">
+      ${scores.map(([l, v]) => `<span class="score-chip">${l} <b>${v}</b></span>`).join('')}
+    </div>
+
+    <div class="section-title">Market Context</div>
+    <div class="desc-card" style="font-size:.8rem">
+      <strong style="color:var(--ink)">Redfin Estimate: $834,607</strong> (+$36K over list).
+      North Side is a seller's market — homes average ~4% over list and go pending in ~36 days.
+      You listed May 28 and had <strong style="color:var(--ink)">6 offers within days</strong>, with a Highest &amp; Best deadline of Sunday 5/31 at 7 PM.
+    </div>
+  `;
+}
+
 function renderGlossary() {
   const terms = [
     ['Earnest Money (EM)', 'A deposit the buyer puts down to show they\'re serious. It goes toward the purchase price at closing. If the buyer backs out without a valid contingency, you typically keep it.', 'Higher EM = more skin in the game. 3–5% is strong; under 2% is light.'],
