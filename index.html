@@ -336,14 +336,14 @@ body {
 
 /* ── RECOMMENDATION HERO ── */
 .rec-hero {
-  background: linear-gradient(145deg, #064e3b 0%, #022c22 75%);
+  background: linear-gradient(145deg, #27272a 0%, #09090b 70%);
   border-radius: var(--radius); padding: 1.4rem; margin-bottom: 1.25rem;
   box-shadow: var(--shadow-lg); position: relative; overflow: hidden;
 }
 .rec-hero::after {
   content: ''; position: absolute; top: -40%; right: -8%;
   width: 240px; height: 240px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(52,211,153,.25), transparent 70%);
+  background: radial-gradient(circle, rgba(52,211,153,.16), transparent 70%);
 }
 .rec-tag { display: inline-flex; align-items: center; gap: .4rem; font-size: .62rem; font-weight: 700; color: #6ee7b7; text-transform: uppercase; letter-spacing: .12em; margin-bottom: .6rem; }
 .rec-tag::before { content: '★'; }
@@ -360,12 +360,12 @@ body {
 .lb { display: flex; flex-direction: column; gap: .5rem; }
 .lb-row { display: flex; align-items: center; gap: .7rem; }
 .lb-rank { width: 22px; height: 22px; border-radius: 50%; background: var(--bg); color: var(--text-2); font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.lb-rank.gold { background: #fef3c7; color: #92400e; }
+.lb-rank.gold { background: var(--emerald-lt); color: var(--emerald); }
 .lb-name { font-size: .78rem; font-weight: 500; width: 95px; flex-shrink: 0; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-bar { flex: 1; background: var(--border-subtle); border-radius: 7px; height: 30px; overflow: hidden; position: relative; }
 .lb-fill { height: 100%; border-radius: 7px; display: flex; align-items: center; justify-content: flex-end; padding: 0 .6rem; transition: width .7s cubic-bezier(.16,1,.3,1); }
-.lb-fill.gold { background: linear-gradient(90deg, #fbbf24, #d97706); }
-.lb-fill.dark { background: linear-gradient(90deg, #52525b, #27272a); }
+.lb-fill.gold { background: linear-gradient(90deg, #34d399, #059669); }
+.lb-fill.dark { background: linear-gradient(90deg, #a1a1aa, #71717a); }
 .lb-fill span { font-size: .74rem; font-weight: 700; color: #fff; white-space: nowrap; }
 
 /* ── NEGOTIATE ── */
@@ -444,7 +444,7 @@ body {
 .listing-hero::after {
   content: ''; position: absolute; top: -50%; right: -5%;
   width: 260px; height: 260px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(96,165,250,.15), transparent 70%);
+  background: radial-gradient(circle, rgba(52,211,153,.14), transparent 70%);
 }
 .lh-status { display: inline-flex; align-items: center; gap: .35rem; font-size: .62rem; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .5rem; }
 .lh-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.25); }
@@ -862,15 +862,15 @@ function renderDashboard() {
   let whatIfHtml = '';
   if (projLeader && String(projLeader.num) !== String(top.num) && projLeader._projected && projLeader._net > top._net) {
     whatIfHtml = `
-      <div class="card" style="padding:.9rem 1rem;margin-bottom:1.25rem;border-left:3px solid #2563eb">
-        <div style="font-size:.68rem;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">📈 If Your Counter Is Accepted</div>
+      <div class="card" style="padding:.9rem 1rem;margin-bottom:1.25rem;border-left:3px solid var(--emerald)">
+        <div style="font-size:.68rem;font-weight:700;color:var(--emerald);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">If Your Counter Is Accepted</div>
         <div style="font-size:.82rem;color:var(--text);line-height:1.5">
           <b>Offer ${projLeader.num} (${firstName(projLeader)})</b> would become the leader at
           <b style="color:var(--emerald)">${fmt(projLeader._net)}</b> net — ahead of the current leader,
           Offer ${top.num} (${firstName(top)}) at ${fmt(top._net)}.
           Its proposed terms aren't accepted yet.
         </div>
-        <button class="rec-btn" style="margin-top:.6rem;background:#2563eb;color:#fff" onclick="openNego(${projLeader.num})">Review &amp; accept terms →</button>
+        <button class="rec-btn" style="margin-top:.6rem;background:var(--ink);color:#fff" onclick="openNego(${projLeader.num})">Review &amp; accept terms →</button>
       </div>`;
   }
 
