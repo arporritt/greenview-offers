@@ -759,10 +759,12 @@ function selectOffer(num) {
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard() {
   const LIST    = cfgN('list_price', 799000);
-  const sorted  = [...offers].sort((a,b) => b._net - a._net); // rank by NET, the # that matters
+  // Rank by the REAL state: base + accepted terms only
+  const real    = offers.map(acceptedOffer);
+  const sorted  = [...real].sort((a,b) => b._net - a._net);
   const top     = sorted[0];
   const second  = sorted[1];
-  const maxNet  = Math.max(...offers.map(o => o._net));
+  const maxNet  = Math.max(...real.map(o => o._net));
   const gapNext = second ? top._net - second._net : 0;
 
   // Build "why it wins" chips from the top offer's positives + key facts
@@ -829,8 +831,26 @@ function renderDashboard() {
   }
 
   // Offers in numeric order + medal map (by net rank) for the matrix
-  const byNum = [...offers].sort((a, b) => +a.num - +b.num);
+  const byNum = [...real].sort((a, b) => +a.num - +b.num);
   const medal = {}; sorted.slice(0, 3).forEach((o, i) => { medal[o.num] = ['🥇','🥈','🥉'][i]; });
+
+  // ── What-if: would a PENDING (proposed-but-not-accepted) counter change the leader? ──
+  const proj = offers.map(projectedOffer);
+  const projLeader = [...proj].sort((a, b) => b._net - a._net)[0];
+  let whatIfHtml = '';
+  if (projLeader && String(projLeader.num) !== String(top.num) && projLeader._projected && projLeader._net > top._net) {
+    whatIfHtml = `
+      <div class="card" style="padding:.9rem 1rem;margin-bottom:1.25rem;border-left:3px solid #2563eb">
+        <div style="font-size:.68rem;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">📈 If Your Counter Is Accepted</div>
+        <div style="font-size:.82rem;color:var(--text);line-height:1.5">
+          <b>Offer ${projLeader.num} (${firstName(projLeader)})</b> would become the leader at
+          <b style="color:var(--emerald)">${fmt(projLeader._net)}</b> net — ahead of the current leader,
+          Offer ${top.num} (${firstName(top)}) at ${fmt(top._net)}.
+          Its proposed terms aren't accepted yet.
+        </div>
+        <button class="rec-btn" style="margin-top:.6rem;background:#2563eb;color:#fff" onclick="openNego(${projLeader.num})">Review &amp; accept terms →</button>
+      </div>`;
+  }
 
   // ── Negotiation summary (reads rounds stored per offer) ──
   const negoOffers = byNum.map(o => ({ o, rounds: loadRounds(o.num) })).filter(x => x.rounds.length);
@@ -905,6 +925,8 @@ function renderDashboard() {
       <div class="rec-cta"><button class="rec-btn" onclick="openOffer(${top.num})">View full detail →</button></div>
     </div>
 
+    ${whatIfHtml}
+
     ${pendingHtml}
 
     ${whyHtml}
@@ -977,7 +999,7 @@ function renderCompare() {
   const cols = [...offers].sort((a, b) => +a.num - +b.num).map(effectiveOffer);
   const medal = {}; [...cols].sort((a, b) => b._net - a._net).slice(0, 3)
     .forEach((o, i) => { medal[o.num] = ['🥇','🥈','🥉'][i]; });
-  const anyNego = cols.some(o => o._negotiated);
+  const anyNego = cols.some(o => o._negotiated || o._hasPending);
 
   function tagHtml(code, map) {
     const [cls, label] = map[code] || ['slate', code];
@@ -1008,12 +1030,16 @@ function renderCompare() {
   const netCls    = rank(o => o._net);
   const scoreCls  = rank(o => o._score);
 
+  const inNego = o => o._negotiated || o._hasPending;
+  const negoTag = o => o._negotiated ? ' <span title="accepted terms applied" style="color:#6ee7b7">✓↻</span>'
+                     : o._hasPending ? ' <span title="counter proposed, pending acceptance" style="color:#fbbf24">⋯</span>' : '';
+  const negoSub = o => o._negotiated ? ' · terms accepted' : o._hasPending ? ' · counter pending' : '';
   const offerCols = cols.map(o =>
-    `<th class="offer-col${o._negotiated?' nego':''}">
-      ${medal[o.num]?medal[o.num]+' ':''}Offer ${o.num}${o._negotiated?' <span title="in active negotiation" style="color:#6ee7b7">↻</span>':''}<br>
-      <span style="font-weight:500;font-size:.65rem;color:rgba(255,255,255,.55)">${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}${o._negotiated?' · in talks':''}</span>
+    `<th class="offer-col${inNego(o)?' nego':''}">
+      ${medal[o.num]?medal[o.num]+' ':''}Offer ${o.num}${negoTag(o)}<br>
+      <span style="font-weight:500;font-size:.65rem;color:rgba(255,255,255,.55)">${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}${negoSub(o)}</span>
     </th>`).join('');
-  const colGroup = `<colgroup><col style="width:150px">${cols.map(o=>`<col style="width:150px"${o._negotiated?' class="nego-col"':''}>`).join('')}</colgroup>`;
+  const colGroup = `<colgroup><col style="width:150px">${cols.map(o=>`<col style="width:150px"${inNego(o)?' class="nego-col"':''}>`).join('')}</colgroup>`;
 
   const check = pass => pass ? '<span style="font-size:1rem">✅</span>' : '<span style="font-size:1rem">❌</span>';
   const span  = n => `<div class="cval"><div class="cval-main">${n}</div></div>`;
@@ -1113,7 +1139,7 @@ function renderCompare() {
       </tbody>
     </table>
     </div>
-    <p style="font-size:.7rem;color:var(--text-3);margin-top:.75rem">Green shading = best · Red shading = weakest · 🥇🥈🥉 top 3 by net.${anyNego?' <span style="color:var(--emerald)">↻ = reflects the latest logged negotiation round.</span>':''}</p>
+    <p style="font-size:.7rem;color:var(--text-3);margin-top:.75rem">Green shading = best · Red shading = weakest · 🥇🥈🥉 top 3 by net.${anyNego?' <span style="color:var(--emerald)">✓↻ = accepted terms applied</span> · <span style="color:#b45309">⋯ = counter proposed, pending acceptance (not yet in these numbers).</span>':''}</p>
   `;
 }
 
@@ -1409,15 +1435,38 @@ function scenarioAfter(base, rounds, uptoIndex) {
   return oc;
 }
 
-// An offer with its latest negotiation scenario applied (base offer if no rounds)
-function effectiveOffer(o) {
-  const rounds = loadRounds(o.num);
-  if (!rounds.length) return o;
-  const eff = scenarioAfter(o, rounds, rounds.length - 1);
-  eff._negotiated = true;
-  eff._rounds = rounds.length;
-  return eff;
+// Apply a list of rounds' terms to a base offer
+function applyRounds(base, list) {
+  const oc = Object.assign({}, base);
+  list.forEach(r => (r.terms || []).forEach(t => { if (t && t.field) applyTerm(oc, t.field, t.value); }));
+  oc._net = calcNet(oc);
+  oc._score = calcScore(oc);
+  return oc;
 }
+
+// "Real" offer = base + only ACCEPTED rounds (what's actually agreed so far)
+function acceptedOffer(o) {
+  const rounds = loadRounds(o.num);
+  const acc = rounds.filter(r => r.accepted);
+  const out = acc.length ? applyRounds(o, acc) : Object.assign({}, o);
+  out._acceptedCount = acc.length;
+  out._pendingCount = rounds.length - acc.length;
+  out._negotiated = acc.length > 0;
+  out._hasPending = (rounds.length - acc.length) > 0;
+  return out;
+}
+
+// "Projected" offer = base + ALL rounds (accepted + pending) — the if-everything-agreed view
+function projectedOffer(o) {
+  const rounds = loadRounds(o.num);
+  if (!rounds.length) { const c = Object.assign({}, o); c._projected = false; return c; }
+  const p = applyRounds(o, rounds);
+  p._projected = true;
+  return p;
+}
+
+// Compare/effective uses the REAL (accepted) state
+function effectiveOffer(o) { return acceptedOffer(o); }
 
 // Smart counter-term suggestions — each carries structured {cat, field, type, applyVal} for modeling
 function genSuggestions(o) {
@@ -1555,11 +1604,12 @@ function renderNego(num) {
         const scen = scenarioAfter(o, rounds, i);
         const d = scen._net - o._net;
         const cls = d > 0 ? 'up' : d < 0 ? 'down' : '';
+        const acc = !!r.accepted;
         return `
-        <div class="round ${r.by.toLowerCase()}">
+        <div class="round ${r.by.toLowerCase()}" style="${acc?'box-shadow:inset 0 0 0 1.5px var(--emerald)':''}">
           <button class="round-del" onclick="delRound(${num}, ${i})">delete</button>
           <div class="round-head">
-            <span class="round-by">${r.by === 'Seller' ? '🟢 Seller' : '🔵 Buyer'} · Round ${i+1}</span>
+            <span class="round-by">${r.by === 'Seller' ? '🟢 Seller' : '🔵 Buyer'} · Round ${i+1}${acc?' <span class="tag tag-green" style="margin-left:.3rem">✓ Accepted</span>':''}</span>
             <span class="round-date">${r.date}</span>
           </div>
           ${(r.terms&&r.terms.length) ? `<ul class="round-terms">${r.terms.map(t=>{
@@ -1573,6 +1623,7 @@ function renderNego(num) {
             <div class="rm-item"><div class="rm-v">${scen._score.toFixed(0)}</div><div class="rm-l">Score</div></div>
             <div class="rm-item"><div class="rm-v ${cls}">${d>=0?'+':'−'}${fmt(Math.abs(d))}</div><div class="rm-l">Δ vs current</div></div>
           </div>
+          <button onclick="toggleAccept(${num}, ${i})" style="margin-top:.5rem;width:100%;padding:.45rem;border-radius:7px;border:1.5px solid ${acc?'var(--border)':'var(--emerald)'};background:${acc?'transparent':'var(--emerald)'};color:${acc?'var(--text-2)':'#fff'};font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer">${acc?'↩ Mark as not accepted':'✓ Accept these terms'}</button>
         </div>`; }).join('')
         : '<div class="empty">No rounds logged yet. Check terms above, then Record Round.</div>'}
     </div>
@@ -1625,6 +1676,14 @@ function delRound(num, i) {
   rounds.splice(i, 1);
   saveRounds(num, rounds);
   buildNegoTabs();   // refresh the ● in-negotiation markers
+  renderNego(num);
+}
+
+function toggleAccept(num, i) {
+  const rounds = loadRounds(num);
+  rounds[i].accepted = !rounds[i].accepted;
+  saveRounds(num, rounds);
+  buildNegoTabs();
   renderNego(num);
 }
 </script>
