@@ -1074,6 +1074,10 @@ function renderCompare() {
             <div class="cval-sub">+${fmtK(+o.price - cfgN('list_price',799000))}</div></div>
           </td>`).join('')}
         </tr>
+        <tr>
+          <td class="row-label">$ / Sq Ft</td>
+          ${cols.map(o => `<td class="offer-col">${span('$' + Math.round(+o.price / cfgN('sqft',1533)).toLocaleString())}</td>`).join('')}
+        </tr>
         <tr><td class="row-label">Financing</td>${cols.map(o=>`<td class="offer-col">${finTag(o)}</td>`).join('')}</tr>
         <tr>
           <td class="row-label">Down Payment</td>
