@@ -728,10 +728,13 @@ function buildOfferTabs() {
   // Sub-tabs inside the "Offers" tab, ordered by offer NUMBER (1→6)
   const byNum = [...offers].sort((a, b) => +a.num - +b.num);
   const sub = document.getElementById('subtabnav');
-  sub.innerHTML = byNum.map(o => `
-    <button class="subtab-btn" data-offer="${o.num}" onclick="selectOffer(${o.num})">
-      Offer ${o.num}<span class="st-net">${fmt(o._net)}</span>
-    </button>`).join('');
+  sub.innerHTML = byNum.map(o => {
+    const active = String(_selectedOffer) === String(o.num);
+    const inTalks = loadRounds(o.num).length > 0;
+    return `<button class="subtab-btn${active?' active':''}" data-offer="${o.num}" onclick="selectOffer(${o.num})">
+      Offer ${o.num}${inTalks?' <span style="color:#34d399" title="in active negotiation">●</span>':''}<span class="st-net">${fmt(o._net)}</span>
+    </button>`;
+  }).join('');
 
   // Wire the main tabs
   document.querySelectorAll('#tabnav .tab-btn').forEach(btn => {
@@ -1181,9 +1184,45 @@ function renderOfferDetail(o) {
   const risks = (o.flags||[]).filter(f => f.type==='red');
   const checks = idealChecks(o);
 
+  // ── Negotiation status banner ──
+  const rounds = loadRounds(o.num);
+  let negoBanner = '';
+  if (rounds.length) {
+    const proj = projectedOffer(o);
+    const accCount = rounds.filter(r => r.accepted).length;
+    const pendCount = rounds.length - accCount;
+    const allTerms = [];
+    rounds.forEach(r => (r.terms||[]).forEach(t => { if (t && t.display) allTerms.push({...t, accepted: !!r.accepted}); }));
+    const dProj = proj._net - o._net;
+    const statusChip = pendCount
+      ? `<span class="tag tag-amber">⋯ ${pendCount} term${pendCount>1?'s':''} pending</span>`
+      : `<span class="tag tag-green">✓ all accepted</span>`;
+    negoBanner = `
+      <div class="card" style="padding:1rem;margin-bottom:1.25rem;border-left:3px solid var(--emerald)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.5rem">
+          <span style="font-size:.7rem;font-weight:700;color:var(--emerald);text-transform:uppercase;letter-spacing:.08em">🤝 In Negotiation</span>
+          ${statusChip}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.25rem;margin-bottom:.6rem">
+          ${allTerms.map(t => `
+            <div style="font-size:.8rem;display:flex;align-items:center;gap:.4rem">
+              <span class="term-cat">${t.cat||'Term'}</span>
+              <span style="flex:1">${t.display}</span>
+              <span style="font-size:.68rem;color:${t.accepted?'var(--emerald)':'var(--amber)'};font-weight:600">${t.accepted?'✓ accepted':'⋯ pending'}</span>
+            </div>`).join('')}
+        </div>
+        <div style="display:flex;gap:1.25rem;padding-top:.6rem;border-top:1px dashed var(--border)">
+          <div><div style="font-size:.9rem;font-weight:800;color:var(--emerald)">${fmt(proj._net)}</div><div style="font-size:.62rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em">Net if all agreed</div></div>
+          <div><div style="font-size:.9rem;font-weight:800;color:var(--ink)">${fmt(proj.price)}</div><div style="font-size:.62rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em">Price if agreed</div></div>
+          <div><div style="font-size:.9rem;font-weight:800;color:${dProj>=0?'var(--emerald)':'var(--rose)'}">${dProj>=0?'+':'−'}${fmt(Math.abs(dProj))}</div><div style="font-size:.62rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em">vs current</div></div>
+        </div>
+        <button class="rec-btn" style="margin-top:.7rem;background:var(--ink);color:#fff" onclick="openNego(${o.num})">Open negotiation →</button>
+      </div>`;
+  }
+
   pane.innerHTML = `
     <div class="offer-hero">
-      <div class="oh-num">Offer #${o.num} · ${o.date||''}</div>
+      <div class="oh-num">Offer #${o.num} · ${o.date||''}${rounds.length?' · <span style="color:#6ee7b7">🤝 in negotiation</span>':''}</div>
       <div class="oh-name">${o.buyers}</div>
       <div class="oh-agent">${o.agent||''}</div>
       <div class="oh-stats">
@@ -1195,6 +1234,8 @@ function renderOfferDetail(o) {
         <div class="ohs"><div class="ohs-v">${fmtDate(o.possession)}</div><div class="ohs-l">Possession</div></div>
       </div>
     </div>
+
+    ${negoBanner}
 
     <div class="cols2">
       <div>
@@ -1688,24 +1729,32 @@ function saveRound(num) {
   });
   saveRounds(num, rounds);
   _customTerms = []; // reset pending custom terms
-  buildNegoTabs();   // refresh the ● in-negotiation markers
-  renderNego(num);
+  refreshAll(num);
 }
 
 function delRound(num, i) {
   const rounds = loadRounds(num);
   rounds.splice(i, 1);
   saveRounds(num, rounds);
-  buildNegoTabs();   // refresh the ● in-negotiation markers
-  renderNego(num);
+  refreshAll(num);
 }
 
 function toggleAccept(num, i) {
   const rounds = loadRounds(num);
   rounds[i].accepted = !rounds[i].accepted;
   saveRounds(num, rounds);
-  buildNegoTabs();
-  renderNego(num);
+  refreshAll(num);
+}
+
+// Re-render every view so negotiation changes show everywhere immediately
+function refreshAll(num) {
+  buildNegoTabs(); buildOfferTabs();
+  renderDashboard(); renderCompare();
+  if (_selectedOffer != null) {
+    const o = offers.find(x => String(x.num) === String(_selectedOffer));
+    if (o) renderOfferDetail(o);
+  }
+  if (num != null) renderNego(num);
 }
 </script>
 </body>
