@@ -363,6 +363,55 @@ body {
 .lb-fill.dark { background: linear-gradient(90deg, #52525b, #27272a); }
 .lb-fill span { font-size: .74rem; font-weight: 700; color: #fff; white-space: nowrap; }
 
+/* ── NEGOTIATE ── */
+.nego-summary { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .9rem 1rem; box-shadow: var(--shadow); margin-bottom: 1rem; }
+.nego-summary .ns-top { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+.nego-summary .ns-name { font-size: .95rem; font-weight: 700; color: var(--ink); }
+.nego-summary .ns-net { font-size: .95rem; font-weight: 800; color: var(--emerald); }
+.nego-summary .ns-sub { font-size: .74rem; color: var(--text-3); margin-top: .15rem; }
+
+.sugg { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .7rem .85rem; margin-bottom: .55rem; box-shadow: var(--shadow); transition: border-color .15s; }
+.sugg.on { border-color: var(--emerald); background: #f6fefb; }
+.sugg-head { display: flex; align-items: flex-start; gap: .6rem; }
+.sugg-check { width: 18px; height: 18px; margin-top: .1rem; flex-shrink: 0; accent-color: var(--emerald); cursor: pointer; }
+.sugg-body { flex: 1; min-width: 0; }
+.sugg-lever { font-size: .82rem; font-weight: 700; color: var(--ink); }
+.sugg-flow { font-size: .76rem; color: var(--text-2); margin-top: .15rem; }
+.sugg-flow .cur { color: var(--rose); }
+.sugg-flow .arr { color: var(--text-3); margin: 0 .3rem; }
+.sugg-flow .new { color: var(--emerald); font-weight: 600; }
+.sugg-why { font-size: .72rem; color: var(--text-3); margin-top: .25rem; }
+.sugg-impact { font-size: .72rem; font-weight: 700; color: var(--emerald); white-space: nowrap; }
+.sugg-edit { margin-top: .5rem; display: none; }
+.sugg.on .sugg-edit { display: block; }
+.sugg-edit input { width: 100%; padding: .4rem .6rem; border: 1.5px solid var(--border); border-radius: 7px; font-family: inherit; font-size: .8rem; outline: none; }
+.sugg-edit input:focus { border-color: var(--emerald); }
+
+.nego-compose { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); margin-top: .5rem; }
+.seg { display: inline-flex; background: var(--bg); border-radius: 99px; padding: .2rem; gap: .2rem; margin-bottom: .7rem; }
+.seg button { border: none; background: none; font-family: inherit; font-size: .75rem; font-weight: 600; color: var(--text-2); padding: .35rem .8rem; border-radius: 99px; cursor: pointer; }
+.seg button.on { background: var(--ink); color: #fff; }
+.nego-note { width: 100%; padding: .55rem .7rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: .82rem; outline: none; resize: vertical; min-height: 2.5rem; margin-top: .5rem; }
+.nego-note:focus { border-color: var(--ink); }
+.nego-save { width: 100%; margin-top: .6rem; padding: .65rem; background: var(--ink); color: #fff; border: none; border-radius: var(--radius-sm); font-family: inherit; font-weight: 700; font-size: .85rem; cursor: pointer; }
+.nego-save:hover { opacity: .9; }
+
+/* timeline of rounds */
+.rounds { position: relative; margin-top: .5rem; }
+.round { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .7rem .85rem; margin-bottom: .55rem; box-shadow: var(--shadow); }
+.round.seller { border-left: 3px solid var(--emerald); }
+.round.buyer { border-left: 3px solid #2563eb; }
+.round-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .35rem; }
+.round-by { font-size: .8rem; font-weight: 700; }
+.round.seller .round-by { color: var(--emerald); }
+.round.buyer .round-by { color: #2563eb; }
+.round-date { font-size: .68rem; color: var(--text-3); }
+.round-terms { list-style: none; display: flex; flex-direction: column; gap: .2rem; }
+.round-terms li { font-size: .78rem; color: var(--text-2); padding-left: 1rem; position: relative; }
+.round-terms li::before { content: '→'; position: absolute; left: 0; color: var(--text-3); }
+.round-note { font-size: .76rem; color: var(--text-2); font-style: italic; margin-top: .35rem; }
+.round-del { float: right; font-size: .68rem; color: var(--rose); background: none; border: none; cursor: pointer; }
+
 /* ── LISTING ── */
 .listing-hero {
   background: linear-gradient(145deg, #1c1c20 0%, #09090b 70%);
@@ -495,8 +544,8 @@ body {
     <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
     <button class="tab-btn" data-tab="compare">Compare</button>
     <button class="tab-btn" data-tab="offers">Offers</button>
+    <button class="tab-btn" data-tab="negotiate">Negotiate</button>
     <button class="tab-btn" data-tab="listing">Listing</button>
-    <button class="tab-btn" data-tab="glossary">Glossary</button>
   </nav>
 
   <div class="tab-content">
@@ -506,8 +555,11 @@ body {
       <div class="subtabnav" id="subtabnav"></div>
       <div id="offer-detail-area"></div>
     </div>
+    <div class="tab-pane" id="tab-negotiate">
+      <div class="subtabnav" id="nego-subtabnav"></div>
+      <div id="nego-area"></div>
+    </div>
     <div class="tab-pane" id="tab-listing"></div>
-    <div class="tab-pane" id="tab-glossary"></div>
   </div>
 </div>
 
@@ -608,10 +660,10 @@ async function loadData() {
     offers = (data.offers || []).map(o => ({ ...o, _score: calcScore(o), _net: calcNet(o) }));
     offers.sort((a, b) => b._score - a._score);
     buildOfferTabs();
+    buildNegoTabs();
     renderDashboard();
     renderCompare();
     renderListing();
-    renderGlossary();
   } catch(e) {
     document.getElementById('tab-dashboard').innerHTML =
       `<div class="empty" style="color:var(--rose)">Could not load data.<br><small>${e.message}</small></div>`;
@@ -642,6 +694,10 @@ function switchTab(id) {
   if (id === 'offers' && _selectedOffer === null) {
     const byNum = [...offers].sort((a, b) => +a.num - +b.num);
     if (byNum.length) selectOffer(byNum[0].num);
+  }
+  if (id === 'negotiate' && _negoOffer === null) {
+    const byNum = [...offers].sort((a, b) => +a.num - +b.num);
+    if (byNum.length) selectNego(byNum[0].num);
   }
   document.querySelector('.tab-content').scrollTop = 0;
 }
@@ -1046,37 +1102,172 @@ function renderListing() {
   `;
 }
 
-function renderGlossary() {
-  const terms = [
-    ['Earnest Money (EM)', 'A deposit the buyer puts down to show they\'re serious. It goes toward the purchase price at closing. If the buyer backs out without a valid contingency, you typically keep it.', 'Higher EM = more skin in the game. 3–5% is strong; under 2% is light.'],
-    ['Attorney-Inspection Period (A/I)', 'A window — typically 5 business days after signing — where both parties can raise legal or inspection concerns. The bulk of earnest money is usually due when this period closes.', 'During A/I, only the initial EM is at risk. The "additional" deposit hits after A/I closes.'],
-    ['AS-IS (Paragraph 14)', 'Buyer agrees to purchase the property in its current condition. They may still inspect, but they cannot ask you to make repairs or give credits.', 'AS-IS + no requests = maximum protection for you as the seller.'],
-    ['Paragraph 15b — Inspection With Requests', 'Buyer can inspect AND submit a list of repair requests. You can accept, negotiate, or reject — but the buyer can walk away if you don\'t agree.', 'Riskiest inspection clause for sellers. Opens the door to renegotiation after you\'ve already accepted.'],
-    ['Paragraph 15c — Inspection, No Requests', 'Buyer can inspect for informational purposes only. They cannot ask for repairs or credits. They can walk away, but cannot negotiate on condition.', 'Clean middle ground: buyer gets peace of mind, you have no repair liability.'],
-    ['Appraisal Contingency', 'Protects the buyer if the home appraises for less than the offer price. If included, the buyer can renegotiate or walk if appraisal comes in low.', 'Above-list offers carry real appraisal risk. A waived appraisal means the buyer pays the gap no matter what.'],
-    ['Appraisal Gap Addendum (§1b)', 'A separate form where the buyer agrees they have NO right to terminate if the appraisal comes in below the purchase price. They must close at the agreed price regardless.', 'Offer 4 (Devey/Lim) has this — significant protection at an elevated price.'],
-    ['LTV (Loan-to-Value)', 'The loan amount as a percentage of the purchase price. 90% LTV = 10% down. Lower LTV = more equity and less appraisal risk for the buyer.', '70% LTV (30% down) is very strong. 90% LTV (10% down) carries more appraisal and financing risk.'],
-    ['Conventional Loan', 'A mortgage not backed by the government. Generally requires higher credit scores and down payments but closes more reliably than FHA or VA.', 'Conventional with 20%+ down is the gold standard for non-cash offers.'],
-    ['PITI', 'Principal, Interest, Taxes, and Insurance — the four components of a monthly mortgage payment. When Offer 4 says rent-back at "PITI rate," you pay the buyer\'s full monthly cost on a per-day basis.', 'At ~$600K loan at 7%, PITI runs $175–200/day. Always get a hard dollar amount in the contract.'],
-    ['Possession After Closing', 'You continue living in the property after the sale closes, becoming a temporary tenant. Terms include end date, daily rate, and possession escrow held as security.', 'Free rent-back means the buyer charges you $0/day. Lock the daily rate and end date into the contract.'],
-    ['Possession Escrow', 'A portion of your sale proceeds held in escrow after closing as security during the rent-back. Released when you vacate on time in good condition.', 'Offer 1 includes a $50K possession escrow — this is the buyer\'s leverage to ensure you leave as agreed.'],
-    ['Tax Proration', 'Illinois property taxes are paid in arrears. At closing, the buyer gets a credit for taxes that have accrued but not yet been paid. 105% means you credit 105% of last year\'s tax bill.', 'Higher proration = more out of your pocket. TBD means it gets negotiated at attorney review — push for 100%.'],
-    ['Transfer Tax', 'A tax paid when real estate changes hands. In Chicago, approximately 0.45% of the sale price, paid by the seller.', 'On an $850K sale: ~$3,825.'],
-    ['Dual Agency', 'When the same brokerage (or agent) represents both buyer and seller. Can create conflicts of interest and sometimes results in reduced total commission.', 'Offer 4 has both agents at @properties — worth asking Haylee how that affects her representation of you.'],
-    ['Highest & Best', 'A process where all buyers submit their best offer by a deadline, knowing they\'re competing. Used to maximize price and terms in a multiple-offer situation.', 'With 4 offers in hand, you are in a Highest & Best situation. Deadline creates urgency and prevents back-and-forth.'],
-    ['Strength Score', 'A composite 0–100 score comparing offers across 7 dimensions: Price (50%), Financing (15%), Earnest Money (10%), Inspection (10%), Appraisal (5%), Timeline (5%), Rent-Back (5%).', 'Score ≠ net proceeds. A cash offer with a lower price can outscore a higher financed offer.'],
-    ['Net Proceeds', 'What you actually walk away with after paying off your mortgage, commissions, transfer tax, closing costs, and any rent-back charges.', 'Always compare net, not gross. A $862K offer can net you less than an $850K offer.'],
-  ];
+// ── NEGOTIATE ─────────────────────────────────────────────────────────────────
+let _negoOffer = null;
+let _negoBy = 'Seller';
 
-  document.getElementById('tab-glossary').innerHTML = `
-    <div class="gl-grid">
-      ${terms.map(([term, def, tip]) => `
-      <div class="gl-item">
-        <div class="gl-term">${term}</div>
-        <div class="gl-def">${def}</div>
-        ${tip ? `<div class="gl-tip">💡 ${tip}</div>` : ''}
-      </div>`).join('')}
-    </div>`;
+const negoKey = num => `nego_v1_${num}`;
+function loadRounds(num) { try { return JSON.parse(localStorage.getItem(negoKey(num))) || []; } catch { return []; } }
+function saveRounds(num, rounds) { localStorage.setItem(negoKey(num), JSON.stringify(rounds)); }
+
+function buildNegoTabs() {
+  const byNum = [...offers].sort((a, b) => +a.num - +b.num);
+  document.getElementById('nego-subtabnav').innerHTML = byNum.map(o => `
+    <button class="subtab-btn" data-nego="${o.num}" onclick="selectNego(${o.num})">Offer ${o.num}</button>`).join('');
+}
+
+function selectNego(num) {
+  _negoOffer = num;
+  document.querySelectorAll('#nego-subtabnav .subtab-btn').forEach(b =>
+    b.classList.toggle('active', String(b.dataset.nego) === String(num)));
+  renderNego(num);
+}
+
+// Smart counter-term suggestions, computed from this offer's gaps vs ideal + competitors
+function genSuggestions(o) {
+  const LIST = cfgN('list_price', 799000);
+  const maxPrice = Math.max(...offers.map(x => +x.price));
+  const s = [];
+
+  if (+o.price < maxPrice) {
+    s.push({ id:'price', lever:'Purchase Price', cur: fmt(o.price), sug: fmt(maxPrice),
+      why:`Highest competing offer is ${fmt(maxPrice)}. Ask them to match.`,
+      impact:`+${fmt((maxPrice - +o.price) * (1 - (parseFloat(o.comm_pct)||0.05) - cfgN('transfer_tax_pct',0.0045)))} net` });
+  }
+  if (o.insp_code === 'full') {
+    s.push({ id:'insp', lever:'Inspection', cur:'With requests', sug:'Info-only / no requests',
+      why:'Removes their ability to renegotiate repairs after signing.', impact:'Lower fall-through risk' });
+  }
+  if (o.appr_code === 'included') {
+    s.push({ id:'appr', lever:'Appraisal', cur:'Standard contingency', sug:'Appraisal gap coverage / waiver',
+      why:`Offer is ${fmt(+o.price - LIST)} over list — protects you if it appraises low.`, impact:'Protects price' });
+  }
+  if (+o.em / +o.price < 0.03) {
+    const target = Math.round(+o.price * 0.03 / 1000) * 1000;
+    s.push({ id:'em', lever:'Earnest Money', cur:`${fmt(o.em)} (${(+o.em/+o.price*100).toFixed(1)}%)`, sug:`${fmt(target)} (3%)`,
+      why:'More skin in the game; stronger commitment.', impact:'Lower walk risk' });
+  }
+  if (o.rent_code !== 'free') {
+    s.push({ id:'rent', lever:'Rent-Back', cur: o.rent_back || 'Paid', sug:'Free through July 31',
+      why:'Saves your post-close occupancy cost.', impact:`+${fmt(+o.rent_cost||0)} saved` });
+  }
+  if (+o.close_days > 26) {
+    s.push({ id:'close', lever:'Closing Date', cur: fmtDate(o.close_date, true), sug:'On or before June 26',
+      why:'Hits your target close window.', impact:'Timing' });
+  }
+  const taxpct = parseTaxPct(o.tax_prorate);
+  if (taxpct > 1.0 || String(o.tax_prorate||'').toUpperCase()==='TBD') {
+    s.push({ id:'tax', lever:'Tax Proration', cur: o.tax_prorate||'TBD', sug:'100% of last bill',
+      why:'Standard ask is 105%+; 100% keeps more in your pocket.',
+      impact:`~+${fmt(((150+ +o.close_days)/365) * cfgN('tax_annual',13700) * (taxpct-1.0))} net` });
+  }
+  if ((parseFloat(o.comm_pct)||0.05) > 0.04) {
+    s.push({ id:'comm', lever:'Commission', cur:`${((parseFloat(o.comm_pct)||0.05)*100).toFixed(1)}%`, sug:'Reduce buyer-agent to 2%',
+      why:'Every 0.5% saved on this price is real money to you.',
+      impact:`~+${fmt(+o.price * 0.005)} per 0.5%` });
+  }
+  return s;
+}
+
+function renderNego(num) {
+  const o = offers.find(x => String(x.num) === String(num));
+  if (!o) return;
+  const suggestions = genSuggestions(o);
+  const rounds = loadRounds(num);
+  const firstName = o.buyers.split(/[&,]/)[0].trim().split(' ').slice(0,2).join(' ');
+
+  document.getElementById('nego-area').innerHTML = `
+    <div class="nego-summary">
+      <div class="ns-top">
+        <span class="ns-name">Offer ${o.num} — ${o.buyers}</span>
+        <span class="ns-net">${fmt(o._net)}</span>
+      </div>
+      <div class="ns-sub">${o.financing} · ${fmt(o.price)} · closes ${fmtDate(o.close_date)} · score ${o._score.toFixed(0)} · net proceeds</div>
+    </div>
+
+    <div class="section-title">Suggested Counter Terms</div>
+    ${suggestions.length ? suggestions.map(sg => `
+      <div class="sugg" id="sugg-${sg.id}">
+        <div class="sugg-head">
+          <input type="checkbox" class="sugg-check" onchange="toggleSugg('${sg.id}')">
+          <div class="sugg-body">
+            <div style="display:flex;justify-content:space-between;gap:.5rem">
+              <span class="sugg-lever">${sg.lever}</span>
+              <span class="sugg-impact">${sg.impact}</span>
+            </div>
+            <div class="sugg-flow"><span class="cur">${sg.cur}</span><span class="arr">→</span><span class="new">${sg.sug}</span></div>
+            <div class="sugg-why">${sg.why}</div>
+            <div class="sugg-edit">
+              <input id="sugg-val-${sg.id}" value="${sg.lever}: ${sg.sug}" data-lever="${sg.lever}">
+            </div>
+          </div>
+        </div>
+      </div>`).join('')
+      : '<div class="empty">This offer already meets your ideal terms — nothing obvious to counter.</div>'}
+
+    <div class="section-title">Build the Round</div>
+    <div class="nego-compose">
+      <div class="seg">
+        <button id="by-seller" class="on" onclick="setNegoBy('Seller')">Seller counter</button>
+        <button id="by-buyer" onclick="setNegoBy('Buyer')">Buyer response</button>
+      </div>
+      <div style="font-size:.74rem;color:var(--text-3);margin-bottom:.3rem">Checked suggestions above are included automatically. Add a note for anything else:</div>
+      <textarea class="nego-note" id="nego-note" placeholder="e.g. 'Verbally agreed to split the survey cost' or other terms…"></textarea>
+      <button class="nego-save" onclick="saveRound(${num})">Record Round →</button>
+    </div>
+
+    <div class="section-title">Negotiation History ${rounds.length ? `(${rounds.length} round${rounds.length>1?'s':''})` : ''}</div>
+    <div class="rounds">
+      ${rounds.length ? rounds.map((r, i) => `
+        <div class="round ${r.by.toLowerCase()}">
+          <button class="round-del" onclick="delRound(${num}, ${i})">delete</button>
+          <div class="round-head">
+            <span class="round-by">${r.by === 'Seller' ? '🟢 Seller' : '🔵 Buyer'} · Round ${i+1}</span>
+            <span class="round-date">${r.date}</span>
+          </div>
+          ${r.terms.length ? `<ul class="round-terms">${r.terms.map(t=>`<li>${t}</li>`).join('')}</ul>` : ''}
+          ${r.note ? `<div class="round-note">"${r.note}"</div>` : ''}
+        </div>`).join('')
+        : '<div class="empty">No rounds logged yet. Check terms above, then Record Round.</div>'}
+    </div>
+    <div style="font-size:.68rem;color:var(--text-3);margin-top:.5rem">History is saved on this device (browser). It is not shared via the live link.</div>
+  `;
+}
+
+function toggleSugg(id) {
+  const el = document.getElementById('sugg-' + id);
+  el.classList.toggle('on', el.querySelector('.sugg-check').checked);
+}
+function setNegoBy(who) {
+  _negoBy = who;
+  document.getElementById('by-seller').classList.toggle('on', who === 'Seller');
+  document.getElementById('by-buyer').classList.toggle('on', who === 'Buyer');
+}
+
+function saveRound(num) {
+  const terms = [];
+  document.querySelectorAll('#nego-area .sugg.on').forEach(el => {
+    const inp = el.querySelector('input[id^="sugg-val-"]');
+    if (inp && inp.value.trim()) terms.push(inp.value.trim());
+  });
+  const note = document.getElementById('nego-note').value.trim();
+  if (!terms.length && !note) { alert('Check at least one suggested term or add a note.'); return; }
+
+  const rounds = loadRounds(num);
+  rounds.push({
+    by: _negoBy,
+    date: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }),
+    terms, note
+  });
+  saveRounds(num, rounds);
+  renderNego(num);
+}
+
+function delRound(num, i) {
+  const rounds = loadRounds(num);
+  rounds.splice(i, 1);
+  saveRounds(num, rounds);
+  renderNego(num);
 }
 </script>
 </body>
