@@ -703,6 +703,13 @@ async function loadData() {
     cfg = data.config || {};
     offers = (data.offers || []).map(o => ({ ...o, _score: calcScore(o), _net: calcNet(o) }));
     offers.sort((a, b) => b._score - a._score);
+    // Recovery: push any device-local rounds that never synced up to the Sheet
+    offers.forEach(o => {
+      if (!cfg['rounds_' + o.num]) {
+        let local = null; try { local = localStorage.getItem(negoKey(o.num)); } catch {}
+        if (local && local !== '[]') { cfg['rounds_' + o.num] = local; saveRounds(o.num, JSON.parse(local)); }
+      }
+    });
     buildOfferTabs();
     buildNegoTabs();
     renderDashboard();
