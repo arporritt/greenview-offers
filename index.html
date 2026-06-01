@@ -128,6 +128,22 @@ body {
 .tab-btn:hover { background: var(--bg); color: var(--text); }
 .tab-btn.active { background: var(--ink); color: #fff; font-weight: 600; box-shadow: var(--shadow-md); }
 
+/* ── SUB-TAB NAV (inside Offers) ── */
+.subtabnav {
+  display: flex; gap: .4rem; overflow-x: auto; scrollbar-width: none;
+  margin-bottom: 1rem; padding-bottom: .15rem;
+}
+.subtabnav::-webkit-scrollbar { display: none; }
+.subtab-btn {
+  padding: .4rem .8rem; font-family: inherit; font-size: .76rem; font-weight: 500;
+  color: var(--text-2); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 99px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  transition: all .15s; box-shadow: var(--shadow);
+}
+.subtab-btn:hover { border-color: var(--text-3); }
+.subtab-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); font-weight: 600; }
+.subtab-btn .st-net { font-size: .66rem; opacity: .6; margin-left: .3rem; }
+
 /* ── CONTENT ── */
 .tab-content { flex: 1; overflow-y: auto; }
 .tab-pane { display: none; padding: 1.25rem; max-width: 1080px; margin: 0 auto; }
@@ -478,6 +494,7 @@ body {
   <nav class="tabnav" id="tabnav">
     <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
     <button class="tab-btn" data-tab="compare">Compare</button>
+    <button class="tab-btn" data-tab="offers">Offers</button>
     <button class="tab-btn" data-tab="listing">Listing</button>
     <button class="tab-btn" data-tab="glossary">Glossary</button>
   </nav>
@@ -485,6 +502,10 @@ body {
   <div class="tab-content">
     <div class="tab-pane active" id="tab-dashboard"><div class="empty"><span class="spin"></span>Loading…</div></div>
     <div class="tab-pane" id="tab-compare"></div>
+    <div class="tab-pane" id="tab-offers">
+      <div class="subtabnav" id="subtabnav"></div>
+      <div id="offer-detail-area"></div>
+    </div>
     <div class="tab-pane" id="tab-listing"></div>
     <div class="tab-pane" id="tab-glossary"></div>
   </div>
@@ -598,38 +619,45 @@ async function loadData() {
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
+let _selectedOffer = null;
+
 function buildOfferTabs() {
-  const nav = document.getElementById('tabnav');
-  const content = document.querySelector('.tab-content');
-  const glossaryBtn = nav.querySelector('[data-tab="glossary"]');
+  // Sub-tabs inside the "Offers" tab, ordered by offer NUMBER (1→6)
+  const byNum = [...offers].sort((a, b) => +a.num - +b.num);
+  const sub = document.getElementById('subtabnav');
+  sub.innerHTML = byNum.map(o => `
+    <button class="subtab-btn" data-offer="${o.num}" onclick="selectOffer(${o.num})">
+      Offer ${o.num}<span class="st-net">${fmt(o._net)}</span>
+    </button>`).join('');
 
-  // Insert offer tabs before Glossary
-  offers.forEach(o => {
-    const btn = document.createElement('button');
-    btn.className = 'tab-btn';
-    btn.dataset.tab = `offer-${o.num}`;
-    btn.textContent = `Offer ${o.num} · ${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}`;
-    nav.insertBefore(btn, glossaryBtn);
-
-    const pane = document.createElement('div');
-    pane.className = 'tab-pane';
-    pane.id = `tab-offer-${o.num}`;
-    content.insertBefore(pane, document.getElementById('tab-glossary'));
-  });
-
-  nav.querySelectorAll('.tab-btn').forEach(btn => {
+  // Wire the main tabs
+  document.querySelectorAll('#tabnav .tab-btn').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 }
 
 function switchTab(id) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === `tab-${id}`));
-  if (id.startsWith('offer-')) {
-    const num = id.replace('offer-', '');
-    const o = offers.find(x => String(x.num) === num);
-    if (o && !document.getElementById(`tab-offer-${o.num}`).dataset.rendered) renderOfferDetail(o);
+  document.querySelectorAll('#tabnav .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.tab-content > .tab-pane').forEach(p => p.classList.toggle('active', p.id === `tab-${id}`));
+  if (id === 'offers' && _selectedOffer === null) {
+    const byNum = [...offers].sort((a, b) => +a.num - +b.num);
+    if (byNum.length) selectOffer(byNum[0].num);
   }
+  document.querySelector('.tab-content').scrollTop = 0;
+}
+
+// Open the Offers tab and show a specific offer (used by dashboard links)
+function openOffer(num) {
+  switchTab('offers');
+  selectOffer(num);
+}
+
+function selectOffer(num) {
+  _selectedOffer = num;
+  document.querySelectorAll('.subtab-btn').forEach(b =>
+    b.classList.toggle('active', String(b.dataset.offer) === String(num)));
+  const o = offers.find(x => String(x.num) === String(num));
+  if (o) renderOfferDetail(o);
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -664,7 +692,7 @@ function renderDashboard() {
         <div><div class="rec-fig-v">${top._score.toFixed(0)}</div><div class="rec-fig-l">Score</div></div>
       </div>
       <div class="rec-chips">${whyChips.map(c=>`<span class="rec-chip">${c}</span>`).join('')}</div>
-      <div class="rec-cta"><button class="rec-btn" onclick="switchTab('offer-${top.num}')">View full detail →</button></div>
+      <div class="rec-cta"><button class="rec-btn" onclick="openOffer(${top.num})">View full detail →</button></div>
     </div>
 
     <!-- NET LEADERBOARD -->
@@ -672,7 +700,7 @@ function renderDashboard() {
     <div class="card" style="padding:1rem">
       <div class="lb">
         ${sorted.map((o, i) => `
-          <div class="lb-row" onclick="switchTab('offer-${o.num}')" style="cursor:pointer">
+          <div class="lb-row" onclick="openOffer(${o.num})" style="cursor:pointer">
             <span class="lb-rank ${i===0?'gold':''}">${i+1}</span>
             <span class="lb-name">#${o.num} ${firstName(o)}</span>
             <div class="lb-bar">
@@ -706,7 +734,7 @@ function renderDashboard() {
         <tbody>
           ${sorted.map(o => {
             const ck = p => p ? '<span style="color:var(--emerald);font-weight:700">✓</span>' : '<span style="color:var(--text-3)">·</span>';
-            return `<tr onclick="switchTab('offer-${o.num}')" style="cursor:pointer">
+            return `<tr onclick="openOffer(${o.num})" style="cursor:pointer">
               <td class="row-label">#${o.num} ${firstName(o)}</td>
               <td class="offer-col">${ck(o.fin_code==='cash')}</td>
               <td class="offer-col">${ck(o.insp_code!=='full')}</td>
@@ -846,8 +874,7 @@ function renderCompare() {
 
 // ── OFFER DETAIL ──────────────────────────────────────────────────────────────
 function renderOfferDetail(o) {
-  const pane = document.getElementById(`tab-offer-${o.num}`);
-  pane.dataset.rendered = '1';
+  const pane = document.getElementById('offer-detail-area');
 
   const comm     = parseFloat(o.comm_pct) || 0.05;
   const commAmt  = +o.price * comm;
