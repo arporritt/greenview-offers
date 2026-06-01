@@ -307,6 +307,40 @@ body {
 .gl-def { font-size: .8rem; color: var(--text-2); line-height: 1.55; }
 .gl-tip { font-size: .75rem; color: var(--text-3); margin-top: .4rem; padding-top: .4rem; border-top: 1px solid var(--border-subtle); }
 
+/* ── RECOMMENDATION HERO ── */
+.rec-hero {
+  background: linear-gradient(145deg, #064e3b 0%, #022c22 75%);
+  border-radius: var(--radius); padding: 1.4rem; margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-lg); position: relative; overflow: hidden;
+}
+.rec-hero::after {
+  content: ''; position: absolute; top: -40%; right: -8%;
+  width: 240px; height: 240px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(52,211,153,.25), transparent 70%);
+}
+.rec-tag { display: inline-flex; align-items: center; gap: .4rem; font-size: .62rem; font-weight: 700; color: #6ee7b7; text-transform: uppercase; letter-spacing: .12em; margin-bottom: .6rem; }
+.rec-tag::before { content: '★'; }
+.rec-name { font-size: 1.15rem; font-weight: 700; color: #fff; letter-spacing: -.01em; position: relative; z-index: 1; }
+.rec-figures { display: flex; gap: 1.5rem; margin: .9rem 0 1rem; position: relative; z-index: 1; }
+.rec-fig-v { font-size: 1.7rem; font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1; }
+.rec-fig-l { font-size: .65rem; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .05em; margin-top: .3rem; }
+.rec-chips { display: flex; flex-wrap: wrap; gap: .4rem; position: relative; z-index: 1; }
+.rec-chip { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.15); color: #d1fae5; font-size: .7rem; font-weight: 500; padding: .3rem .65rem; border-radius: 99px; }
+.rec-cta { margin-top: 1rem; }
+.rec-btn { background: #fff; color: #022c22; border: none; border-radius: var(--radius-sm); padding: .55rem 1rem; font-family: inherit; font-weight: 700; font-size: .8rem; cursor: pointer; position: relative; z-index: 1; }
+
+/* ── NET LEADERBOARD ── */
+.lb { display: flex; flex-direction: column; gap: .5rem; }
+.lb-row { display: flex; align-items: center; gap: .7rem; }
+.lb-rank { width: 22px; height: 22px; border-radius: 50%; background: var(--bg); color: var(--text-2); font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.lb-rank.gold { background: #fef3c7; color: #92400e; }
+.lb-name { font-size: .78rem; font-weight: 500; width: 95px; flex-shrink: 0; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-bar { flex: 1; background: var(--border-subtle); border-radius: 7px; height: 30px; overflow: hidden; position: relative; }
+.lb-fill { height: 100%; border-radius: 7px; display: flex; align-items: center; justify-content: flex-end; padding: 0 .6rem; transition: width .7s cubic-bezier(.16,1,.3,1); }
+.lb-fill.gold { background: linear-gradient(90deg, #fbbf24, #d97706); }
+.lb-fill.dark { background: linear-gradient(90deg, #52525b, #27272a); }
+.lb-fill span { font-size: .74rem; font-weight: 700; color: #fff; white-space: nowrap; }
+
 /* ── LISTING ── */
 .listing-hero {
   background: linear-gradient(145deg, #1c1c20 0%, #09090b 70%);
@@ -419,6 +453,16 @@ async function sha1(s) {
 }
 const fmt  = n => '$' + Math.round(+n).toLocaleString();
 const fmtK = n => '$' + Math.round(+n / 1000) + 'K';
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// Handles both ISO datetimes from Google Sheets ("2026-06-30T05:00:00.000Z")
+// and plain text ("June 15, 2026"). Returns "Jun 30" style, no timezone shift.
+function fmtDate(v, withYear) {
+  if (v === null || v === undefined || v === '') return '—';
+  const s = String(v);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return MONTHS[+m[2]-1] + ' ' + (+m[3]) + (withYear ? ', ' + m[1] : '');
+  return s.replace(', 2026', withYear ? ', 2026' : '');
+}
 const cfgN = (k, d) => parseFloat(cfg[k]) || d;
 const PURCHASE_PRICE = 615000;
 
@@ -464,7 +508,7 @@ function idealChecks(o) {
     { label: 'No inspection requests',  pass: o.insp_code !== 'full',      val: o.inspection },
     { label: 'Appraisal waived / gap',  pass: o.appr_code !== 'included',  val: o.appraisal },
     { label: 'Free rent-back',          pass: o.rent_code === 'free',      val: o.rent_back },
-    { label: 'Close before June 26',    pass: +o.close_days <= 26,         val: o.close_date },
+    { label: 'Close before June 26',    pass: +o.close_days <= 26,         val: fmtDate(o.close_date, true) },
     { label: 'Strong EM (≥ 3%)',        pass: +o.em / +o.price >= 0.03,    val: fmt(o.em) + ' (' + (+o.em/+o.price*100).toFixed(1) + '%)' },
   ];
 }
@@ -542,121 +586,99 @@ function switchTab(id) {
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard() {
-  const LIST   = cfgN('list_price', 799000);
-  const top    = offers[0];
-  const maxNet = Math.max(...offers.map(o => o._net));
+  const LIST    = cfgN('list_price', 799000);
+  const sorted  = [...offers].sort((a,b) => b._net - a._net); // rank by NET, the # that matters
+  const top     = sorted[0];
+  const second  = sorted[1];
+  const maxNet  = Math.max(...offers.map(o => o._net));
+  const gapNext = second ? top._net - second._net : 0;
 
-  const rankLabels = ['★ Top Pick', '#2', '#3', '#4', '#5'];
+  // Build "why it wins" chips from the top offer's positives + key facts
+  const whyChips = [];
+  if (top.fin_code === 'cash') whyChips.push('All cash');
+  if (top.insp_code === 'none') whyChips.push('No inspection requests');
+  if (top.appr_code !== 'included') whyChips.push('No appraisal risk');
+  if (top.rent_code === 'free') whyChips.push('Free rent-back');
+  if (gapNext > 0) whyChips.push('+' + fmt(gapNext) + ' vs next offer');
+
+  const firstName = o => o.buyers.split(/[&,]/)[0].trim().split(' ').slice(0,2).join(' ');
+  const appreciationPct = ((+top.price - PURCHASE_PRICE)/PURCHASE_PRICE*100).toFixed(0);
+  const cagr = ((Math.pow(+top.price/PURCHASE_PRICE, 1/5)-1)*100).toFixed(1);
 
   document.getElementById('tab-dashboard').innerHTML = `
-    <div class="ideal-banner">
-      <strong>Ideal Scenario</strong>
-      <ul>
-        <li>Highest price · Cash · No contingencies</li>
-        <li>Free rent-back through July 31, 2026</li>
-        <li>Close before June 26 · Buyer commission 2.5%</li>
-      </ul>
+    <!-- RECOMMENDATION -->
+    <div class="rec-hero">
+      <div class="rec-tag">Leading Offer · by net proceeds</div>
+      <div class="rec-name">Offer ${top.num} — ${top.buyers.replace('&','&amp;')}</div>
+      <div class="rec-figures">
+        <div><div class="rec-fig-v">${fmt(top.price)}</div><div class="rec-fig-l">Sale Price</div></div>
+        <div><div class="rec-fig-v">${fmt(top._net)}</div><div class="rec-fig-l">Net to You</div></div>
+        <div><div class="rec-fig-v">${top._score.toFixed(0)}</div><div class="rec-fig-l">Score</div></div>
+      </div>
+      <div class="rec-chips">${whyChips.map(c=>`<span class="rec-chip">${c}</span>`).join('')}</div>
+      <div class="rec-cta"><button class="rec-btn" onclick="switchTab('offer-${top.num}')">View full detail →</button></div>
     </div>
 
-    <div class="section-title">Offers Ranked by Score</div>
-    <div class="score-cards">
-      ${offers.map((o, i) => `
-      <div class="sc-card ${i===0?'rank-1':''}" onclick="switchTab('offer-${o.num}')">
-        <div class="rank-label ${i===0?'top':''}">${rankLabels[i]||'#'+(i+1)}</div>
-        <div class="sc-buyers">${o.buyers.replace('&','&amp;')}</div>
-        <div class="sc-price">${fmt(o.price)}</div>
-        <div class="sc-net">Net ${fmt(o._net)}</div>
-        <div class="sc-fin">${o.financing}</div>
-        <div class="score-row">
-          <div class="score-track"><div class="score-fill" style="width:${o._score}%"></div></div>
-          <span class="score-num">${o._score.toFixed(1)}</span>
-        </div>
-      </div>`).join('')}
-    </div>
-
-    <div class="section-title">Key Numbers</div>
-    <div class="kpi-grid">
-      <div class="kpi"><div class="kpi-val">${fmt(top.price)}</div><div class="kpi-lbl">Top Offer</div><div class="kpi-sub">+${fmtK(+top.price - LIST)} over list</div></div>
-      <div class="kpi"><div class="kpi-val">${fmt(top._net)}</div><div class="kpi-lbl">Best Net</div><div class="kpi-sub">${top.buyers.split(' ')[0]}</div></div>
-      <div class="kpi"><div class="kpi-val">${fmt(LIST)}</div><div class="kpi-lbl">List Price</div><div class="kpi-sub">MLS #${cfg.mls||'12652161'}</div></div>
-      <div class="kpi"><div class="kpi-val">${offers.length}</div><div class="kpi-lbl">Offers</div><div class="kpi-sub">Received May 31</div></div>
-    </div>
-
-    <div class="section-title">Your Return — Bought June 2021 at $615,000</div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.25rem" id="return-grid">
-      ${offers.map((o, i) => {
-        const priceGain = +o.price - PURCHASE_PRICE;
-        const priceGainPct = (priceGain / PURCHASE_PRICE * 100).toFixed(1);
-        const holdYears = 5;
-        return `
-        <div class="kpi" style="${i===0?'border-color:var(--emerald)':''}">
-          <div style="font-size:.65rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem">
-            Offer ${o.num} · ${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}
-          </div>
-          <div style="display:flex;flex-direction:column;gap:.3rem">
-            <div style="display:flex;justify-content:space-between;font-size:.82rem">
-              <span style="color:var(--text-2)">Sale price</span>
-              <span style="font-weight:600">${fmt(o.price)}</span>
+    <!-- NET LEADERBOARD -->
+    <div class="section-title">Net Proceeds — Ranked</div>
+    <div class="card" style="padding:1rem">
+      <div class="lb">
+        ${sorted.map((o, i) => `
+          <div class="lb-row" onclick="switchTab('offer-${o.num}')" style="cursor:pointer">
+            <span class="lb-rank ${i===0?'gold':''}">${i+1}</span>
+            <span class="lb-name">#${o.num} ${firstName(o)}</span>
+            <div class="lb-bar">
+              <div class="lb-fill ${i===0?'gold':'dark'}" style="width:${Math.max(18, Math.round(o._net/maxNet*100))}%">
+                <span>${fmt(o._net)}</span>
+              </div>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:.82rem">
-              <span style="color:var(--text-2)">Purchase price</span>
-              <span style="font-weight:600;color:var(--text-3)">− ${fmt(PURCHASE_PRICE)}</span>
-            </div>
-            <div style="height:1px;background:var(--border-subtle);margin:.1rem 0"></div>
-            <div style="display:flex;justify-content:space-between;font-size:.88rem">
-              <span style="font-weight:600">Price appreciation</span>
-              <span style="font-weight:700;color:var(--emerald)">+${fmt(priceGain)} <span style="font-size:.72rem">(+${priceGainPct}%)</span></span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-top:.1rem">
-              <span style="color:var(--text-2)">Est. net proceeds</span>
-              <span style="font-weight:700;color:var(--emerald)">${fmt(o._net)}</span>
-            </div>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-    <div style="background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:.875rem 1rem;margin-bottom:1.25rem;box-shadow:var(--shadow)">
-      <div style="font-size:.72rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">5-Year Appreciation Summary</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;text-align:center">
-        <div>
-          <div style="font-size:1.1rem;font-weight:800;color:var(--ink)">$615K → ${fmtK(offers[0].price)}</div>
-          <div style="font-size:.72rem;color:var(--text-3);margin-top:.15rem">Best offer price</div>
-        </div>
-        <div>
-          <div style="font-size:1.1rem;font-weight:800;color:var(--emerald)">+${((+offers[0].price - PURCHASE_PRICE)/PURCHASE_PRICE*100).toFixed(0)}%</div>
-          <div style="font-size:.72rem;color:var(--text-3);margin-top:.15rem">Price appreciation</div>
-        </div>
-        <div>
-          <div style="font-size:1.1rem;font-weight:800;color:var(--ink)">${((Math.pow(+offers[0].price/PURCHASE_PRICE, 1/5)-1)*100).toFixed(1)}% / yr</div>
-          <div style="font-size:.72rem;color:var(--text-3);margin-top:.15rem">Annualized (CAGR)</div>
-        </div>
+          </div>`).join('')}
       </div>
     </div>
 
-    <div class="section-title">Estimated Net Proceeds</div>
-    <div class="net-bars">
-      ${offers.map(o => `
-      <div class="nb-row">
-        <div class="nb-label">#${o.num} ${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}</div>
-        <div class="nb-track">
-          <div class="nb-fill" style="width:${Math.round(o._net/maxNet*100)}%">
-            <span>${fmt(o._net)}</span>
-          </div>
-        </div>
-      </div>`).join('')}
+    <!-- KEY NUMBERS -->
+    <div class="section-title">At a Glance</div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val">${offers.length}</div><div class="kpi-lbl">Offers In</div><div class="kpi-sub">as of May 31</div></div>
+      <div class="kpi"><div class="kpi-val">${fmtK(top.price)}</div><div class="kpi-lbl">Highest Net Offer</div><div class="kpi-sub">+${fmtK(+top.price-LIST)} over list</div></div>
+      <div class="kpi"><div class="kpi-val" style="color:var(--emerald)">+${appreciationPct}%</div><div class="kpi-lbl">Appreciation</div><div class="kpi-sub">since $615K (2021)</div></div>
+      <div class="kpi"><div class="kpi-val">${cagr}%/yr</div><div class="kpi-lbl">Annualized</div><div class="kpi-sub">5-yr CAGR</div></div>
     </div>
 
-    <div class="section-title">Risk Flags</div>
-    ${offers.map(o => {
+    <!-- IDEAL SCENARIO MATCH -->
+    <div class="section-title">How Each Offer Matches Your Ideal</div>
+    <div class="compare-wrap">
+      <table class="compare-table" style="min-width:0">
+        <thead><tr>
+          <th>Offer</th><th class="offer-col">Cash</th><th class="offer-col">No Insp.</th>
+          <th class="offer-col">Appr. Safe</th><th class="offer-col">Free Rent</th><th class="offer-col">≤Jun 26</th>
+        </tr></thead>
+        <tbody>
+          ${sorted.map(o => {
+            const ck = p => p ? '<span style="color:var(--emerald);font-weight:700">✓</span>' : '<span style="color:var(--text-3)">·</span>';
+            return `<tr onclick="switchTab('offer-${o.num}')" style="cursor:pointer">
+              <td class="row-label">#${o.num} ${firstName(o)}</td>
+              <td class="offer-col">${ck(o.fin_code==='cash')}</td>
+              <td class="offer-col">${ck(o.insp_code!=='full')}</td>
+              <td class="offer-col">${ck(o.appr_code!=='included')}</td>
+              <td class="offer-col">${ck(o.rent_code==='free')}</td>
+              <td class="offer-col">${ck(+o.close_days<=26)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- RISK FLAGS -->
+    <div class="section-title">Watch-Outs</div>
+    ${sorted.map(o => {
       const reds = (o.flags||[]).filter(f => f.type==='red');
       return reds.length ? `
-        <div style="margin-bottom:.875rem">
-          <div style="font-size:.75rem;font-weight:600;color:var(--text-2);margin-bottom:.35rem">
-            Offer ${o.num} · ${o.buyers}
-          </div>
+        <div style="margin-bottom:.75rem">
+          <div style="font-size:.72rem;font-weight:700;color:var(--ink);margin-bottom:.3rem">Offer ${o.num} · ${firstName(o)}</div>
           ${reds.map(f=>`<div class="flag flag-rose">${f.text}</div>`).join('')}
         </div>` : '';
-    }).join('')}
+    }).join('') || '<div class="empty" style="padding:1rem">No red-flag items.</div>'}
   `;
 }
 
@@ -734,11 +756,11 @@ function renderCompare() {
         <tr>
           <td class="row-label">Close Date</td>
           ${offers.map(o => `<td class="offer-col ${closeCls(o)}">
-            <div class="cval"><div class="cval-main">${(o.close_date||'').replace(', 2026','')}</div>
+            <div class="cval"><div class="cval-main">${fmtDate(o.close_date)}</div>
             <div class="cval-sub">${o.close_days} days out</div></div>
           </td>`).join('')}
         </tr>
-        <tr><td class="row-label">Possession</td>${offers.map(o=>`<td class="offer-col">${span(o.possession||'—')}</td>`).join('')}</tr>
+        <tr><td class="row-label">Possession</td>${offers.map(o=>`<td class="offer-col">${span(fmtDate(o.possession))}</td>`).join('')}</tr>
         <tr><td class="row-label">Rent-Back</td>${offers.map(o=>`<td class="offer-col">${rentTag(o)}</td>`).join('')}</tr>
 
         <tr class="section-row"><td colspan="${offers.length+1}">Ideal Scenario ✓</td></tr>
@@ -798,8 +820,8 @@ function renderOfferDetail(o) {
         <div class="ohs"><div class="ohs-v">${fmt(o._net)}</div><div class="ohs-l">Est. Net</div></div>
         <div class="ohs"><div class="ohs-v">${o._score.toFixed(1)}</div><div class="ohs-l">Score</div></div>
         <div class="ohs"><div class="ohs-v">${o.financing}</div><div class="ohs-l">Financing</div></div>
-        <div class="ohs"><div class="ohs-v">${(o.close_date||'—').replace(', 2026','')}</div><div class="ohs-l">Close</div></div>
-        <div class="ohs"><div class="ohs-v">${(o.possession||'—').replace(', 2026','')}</div><div class="ohs-l">Possession</div></div>
+        <div class="ohs"><div class="ohs-v">${fmtDate(o.close_date)}</div><div class="ohs-l">Close</div></div>
+        <div class="ohs"><div class="ohs-v">${fmtDate(o.possession)}</div><div class="ohs-l">Possession</div></div>
       </div>
     </div>
 
