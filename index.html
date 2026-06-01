@@ -928,10 +928,11 @@ function renderDashboard() {
 
 // ── COMPARE ───────────────────────────────────────────────────────────────────
 function renderCompare() {
-  // Columns ordered by offer number 1→6 (medals reflect net-proceeds rank)
-  const cols = [...offers].sort((a, b) => +a.num - +b.num);
-  const medal = {}; [...offers].sort((a, b) => b._net - a._net).slice(0, 3)
+  // Columns ordered by offer number 1→6, each reflecting its LATEST negotiated terms
+  const cols = [...offers].sort((a, b) => +a.num - +b.num).map(effectiveOffer);
+  const medal = {}; [...cols].sort((a, b) => b._net - a._net).slice(0, 3)
     .forEach((o, i) => { medal[o.num] = ['🥇','🥈','🥉'][i]; });
+  const anyNego = cols.some(o => o._negotiated);
 
   function tagHtml(code, map) {
     const [cls, label] = map[code] || ['slate', code];
@@ -943,13 +944,13 @@ function renderCompare() {
   const rentTag = o => tagHtml(o.rent_code,  {free:['green','Free'],modified:['amber','Paid'],declined:['rose','Declined']});
 
   function rank(fn, high=true) {
-    const vals = offers.map(fn);
+    const vals = cols.map(fn);
     const best = high ? Math.max(...vals) : Math.min(...vals);
     const worst = high ? Math.min(...vals) : Math.max(...vals);
     return o => {
       const v = fn(o);
       if (v === best) return 'c-best';
-      if (v === worst && offers.length > 1) return 'c-bad';
+      if (v === worst && cols.length > 1) return 'c-bad';
       return '';
     };
   }
@@ -964,7 +965,7 @@ function renderCompare() {
 
   const offerCols = cols.map(o =>
     `<th class="offer-col">
-      ${medal[o.num]?medal[o.num]+' ':''}Offer ${o.num}<br>
+      ${medal[o.num]?medal[o.num]+' ':''}Offer ${o.num}${o._negotiated?' <span title="reflects latest negotiation" style="color:#6ee7b7">↻</span>':''}<br>
       <span style="font-weight:500;font-size:.65rem;color:rgba(255,255,255,.55)">${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}</span>
     </th>`).join('');
 
@@ -1065,7 +1066,7 @@ function renderCompare() {
       </tbody>
     </table>
     </div>
-    <p style="font-size:.7rem;color:var(--text-3);margin-top:.75rem">Green shading = best · Red shading = weakest · Tap offer tabs above for full detail.</p>
+    <p style="font-size:.7rem;color:var(--text-3);margin-top:.75rem">Green shading = best · Red shading = weakest · 🥇🥈🥉 top 3 by net.${anyNego?' <span style="color:var(--emerald)">↻ = reflects the latest logged negotiation round.</span>':''}</p>
   `;
 }
 
@@ -1356,6 +1357,16 @@ function scenarioAfter(base, rounds, uptoIndex) {
   oc._net = calcNet(oc);
   oc._score = calcScore(oc);
   return oc;
+}
+
+// An offer with its latest negotiation scenario applied (base offer if no rounds)
+function effectiveOffer(o) {
+  const rounds = loadRounds(o.num);
+  if (!rounds.length) return o;
+  const eff = scenarioAfter(o, rounds, rounds.length - 1);
+  eff._negotiated = true;
+  eff._rounds = rounds.length;
+  return eff;
 }
 
 // Smart counter-term suggestions — each carries structured {cat, field, type, applyVal} for modeling
