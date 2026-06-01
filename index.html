@@ -913,7 +913,12 @@ function renderCompare() {
           </td>`).join('')}
         </tr>
         <tr><td class="row-label">Possession</td>${offers.map(o=>`<td class="offer-col">${span(fmtDate(o.possession))}</td>`).join('')}</tr>
-        <tr><td class="row-label">Rent-Back</td>${offers.map(o=>`<td class="offer-col">${rentTag(o)}</td>`).join('')}</tr>
+        <tr><td class="row-label">Rent-Back</td>${offers.map(o=>{
+          const cost = +o.rent_cost || 0;
+          const sub = o.rent_code==='free' ? `<div class="cval-sub" style="color:var(--emerald)">$0 / no cost</div>`
+            : cost ? `<div class="cval-sub" style="color:var(--rose)">−${fmt(cost)} cost</div>` : '';
+          return `<td class="offer-col">${rentTag(o)}${sub}</td>`;
+        }).join('')}</tr>
 
         <tr class="section-row"><td colspan="${offers.length+1}">Ideal Scenario ✓</td></tr>
         <tr><td class="row-label">Cash?</td>${offers.map(o=>`<td class="offer-col">${check(o.fin_code==='cash')}</td>`).join('')}</tr>
@@ -925,7 +930,27 @@ function renderCompare() {
         <tr class="section-row"><td colspan="${offers.length+1}">Bottom Line</td></tr>
         <tr>
           <td class="row-label">Commission</td>
-          ${offers.map(o => `<td class="offer-col ${commCls(o)}">${span(((+o.comm_pct||0.05)*100).toFixed(1)+'%')}</td>`).join('')}
+          ${offers.map(o => {
+            const rate = +o.comm_pct || 0.05;
+            const dollars = +o.price * rate;
+            const savesVs5 = +o.price * (0.05 - rate); // + if below 5%
+            const sub = savesVs5 > 1
+              ? `<div class="cval-sub" style="color:var(--emerald)">${fmt(dollars)} · saves ${fmt(savesVs5)} vs 5%</div>`
+              : `<div class="cval-sub">${fmt(dollars)}</div>`;
+            return `<td class="offer-col ${commCls(o)}"><div class="cval"><div class="cval-main">${(rate*100).toFixed(1)}%</div>${sub}</div></td>`;
+          }).join('')}
+        </tr>
+        <tr>
+          <td class="row-label">Transfer Tax (0.45%)</td>
+          ${offers.map(o => `<td class="offer-col"><div class="cval-sub">−${fmt(+o.price*cfgN('transfer_tax_pct',0.0045))}</div></td>`).join('')}
+        </tr>
+        <tr>
+          <td class="row-label">Tax Proration</td>
+          ${offers.map(o => `<td class="offer-col"><div class="cval"><div class="cval-main" style="font-size:.76rem">${o.tax_prorate||'TBD'}</div><div class="cval-sub" style="color:var(--rose)">−${fmt(taxProrationAmt(o))}</div></div></td>`).join('')}
+        </tr>
+        <tr>
+          <td class="row-label">Mortgage Payoff</td>
+          ${offers.map(o => `<td class="offer-col"><div class="cval-sub">−${fmt(cfgN('mortgage_payoff',486311.79))}</div></td>`).join('')}
         </tr>
         <tr>
           <td class="row-label">Est. Net Proceeds</td>
