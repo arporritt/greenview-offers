@@ -1344,9 +1344,11 @@ function saveRounds(num, rounds) {
   const json = JSON.stringify(rounds);
   cfg['rounds_' + num] = json;                       // update in-memory copy
   try { localStorage.setItem(negoKey(num), json); } catch {}   // local backup
-  // persist to the Sheet (fire-and-forget; uses already-deployed updateConfig)
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
+  // Persist to the Sheet. Use text/plain to avoid a CORS preflight that Apps
+  // Script can't answer (application/json would make the write silently fail).
+  return fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ action: 'updateConfig', key: 'rounds_' + num, value: json })
   }).catch(() => {});
 }
