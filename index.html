@@ -1202,7 +1202,7 @@ function renderOfferDetail(o) {
           ${allTerms.map(t => `
             <div style="font-size:.8rem;display:flex;align-items:center;gap:.4rem">
               <span class="term-cat">${t.cat||'Term'}</span>
-              <span style="flex:1">${t.display}</span>
+              <span style="flex:1">${termDisplay(t)}</span>
               <span style="font-size:.68rem;font-weight:600;color:${t.status==='accepted'?'var(--emerald)':t.status==='rejected'?'var(--rose)':'var(--amber)'}">${t.status==='accepted'?'✓ accepted':t.status==='rejected'?'✗ rejected':'⋯ pending'}</span>
             </div>`).join('')}
         </div>
@@ -1472,6 +1472,20 @@ function addCustomTerm() {
 }
 function removeCustomTerm(i) { _customTerms.splice(i,1); renderNego(_negoOffer); }
 
+// Human-readable label for a term — re-derives close/commission so they never
+// show as dollars (fixes legacy terms saved with a "$" display too).
+function termDisplay(t) {
+  if (!t) return '';
+  if (t.field === 'close_days') {
+    const v = +t.value;
+    const d = new Date(2026, 4, 31); d.setDate(d.getDate() + v); // May 31 + v
+    return `Close ${d.toLocaleDateString('en-US', { month:'short', day:'numeric' })} (${v} days)`;
+  }
+  if (t.field === 'comm_pct') return `${(+t.value * 100).toFixed(1)}% commission`;
+  if (t.field === 'price' && /^\$?\d/.test(String(t.value))) return fmt(t.value);
+  return t.display || '';
+}
+
 // Apply one structured term to a working copy of an offer
 function applyTerm(oc, field, value) {
   if (field === 'rent') { oc.rent_code = 'free'; oc.rent_cost = 0; }
@@ -1645,7 +1659,7 @@ function renderNego(num) {
           const oc=Object.assign({},o); applyTerm(oc,t.field,t.value); const d=calcNet(oc)-o._net;
           const imp = Math.abs(d)>=1 ? `${d>=0?'+':'−'}${fmt(Math.abs(d))} net` : 'terms';
           return `<div style="display:flex;justify-content:space-between;align-items:center;background:#f6fefb;border:1px solid var(--emerald-border);border-radius:7px;padding:.35rem .6rem;font-size:.78rem">
-            <span><span class="term-cat">${t.cat}</span>${t.display}</span>
+            <span><span class="term-cat">${t.cat}</span>${termDisplay(t)}</span>
             <span style="display:flex;gap:.6rem;align-items:center"><b style="color:var(--emerald);font-size:.72rem">${imp}</b><button onclick="removeCustomTerm(${i})" style="background:none;border:none;color:var(--rose);cursor:pointer;font-size:.7rem">remove</button></span>
           </div>`;
         }).join('')}
@@ -1689,7 +1703,7 @@ function renderNego(num) {
             <span class="round-date">${r.date}</span>
           </div>
           ${(r.terms&&r.terms.length) ? `<ul class="round-terms" style="${rej?'text-decoration:line-through;color:var(--text-3)':''}">${r.terms.map(t=>{
-            if (t && t.display) return `<li><span class="term-cat">${t.cat||'Term'}</span>${t.display}</li>`;
+            if (t && t.display) return `<li><span class="term-cat">${t.cat||'Term'}</span>${termDisplay(t)}</li>`;
             return `<li>${t}</li>`; // legacy string
           }).join('')}</ul>` : ''}
           ${r.note ? `<div class="round-note">"${r.note}"</div>` : ''}
@@ -1725,10 +1739,9 @@ function saveRound(num) {
     const sg = window._negoSugg[inp.dataset.id];
     if (!sg) return;
     const value = sg.type === 'num' ? (+inp.value || sg.applyVal) : sg.applyVal;
-    const display = sg.type === 'num'
-      ? (sg.field === 'comm_pct' ? (value*100).toFixed(1)+'%' : fmt(value))
-      : sg.sug;
-    terms.push({ cat: sg.cat, field: sg.field, value: value, display: display });
+    const term = { cat: sg.cat, field: sg.field, value: value, display: sg.sug };
+    term.display = termDisplay(term) || sg.sug; // close/commission/price re-derived correctly
+    terms.push(term);
   });
   // include any custom terms added by the user
   _customTerms.forEach(t => terms.push(t));
