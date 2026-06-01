@@ -751,6 +751,57 @@ function renderDashboard() {
   const appreciationPct = ((+top.price - PURCHASE_PRICE)/PURCHASE_PRICE*100).toFixed(0);
   const cagr = ((Math.pow(+top.price/PURCHASE_PRICE, 1/5)-1)*100).toFixed(1);
 
+  // ── Build the narrative explaining WHY the leader wins vs the runner-up ──
+  let whyHtml = '';
+  if (second) {
+    const reasons = [];
+    const dPrice = +top.price - +second.price;
+    const commT = +top.price * (parseFloat(top.comm_pct)||0.05);
+    const commS = +second.price * (parseFloat(second.comm_pct)||0.05);
+    const rentT = +top.rent_cost || 0, rentS = +second.rent_cost || 0;
+
+    if (dPrice > 0) reasons.push(`<b>Higher price</b> — ${fmt(top.price)} vs ${fmt(second.price)} (a ${fmt(dPrice)} edge).`);
+    else if (dPrice < 0) reasons.push(`Even though the price is ${fmt(-dPrice)} <b>lower</b> than Offer ${second.num}, it still nets more because of stronger terms below.`);
+    else reasons.push(`Same price as Offer ${second.num} — the terms break the tie.`);
+
+    if ((parseFloat(top.comm_pct)||0.05) < (parseFloat(second.comm_pct)||0.05))
+      reasons.push(`<b>Lower commission</b> — ${(top.comm_pct*100).toFixed(1)}% vs ${(second.comm_pct*100).toFixed(1)}%, roughly ${fmt(Math.abs(commS-commT))} less in fees.`);
+
+    if (top.fin_code === 'cash' && second.fin_code !== 'cash')
+      reasons.push(`<b>All cash vs financed</b> — no lender, no appraisal contingency, far lower chance of the deal falling through.`);
+
+    if (top.insp_code !== 'full' && second.insp_code === 'full')
+      reasons.push(`<b>No inspection requests</b> — the buyer can't come back for repair credits after signing (Offer ${second.num} can).`);
+    if (top.appr_code !== 'included' && second.appr_code === 'included')
+      reasons.push(`<b>Appraisal protected</b> — your price is shielded if it appraises low; Offer ${second.num} carries that risk.`);
+
+    if (rentT < rentS)
+      reasons.push(`<b>Cheaper rent-back</b> — ${rentT? fmt(rentT):'free'} vs ${fmt(rentS)} for your post-close stay.`);
+
+    if ((+top.em/+top.price) > (+second.em/+second.price))
+      reasons.push(`<b>Stronger earnest money</b> — ${fmt(top.em)} (${(+top.em/+top.price*100).toFixed(1)}%) vs ${fmt(second.em)} (${(+second.em/+second.price*100).toFixed(1)}%).`);
+
+    // Caveats from the leader's own red flags
+    const redFlags = (top.flags||[]).filter(f => f.type === 'red');
+
+    whyHtml = `
+      <div class="card" style="padding:1rem;margin-bottom:1.25rem">
+        <div style="font-size:.82rem;line-height:1.5;color:var(--text);margin-bottom:.6rem">
+          <b>Offer ${top.num} (${firstName(top)})</b> nets you <b style="color:var(--emerald)">${fmt(top._net)}</b> —
+          about <b>${fmt(gapNext)} more</b> than the next-best, Offer ${second.num} (${firstName(second)}) at ${fmt(second._net)}.
+          Here's why it comes out ahead:
+        </div>
+        <ul style="font-size:.8rem;color:var(--text-2);padding-left:1.1rem;display:flex;flex-direction:column;gap:.3rem">
+          ${reasons.map(r=>`<li>${r}</li>`).join('')}
+        </ul>
+        ${redFlags.length ? `
+          <div style="margin-top:.7rem;padding-top:.6rem;border-top:1px dashed var(--border)">
+            <div style="font-size:.68rem;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">Before you rely on it</div>
+            ${redFlags.map(f=>`<div class="flag flag-rose" style="margin-bottom:.25rem">${f.text}</div>`).join('')}
+          </div>` : ''}
+      </div>`;
+  }
+
   document.getElementById('tab-dashboard').innerHTML = `
     <!-- RECOMMENDATION -->
     <div class="rec-hero">
@@ -764,6 +815,8 @@ function renderDashboard() {
       <div class="rec-chips">${whyChips.map(c=>`<span class="rec-chip">${c}</span>`).join('')}</div>
       <div class="rec-cta"><button class="rec-btn" onclick="openOffer(${top.num})">View full detail →</button></div>
     </div>
+
+    ${whyHtml}
 
     <!-- NET LEADERBOARD -->
     <div class="section-title">Net Proceeds — Ranked</div>
