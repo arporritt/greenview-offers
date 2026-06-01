@@ -610,17 +610,28 @@ function calcScore(o) {
   const appr = {waived:100,gap:75,included:50}[o.appr_code] || 50;
   const rent = {free:100,modified:70,declined:0}[o.rent_code] || 50;
   const LIST = cfgN('list_price', 799000);
+
+  // Timeline: only penalize closing LATER than the June 26 target (~26 days).
+  // On-time or earlier = 100 (an early close is good — less carrying cost).
+  const TARGET_DAYS = 26;
+  const timeline = Math.max(0, 100 - Math.max(0, +o.close_days - TARGET_DAYS) * 3);
+
+  // Commission: lower total commission scores higher. 4% or less = 100, 5% = 50, 6% = 0.
+  const comm = parseFloat(o.comm_pct) || 0.05;
+  const commScore = Math.max(0, Math.min(100, (0.06 - comm) / 0.02 * 100));
+
   const raw = (
-    0.50 * Math.min(110, +o.price / LIST * 100) +
+    0.45 * Math.min(110, +o.price / LIST * 100) +
     0.15 * fin +
     0.10 * Math.min(100, (+o.em / +o.price) / 0.05 * 100) +
-    0.10 * insp + 0.05 * appr +
-    0.05 * Math.max(0, 100 - Math.abs(+o.close_days - 30) * 2) +
-    0.05 * rent
+    0.10 * insp +
+    0.05 * appr +
+    0.05 * timeline +
+    0.05 * rent +
+    0.05 * commScore
   );
-  // Normalize: theoretical max is 105 (price sub-score allowed up to 110), so
-  // rescale to a clean 0–100 where a perfect offer = 100.
-  return raw * (100 / 105);
+  // Theoretical max = 104.5 (price sub-score allowed up to 110). Rescale to 0–100.
+  return raw * (100 / 104.5);
 }
 function parseTaxPct(s) {
   if (!s || String(s).toUpperCase() === 'TBD') return 1.05; // assume 105% if TBD
