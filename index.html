@@ -817,6 +817,32 @@ function renderDashboard() {
 
   // ── Negotiation summary (reads rounds stored per offer) ──
   const negoOffers = byNum.map(o => ({ o, rounds: loadRounds(o.num) })).filter(x => x.rounds.length);
+
+  // ── Pending-action banner: who owes the next move ──
+  let pendingHtml = '';
+  if (negoOffers.length) {
+    const items = negoOffers.map(({o, rounds}) => {
+      const last = rounds[rounds.length - 1];
+      const yourMove = last.by === 'Buyer';            // they responded → ball is yours
+      return { o, yourMove, last };
+    });
+    const yours = items.filter(i => i.yourMove);
+    const theirs = items.filter(i => !i.yourMove);
+    pendingHtml = `
+      <div class="card" style="padding:.9rem 1rem;margin-bottom:1.25rem;border-left:3px solid var(--amber)">
+        <div style="font-size:.68rem;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">⏳ Pending Negotiation</div>
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          ${items.map(({o, yourMove, last}) => `
+            <div onclick="openNego(${o.num})" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:.6rem">
+              <span style="font-size:.82rem"><b>Offer ${o.num} · ${firstName(o)}</b>
+                <span style="font-size:.7rem;color:var(--text-3)"> — last move: ${last.by} (${last.date})</span></span>
+              <span class="tag ${yourMove ? 'tag-amber' : 'tag-slate'}" style="flex-shrink:0">${yourMove ? '🔔 Your move' : '⏳ Awaiting buyer'}</span>
+            </div>`).join('')}
+        </div>
+        ${yours.length ? `<div style="font-size:.72rem;color:var(--text-2);margin-top:.55rem">You owe a response on <b>${yours.length}</b> offer${yours.length>1?'s':''}. Tap to counter in the Negotiate tab.</div>` : `<div style="font-size:.72rem;color:var(--text-2);margin-top:.55rem">All ${theirs.length} open counter${theirs.length>1?'s are':' is'} awaiting the buyer's response.</div>`}
+      </div>`;
+  }
+
   let negoSummaryHtml = '';
   if (negoOffers.length) {
     negoSummaryHtml = `
@@ -861,6 +887,8 @@ function renderDashboard() {
       <div class="rec-chips">${whyChips.map(c=>`<span class="rec-chip">${c}</span>`).join('')}</div>
       <div class="rec-cta"><button class="rec-btn" onclick="openOffer(${top.num})">View full detail →</button></div>
     </div>
+
+    ${pendingHtml}
 
     ${whyHtml}
 
