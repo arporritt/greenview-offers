@@ -702,7 +702,7 @@ async function loadData() {
     const data = await r.json();
     cfg = data.config || {};
     offers = (data.offers || []).map(o => ({ ...o, _score: calcScore(o), _net: calcNet(o) }));
-    offers.sort((a, b) => b._score - a._score);
+    offers.sort((a, b) => b._net - a._net);
     // Recovery: push any device-local rounds that never synced up to the Sheet
     offers.forEach(o => {
       if (!cfg['rounds_' + o.num]) {
@@ -937,7 +937,6 @@ function renderDashboard() {
       <div class="rec-figures">
         <div><div class="rec-fig-v">${fmt(top.price)}</div><div class="rec-fig-l">Sale Price</div></div>
         <div><div class="rec-fig-v">${fmt(top._net)}</div><div class="rec-fig-l">Net to You</div></div>
-        <div><div class="rec-fig-v">${top._score.toFixed(0)}</div><div class="rec-fig-l">Score</div></div>
       </div>
       <div class="rec-chips">${whyChips.map(c=>`<span class="rec-chip">${c}</span>`).join('')}</div>
       <div class="rec-cta"><button class="rec-btn" onclick="openOffer(${top.num})">View full detail →</button></div>
@@ -1154,10 +1153,6 @@ function renderCompare() {
           <td class="row-label">Est. Net Proceeds</td>
           ${cols.map(o => `<td class="offer-col ${netCls(o)}"><strong>${fmt(o._net)}</strong></td>`).join('')}
         </tr>
-        <tr>
-          <td class="row-label">Strength Score</td>
-          ${cols.map(o => `<td class="offer-col ${scoreCls(o)}"><strong>${o._score.toFixed(1)}</strong></td>`).join('')}
-        </tr>
       </tbody>
     </table>
     </div>
@@ -1228,7 +1223,6 @@ function renderOfferDetail(o) {
       <div class="oh-stats">
         <div class="ohs"><div class="ohs-v">${fmt(o.price)}</div><div class="ohs-l">Price</div></div>
         <div class="ohs"><div class="ohs-v">${fmt(o._net)}</div><div class="ohs-l">Est. Net</div></div>
-        <div class="ohs"><div class="ohs-v">${o._score.toFixed(1)}</div><div class="ohs-l">Score</div></div>
         <div class="ohs"><div class="ohs-v">${o.financing}</div><div class="ohs-l">Financing</div></div>
         <div class="ohs"><div class="ohs-v">${fmtDate(o.close_date)}</div><div class="ohs-l">Close</div></div>
         <div class="ohs"><div class="ohs-v">${fmtDate(o.possession)}</div><div class="ohs-l">Possession</div></div>
@@ -1589,7 +1583,7 @@ function renderNego(num) {
         <span class="ns-name">Offer ${o.num} — ${o.buyers}</span>
         <span class="ns-net">${fmt(o._net)}</span>
       </div>
-      <div class="ns-sub">${o.financing} · ${fmt(o.price)} · closes ${fmtDate(o.close_date)} · score ${o._score.toFixed(0)} · current net proceeds</div>
+      <div class="ns-sub">${o.financing} · ${fmt(o.price)} · closes ${fmtDate(o.close_date)} · current net proceeds</div>
     </div>
 
     ${rounds.length ? `
@@ -1598,7 +1592,6 @@ function renderNego(num) {
       <div class="sb-figs">
         <div><div class="sb-v">${fmt(working._net)}</div><div class="sb-sub">Net Proceeds</div></div>
         <div><div class="sb-v">${fmt(working.price)}</div><div class="sb-sub">Price</div></div>
-        <div><div class="sb-v">${working._score.toFixed(0)}</div><div class="sb-sub">Score</div></div>
       </div>
       <div class="sb-delta">${netDelta>=0?'▲ +':'▼ '}${fmt(Math.abs(netDelta))} net vs current offer</div>
     </div>` : ''}
@@ -1682,7 +1675,6 @@ function renderNego(num) {
           <div class="round-model">
             <div class="rm-item"><div class="rm-v ${cls}">${fmt(scen._net)}</div><div class="rm-l">Net if agreed</div></div>
             <div class="rm-item"><div class="rm-v">${fmt(scen.price)}</div><div class="rm-l">Price</div></div>
-            <div class="rm-item"><div class="rm-v">${scen._score.toFixed(0)}</div><div class="rm-l">Score</div></div>
             <div class="rm-item"><div class="rm-v ${cls}">${d>=0?'+':'−'}${fmt(Math.abs(d))}</div><div class="rm-l">Δ vs current</div></div>
           </div>
           <button onclick="toggleAccept(${num}, ${i})" style="margin-top:.5rem;width:100%;padding:.45rem;border-radius:7px;border:1.5px solid ${acc?'var(--border)':'var(--emerald)'};background:${acc?'transparent':'var(--emerald)'};color:${acc?'var(--text-2)':'#fff'};font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer">${acc?'↩ Mark as not accepted':'✓ Accept these terms'}</button>
