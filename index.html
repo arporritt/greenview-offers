@@ -627,6 +627,10 @@ function taxProrationAmt(o) {
   const annual = cfgN('tax_annual', 13700);
   return (days / 365) * annual * parseTaxPct(o.tax_prorate);
 }
+// Mortgage you keep paying until you close — earlier close = less carrying cost
+function carryCost(o) {
+  return (+o.close_days / 30.44) * cfgN('monthly_carry', 3511);
+}
 function calcNet(o) {
   const comm = parseFloat(o.comm_pct) || 0.05;
   return +o.price
@@ -635,6 +639,7 @@ function calcNet(o) {
     - cfgN('closing_costs', 3650)
     - (+o.rent_cost || 0)
     - taxProrationAmt(o)
+    - carryCost(o)
     - cfgN('mortgage_payoff', 486311.79);
 }
 function idealChecks(o) {
@@ -1002,6 +1007,10 @@ function renderCompare() {
           ${offers.map(o => `<td class="offer-col"><div class="cval"><div class="cval-main" style="font-size:.76rem">${o.tax_prorate||'TBD'}</div><div class="cval-sub" style="color:var(--rose)">−${fmt(taxProrationAmt(o))}</div></div></td>`).join('')}
         </tr>
         <tr>
+          <td class="row-label">Carrying to Close</td>
+          ${offers.map(o => `<td class="offer-col ${rank(x=>-carryCost(x))(o)}"><div class="cval"><div class="cval-main" style="font-size:.76rem">${Math.round(+o.close_days)}d</div><div class="cval-sub" style="color:var(--rose)">−${fmt(carryCost(o))}</div></div></td>`).join('')}
+        </tr>
+        <tr>
           <td class="row-label">Mortgage Payoff</td>
           ${offers.map(o => `<td class="offer-col"><div class="cval-sub">−${fmt(cfgN('mortgage_payoff',486311.79))}</div></td>`).join('')}
         </tr>
@@ -1074,6 +1083,7 @@ function renderOfferDetail(o) {
           <div class="nbt-row sub"><span class="nbt-lbl">Closing Costs (est.)</span><span class="nbt-amt">− ${fmt(closAmt)}</span></div>
           ${rentAmt?`<div class="nbt-row sub"><span class="nbt-lbl">Rent-Back Cost (est.)</span><span class="nbt-amt">− ${fmt(rentAmt)}</span></div>`:''}
           <div class="nbt-row sub"><span class="nbt-lbl">Tax Proration (${taxProrPct}%${taxProrNote})</span><span class="nbt-amt">− ${fmt(taxProrAmt)}</span></div>
+          <div class="nbt-row sub"><span class="nbt-lbl">Carrying cost to close (~${Math.round(+o.close_days)}d @ ${fmt(cfgN('monthly_carry',3511))}/mo)</span><span class="nbt-amt">− ${fmt(carryCost(o))}</span></div>
           <div class="nbt-row sub"><span class="nbt-lbl">Mortgage Payoff</span><span class="nbt-amt">− ${fmt(mortAmt)}</span></div>
           <div class="nbt-row total"><span class="nbt-lbl">Estimated Net to You</span><span class="nbt-amt">${fmt(o._net)}</span></div>
         </div>
@@ -1199,8 +1209,25 @@ let _negoOffer = null;
 let _negoBy = 'Seller';
 
 const negoKey = num => `nego_v1_${num}`;
-function loadRounds(num) { try { return JSON.parse(localStorage.getItem(negoKey(num))) || []; } catch { return []; } }
-function saveRounds(num, rounds) { localStorage.setItem(negoKey(num), JSON.stringify(rounds)); }
+let _customTerms = []; // pending custom terms for the round being built
+
+// Rounds are stored in the Google Sheet (Config tab, key rounds_<num>) so they
+// survive reloads and sync across devices. localStorage is a same-device backup.
+function loadRounds(num) {
+  const fromSheet = cfg['rounds_' + num];
+  if (fromSheet) { try { return JSON.parse(fromSheet) || []; } catch {} }
+  try { return JSON.parse(localStorage.getItem(negoKey(num))) || []; } catch { return []; }
+}
+function saveRounds(num, rounds) {
+  const json = JSON.stringify(rounds);
+  cfg['rounds_' + num] = json;                       // update in-memory copy
+  try { localStorage.setItem(negoKey(num), json); } catch {}   // local backup
+  // persist to the Sheet (fire-and-forget; uses already-deployed updateConfig)
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'updateConfig', key: 'rounds_' + num, value: json })
+  }).catch(() => {});
+}
 
 function buildNegoTabs() {
   const byNum = [...offers].sort((a, b) => +a.num - +b.num);
@@ -1210,10 +1237,67 @@ function buildNegoTabs() {
 
 function selectNego(num) {
   _negoOffer = num;
+  _customTerms = []; // clear pending custom terms when switching offers
   document.querySelectorAll('#nego-subtabnav .subtab-btn').forEach(b =>
     b.classList.toggle('active', String(b.dataset.nego) === String(num)));
   renderNego(num);
 }
+
+// Custom-term builder: field definitions
+const CUSTOM_FIELDS = {
+  price:      { cat:'Price',         type:'num',  label:'Purchase price ($)' },
+  em:         { cat:'Earnest Money', type:'num',  label:'Earnest money ($)' },
+  close_days: { cat:'Closing',       type:'days', label:'Close in N days (from May 31)' },
+  comm_pct:   { cat:'Commission',    type:'pct',  label:'Total commission (%)' },
+  insp_code:  { cat:'Inspection',    type:'sel',  label:'Inspection', opts:[['none','No requests'],['info','Info only'],['full','With requests']] },
+  appr_code:  { cat:'Appraisal',     type:'sel',  label:'Appraisal', opts:[['waived','Waived'],['gap','Gap coverage'],['included','Included']] },
+  rent:       { cat:'Rent-Back',     type:'sel',  label:'Rent-back', opts:[['free','Free'],['paid','Paid']] },
+  tax_prorate:{ cat:'Tax Proration', type:'text', label:'Tax proration (e.g. 100%)' },
+};
+
+function customFieldChanged() {
+  const f = document.getElementById('cf-field').value;
+  const def = CUSTOM_FIELDS[f];
+  const wrap = document.getElementById('cf-input-wrap');
+  if (def.type === 'sel') {
+    wrap.innerHTML = `<select id="cf-val">${def.opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select>`;
+  } else if (def.type === 'days') {
+    wrap.innerHTML = `<input id="cf-val" type="number" placeholder="e.g. 15" oninput="cfDateHint()"><span id="cf-hint" style="font-size:.68rem;color:var(--text-3);margin-left:.4rem"></span>`;
+  } else if (def.type === 'pct') {
+    wrap.innerHTML = `<input id="cf-val" type="number" step="0.1" placeholder="e.g. 4.5">`;
+  } else if (def.type === 'num') {
+    wrap.innerHTML = `<input id="cf-val" type="number" placeholder="$">`;
+  } else {
+    wrap.innerHTML = `<input id="cf-val" placeholder="value">`;
+  }
+}
+function cfDateHint() {
+  const n = +document.getElementById('cf-val').value;
+  const hint = document.getElementById('cf-hint');
+  if (!n) { hint.textContent = ''; return; }
+  const d = new Date(2026, 4, 31); d.setDate(d.getDate() + n); // May=4
+  hint.textContent = '→ ' + d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function addCustomTerm() {
+  const f = document.getElementById('cf-field').value;
+  const def = CUSTOM_FIELDS[f];
+  const raw = document.getElementById('cf-val').value;
+  if (raw === '' || raw == null) { alert('Enter a value.'); return; }
+
+  let field = f, value, display;
+  if (def.type === 'num')      { value = +raw; display = `${def.cat}: ${fmt(value)}`; }
+  else if (def.type === 'days'){ field='close_days'; value = +raw;
+    const d=new Date(2026,4,31); d.setDate(d.getDate()+value);
+    display = `${def.cat}: close ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})} (${value}d)`; }
+  else if (def.type === 'pct') { field='comm_pct'; value = +raw/100; display = `${def.cat}: ${(+raw).toFixed(1)}%`; }
+  else if (def.type === 'sel' && f === 'rent') { field='rent'; value=raw; display = `Rent-Back: ${raw==='free'?'Free':'Paid'}`; }
+  else if (def.type === 'sel') { value = raw; const lbl=(def.opts.find(o=>o[0]===raw)||[])[1]; display = `${def.cat}: ${lbl}`; }
+  else { value = raw; display = `${def.cat}: ${raw}`; }
+
+  _customTerms.push({ cat: def.cat, field, value, display });
+  renderNego(_negoOffer);
+}
+function removeCustomTerm(i) { _customTerms.splice(i,1); renderNego(_negoOffer); }
 
 // Apply one structured term to a working copy of an offer
 function applyTerm(oc, field, value) {
@@ -1332,13 +1416,34 @@ function renderNego(num) {
       </div>`; }).join('')
       : '<div class="empty">This offer already meets your ideal terms — nothing obvious to counter.</div>'}
 
+    <div class="section-title">Add a Custom Term</div>
+    <div class="nego-compose" style="margin-top:0">
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
+        <select id="cf-field" onchange="customFieldChanged()" style="padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.8rem">
+          ${Object.entries(CUSTOM_FIELDS).map(([k,d])=>`<option value="${k}">${d.label}</option>`).join('')}
+        </select>
+        <span id="cf-input-wrap" style="display:inline-flex;align-items:center"><input id="cf-val" type="number" placeholder="$" style="padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.8rem"></span>
+        <button onclick="addCustomTerm()" style="padding:.45rem .8rem;background:var(--ink);color:#fff;border:none;border-radius:7px;font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer">+ Add</button>
+      </div>
+      ${_customTerms.length ? `<div style="margin-top:.6rem;display:flex;flex-direction:column;gap:.3rem">
+        ${_customTerms.map((t,i)=>{
+          const oc=Object.assign({},o); applyTerm(oc,t.field,t.value); const d=calcNet(oc)-o._net;
+          const imp = Math.abs(d)>=1 ? `${d>=0?'+':'−'}${fmt(Math.abs(d))} net` : 'terms';
+          return `<div style="display:flex;justify-content:space-between;align-items:center;background:#f6fefb;border:1px solid var(--emerald-border);border-radius:7px;padding:.35rem .6rem;font-size:.78rem">
+            <span><span class="term-cat">${t.cat}</span>${t.display}</span>
+            <span style="display:flex;gap:.6rem;align-items:center"><b style="color:var(--emerald);font-size:.72rem">${imp}</b><button onclick="removeCustomTerm(${i})" style="background:none;border:none;color:var(--rose);cursor:pointer;font-size:.7rem">remove</button></span>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+    </div>
+
     <div class="section-title">Build the Round</div>
     <div class="nego-compose">
       <div class="seg">
         <button id="by-seller" class="on" onclick="setNegoBy('Seller')">Seller counter</button>
         <button id="by-buyer" onclick="setNegoBy('Buyer')">Buyer response</button>
       </div>
-      <div style="font-size:.74rem;color:var(--text-3);margin-bottom:.3rem">Checked terms above are included &amp; modelled. Add a note for anything else:</div>
+      <div style="font-size:.74rem;color:var(--text-3);margin-bottom:.3rem">Checked suggestions + custom terms above are included &amp; modelled. Add a note for anything else:</div>
       <textarea class="nego-note" id="nego-note" placeholder="e.g. 'Verbally agreed to split the survey cost'…"></textarea>
       <button class="nego-save" onclick="saveRound(${num})">Record Round →</button>
     </div>
@@ -1370,7 +1475,7 @@ function renderNego(num) {
         </div>`; }).join('')
         : '<div class="empty">No rounds logged yet. Check terms above, then Record Round.</div>'}
     </div>
-    <div style="font-size:.68rem;color:var(--text-3);margin-top:.5rem">History is saved on this device (browser). It is not shared via the live link.</div>
+    <div style="font-size:.68rem;color:var(--text-3);margin-top:.5rem">History is saved to your Google Sheet — it persists across devices and reloads.</div>
   `;
 }
 
@@ -1396,8 +1501,11 @@ function saveRound(num) {
       : sg.sug;
     terms.push({ cat: sg.cat, field: sg.field, value: value, display: display });
   });
+  // include any custom terms added by the user
+  _customTerms.forEach(t => terms.push(t));
+
   const note = document.getElementById('nego-note').value.trim();
-  if (!terms.length && !note) { alert('Check at least one suggested term or add a note.'); return; }
+  if (!terms.length && !note) { alert('Check a suggested term, add a custom term, or write a note.'); return; }
 
   const rounds = loadRounds(num);
   rounds.push({
@@ -1406,6 +1514,7 @@ function saveRound(num) {
     terms, note
   });
   saveRounds(num, rounds);
+  _customTerms = []; // reset pending custom terms
   renderNego(num);
 }
 
