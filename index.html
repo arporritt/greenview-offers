@@ -1305,8 +1305,11 @@ function saveRounds(num, rounds) {
 
 function buildNegoTabs() {
   const byNum = [...offers].sort((a, b) => +a.num - +b.num);
-  document.getElementById('nego-subtabnav').innerHTML = byNum.map(o => `
-    <button class="subtab-btn" data-nego="${o.num}" onclick="selectNego(${o.num})">Offer ${o.num}</button>`).join('');
+  document.getElementById('nego-subtabnav').innerHTML = byNum.map(o => {
+    const active = String(_negoOffer) === String(o.num);
+    const inTalks = loadRounds(o.num).length > 0;
+    return `<button class="subtab-btn${active?' active':''}" data-nego="${o.num}" onclick="selectNego(${o.num})">Offer ${o.num}${inTalks?' <span style="color:#34d399" title="in active negotiation">●</span>':''}</button>`;
+  }).join('');
 }
 
 function selectNego(num) {
@@ -1599,6 +1602,7 @@ function saveRound(num) {
   });
   saveRounds(num, rounds);
   _customTerms = []; // reset pending custom terms
+  buildNegoTabs();   // refresh the ● in-negotiation markers
   renderNego(num);
 }
 
@@ -1606,6 +1610,7 @@ function delRound(num, i) {
   const rounds = loadRounds(num);
   rounds.splice(i, 1);
   saveRounds(num, rounds);
+  buildNegoTabs();   // refresh the ● in-negotiation markers
   renderNego(num);
 }
 </script>
