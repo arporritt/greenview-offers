@@ -610,7 +610,7 @@ function calcScore(o) {
   const appr = {waived:100,gap:75,included:50}[o.appr_code] || 50;
   const rent = {free:100,modified:70,declined:0}[o.rent_code] || 50;
   const LIST = cfgN('list_price', 799000);
-  return (
+  const raw = (
     0.50 * Math.min(110, +o.price / LIST * 100) +
     0.15 * fin +
     0.10 * Math.min(100, (+o.em / +o.price) / 0.05 * 100) +
@@ -618,6 +618,9 @@ function calcScore(o) {
     0.05 * Math.max(0, 100 - Math.abs(+o.close_days - 30) * 2) +
     0.05 * rent
   );
+  // Normalize: theoretical max is 105 (price sub-score allowed up to 110), so
+  // rescale to a clean 0–100 where a perfect offer = 100.
+  return raw * (100 / 105);
 }
 function parseTaxPct(s) {
   if (!s || String(s).toUpperCase() === 'TBD') return 1.05; // assume 105% if TBD
