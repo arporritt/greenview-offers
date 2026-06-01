@@ -1437,16 +1437,36 @@ function customFieldChanged() {
   const def = CUSTOM_FIELDS[f];
   const wrap = document.getElementById('cf-input-wrap');
   if (def.type === 'sel') {
-    wrap.innerHTML = `<select id="cf-val">${def.opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select>`;
+    wrap.innerHTML = `<select id="cf-val" onchange="cfPreview()">${def.opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select>`;
   } else if (def.type === 'days') {
-    wrap.innerHTML = `<input id="cf-val" type="number" placeholder="e.g. 15" oninput="cfDateHint()"><span id="cf-hint" style="font-size:.68rem;color:var(--text-3);margin-left:.4rem"></span>`;
+    wrap.innerHTML = `<input id="cf-val" type="number" placeholder="e.g. 15" oninput="cfDateHint();cfPreview()"><span id="cf-hint" style="font-size:.68rem;color:var(--text-3);margin-left:.4rem"></span>`;
   } else if (def.type === 'pct') {
-    wrap.innerHTML = `<input id="cf-val" type="number" step="0.1" placeholder="e.g. 4.5">`;
+    wrap.innerHTML = `<input id="cf-val" type="number" step="0.1" placeholder="e.g. 4.5" oninput="cfPreview()">`;
   } else if (def.type === 'num') {
-    wrap.innerHTML = `<input id="cf-val" type="number" placeholder="$">`;
+    wrap.innerHTML = `<input id="cf-val" type="number" placeholder="$" oninput="cfPreview()">`;
   } else {
-    wrap.innerHTML = `<input id="cf-val" placeholder="value">`;
+    wrap.innerHTML = `<input id="cf-val" placeholder="value" oninput="cfPreview()">`;
   }
+  cfPreview();
+}
+
+// Live net-impact preview for the custom-term builder
+function cfPreview() {
+  const el = document.getElementById('cf-impact'); if (!el) return;
+  const f = document.getElementById('cf-field').value;
+  const def = CUSTOM_FIELDS[f];
+  const raw = document.getElementById('cf-val').value;
+  const o = offers.find(x => String(x.num) === String(_negoOffer));
+  if (!o || raw === '' || raw == null) { el.textContent = ''; return; }
+  let field = f, value;
+  if (def.type === 'days')      { field = 'close_days'; value = +raw; }
+  else if (def.type === 'pct')  { field = 'comm_pct';   value = +raw / 100; }
+  else if (def.type === 'num')  { value = +raw; }
+  else if (def.type === 'sel' && f === 'rent') { field = 'rent'; value = raw; }
+  else { el.textContent = ''; return; } // text fields have no $ impact
+  const oc = Object.assign({}, o); applyTerm(oc, field, value);
+  const d = calcNet(oc) - o._net;
+  el.textContent = Math.abs(d) >= 1 ? `${d>=0?'+':'−'}${fmt(Math.abs(d))} net` : '';
 }
 function cfDateHint() {
   const n = +document.getElementById('cf-val').value;
@@ -1704,8 +1724,9 @@ function renderNego(num) {
         <select id="cf-field" onchange="customFieldChanged()" style="padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.8rem">
           ${Object.entries(CUSTOM_FIELDS).map(([k,d])=>`<option value="${k}">${d.label}</option>`).join('')}
         </select>
-        <span id="cf-input-wrap" style="display:inline-flex;align-items:center"><input id="cf-val" type="number" placeholder="$" style="padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.8rem"></span>
+        <span id="cf-input-wrap" style="display:inline-flex;align-items:center"><input id="cf-val" type="number" placeholder="$" oninput="cfPreview()" style="padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.8rem"></span>
         <button onclick="addCustomTerm()" style="padding:.45rem .8rem;background:var(--ink);color:#fff;border:none;border-radius:7px;font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer">+ Add</button>
+        <span id="cf-impact" style="font-size:.74rem;font-weight:700;color:var(--emerald)"></span>
       </div>
       ${_customTerms.length ? `<div style="margin-top:.6rem;display:flex;flex-direction:column;gap:.3rem">
         ${_customTerms.map((t,i)=>{
