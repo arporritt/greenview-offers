@@ -404,18 +404,21 @@ body {
 /* timeline of rounds */
 .rounds { position: relative; margin-top: .5rem; }
 .round { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .7rem .85rem; margin-bottom: .55rem; box-shadow: var(--shadow); }
-.round.seller { border-left: 3px solid var(--emerald); }
-.round.buyer { border-left: 3px solid #2563eb; }
+/* Neutral cards with a quiet status dot — no heavy colored borders */
 .round-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .35rem; }
-.round-by { font-size: .8rem; font-weight: 700; }
-.round.seller .round-by { color: var(--emerald); }
-.round.buyer .round-by { color: #2563eb; }
+.round-by { font-size: .8rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: .4rem; }
+.round-by::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); flex-shrink: 0; }
+.round.seller .round-by::before { background: var(--emerald); }
+.round.buyer .round-by::before { background: #3b82f6; }
+.round.is-accepted { background: #fbfefc; border-color: var(--emerald-border); }
+.round.is-rejected { opacity: .55; }
 .round-date { font-size: .68rem; color: var(--text-3); }
 .round-terms { list-style: none; display: flex; flex-direction: column; gap: .2rem; }
 .round-terms li { font-size: .78rem; color: var(--text-2); padding-left: 1rem; position: relative; }
 .round-terms li::before { content: '→'; position: absolute; left: 0; color: var(--text-3); }
 .round-note { font-size: .76rem; color: var(--text-2); font-style: italic; margin-top: .35rem; }
-.round-del { float: right; font-size: .68rem; color: var(--rose); background: none; border: none; cursor: pointer; }
+.round-del { float: right; font-size: .68rem; color: var(--text-3); background: none; border: none; cursor: pointer; }
+.round-del:hover { color: var(--rose); }
 .term-cat { display: inline-block; font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-2); background: var(--bg); border-radius: 4px; padding: .05rem .35rem; margin-right: .35rem; }
 .round-model { margin-top: .5rem; padding-top: .45rem; border-top: 1px dashed var(--border); display: flex; gap: 1.1rem; }
 .rm-item .rm-v { font-size: .9rem; font-weight: 800; color: var(--ink); }
@@ -423,11 +426,12 @@ body {
 .rm-item .rm-v.down { color: var(--rose); }
 .rm-item .rm-l { font-size: .62rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
 
-.scenario-box { background: linear-gradient(145deg,#064e3b,#022c22); border-radius: var(--radius); padding: .9rem 1rem; margin-bottom: .6rem; color: #fff; position: relative; overflow: hidden; }
-.scenario-box .sb-l { font-size: .62rem; font-weight: 700; color: #6ee7b7; text-transform: uppercase; letter-spacing: .08em; }
+/* Working scenario — neutral charcoal so it doesn't compete with the green accents */
+.scenario-box { background: linear-gradient(145deg,#27272a 0%,#09090b 70%); border-radius: var(--radius); padding: .9rem 1rem; margin-bottom: .6rem; color: #fff; position: relative; overflow: hidden; box-shadow: var(--shadow-md); }
+.scenario-box .sb-l { font-size: .62rem; font-weight: 700; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .08em; }
 .scenario-box .sb-figs { display: flex; gap: 1.5rem; margin-top: .5rem; }
 .scenario-box .sb-v { font-size: 1.35rem; font-weight: 800; letter-spacing: -.02em; }
-.scenario-box .sb-sub { font-size: .62rem; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .05em; margin-top: .2rem; }
+.scenario-box .sb-sub { font-size: .62rem; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .05em; margin-top: .2rem; }
 .scenario-box .sb-delta { font-size: .78rem; font-weight: 600; color: #6ee7b7; }
 .sugg-impact.neg { color: var(--text-3); }
 
@@ -1621,9 +1625,9 @@ function renderNego(num) {
         const cls = d > 0 ? 'up' : d < 0 ? 'down' : '';
         const acc = !!r.accepted && !r.rejected;
         const rej = !!r.rejected;
-        const outline = acc ? 'inset 0 0 0 1.5px var(--emerald)' : rej ? 'inset 0 0 0 1.5px var(--rose)' : '';
-        const badge = acc ? ' <span class="tag tag-green" style="margin-left:.3rem">✓ Accepted</span>'
-                    : rej ? ' <span class="tag tag-rose" style="margin-left:.3rem">✗ Rejected</span>' : '';
+        const statusClass = acc ? 'is-accepted' : rej ? 'is-rejected' : '';
+        const badge = acc ? ' <span class="tag tag-green" style="margin-left:.3rem">Accepted</span>'
+                    : rej ? ' <span class="tag tag-rose" style="margin-left:.3rem">Rejected</span>' : '';
         const btnStyle = 'flex:1;padding:.45rem;border-radius:7px;font-family:inherit;font-weight:600;font-size:.76rem;cursor:pointer';
         let actions;
         if (acc) {
@@ -1632,14 +1636,14 @@ function renderNego(num) {
           actions = `<button onclick="setRoundStatus(${num}, ${i}, 'pending')" style="${btnStyle};border:1.5px solid var(--border);background:transparent;color:var(--text-2)">↩ Undo reject</button>`;
         } else {
           actions = `
-            <button onclick="setRoundStatus(${num}, ${i}, 'accepted')" style="${btnStyle};border:1.5px solid var(--emerald);background:var(--emerald);color:#fff">✓ Accept</button>
-            <button onclick="setRoundStatus(${num}, ${i}, 'rejected')" style="${btnStyle};border:1.5px solid var(--rose);background:transparent;color:var(--rose)">✗ Reject</button>`;
+            <button onclick="setRoundStatus(${num}, ${i}, 'accepted')" style="${btnStyle};border:1.5px solid var(--emerald);background:var(--emerald);color:#fff">Accept</button>
+            <button onclick="setRoundStatus(${num}, ${i}, 'rejected')" style="${btnStyle};border:1.5px solid var(--border);background:transparent;color:var(--text-2)">Reject</button>`;
         }
         return `
-        <div class="round ${r.by.toLowerCase()}" style="${outline?'box-shadow:'+outline:''};${rej?'opacity:.7':''}">
+        <div class="round ${r.by.toLowerCase()} ${statusClass}">
           <button class="round-del" onclick="delRound(${num}, ${i})">delete</button>
           <div class="round-head">
-            <span class="round-by">${r.by === 'Seller' ? '🟢 Seller' : '🔵 Buyer'} · Round ${i+1}${badge}</span>
+            <span class="round-by">${r.by} · Round ${i+1}${badge}</span>
             <span class="round-date">${r.date}</span>
           </div>
           ${(r.terms&&r.terms.length) ? `<ul class="round-terms" style="${rej?'text-decoration:line-through;color:var(--text-3)':''}">${r.terms.map(t=>{
