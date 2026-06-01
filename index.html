@@ -1187,7 +1187,7 @@ function renderOfferDetail(o) {
     const accCount = rounds.filter(r => r.accepted).length;
     const pendCount = rounds.length - accCount;
     const allTerms = [];
-    rounds.forEach(r => (r.terms||[]).forEach(t => { if (t && t.display) allTerms.push({...t, accepted: !!r.accepted}); }));
+    rounds.forEach(r => (r.terms||[]).forEach(t => { if (t && t.display) allTerms.push({...t, status: r.rejected?'rejected':(r.accepted?'accepted':'pending')}); }));
     const dProj = proj._net - o._net;
     const statusChip = pendCount
       ? `<span class="tag tag-amber">⋯ ${pendCount} term${pendCount>1?'s':''} pending</span>`
@@ -1203,7 +1203,7 @@ function renderOfferDetail(o) {
             <div style="font-size:.8rem;display:flex;align-items:center;gap:.4rem">
               <span class="term-cat">${t.cat||'Term'}</span>
               <span style="flex:1">${t.display}</span>
-              <span style="font-size:.68rem;color:${t.accepted?'var(--emerald)':'var(--amber)'};font-weight:600">${t.accepted?'✓ accepted':'⋯ pending'}</span>
+              <span style="font-size:.68rem;font-weight:600;color:${t.status==='accepted'?'var(--emerald)':t.status==='rejected'?'var(--rose)':'var(--amber)'}">${t.status==='accepted'?'✓ accepted':t.status==='rejected'?'✗ rejected':'⋯ pending'}</span>
             </div>`).join('')}
         </div>
         <div style="display:flex;gap:1.25rem;padding-top:.6rem;border-top:1px dashed var(--border)">
@@ -1503,18 +1503,19 @@ function applyRounds(base, list) {
 // "Real" offer = base + only ACCEPTED rounds (what's actually agreed so far)
 function acceptedOffer(o) {
   const rounds = loadRounds(o.num);
-  const acc = rounds.filter(r => r.accepted);
+  const acc  = rounds.filter(r => r.accepted && !r.rejected);
+  const pend = rounds.filter(r => !r.accepted && !r.rejected);
   const out = acc.length ? applyRounds(o, acc) : Object.assign({}, o);
   out._acceptedCount = acc.length;
-  out._pendingCount = rounds.length - acc.length;
+  out._pendingCount = pend.length;
   out._negotiated = acc.length > 0;
-  out._hasPending = (rounds.length - acc.length) > 0;
+  out._hasPending = pend.length > 0;
   return out;
 }
 
-// "Projected" offer = base + ALL rounds (accepted + pending) — the if-everything-agreed view
+// "Projected" offer = base + accepted + pending (rejected terms are off the table)
 function projectedOffer(o) {
-  const rounds = loadRounds(o.num);
+  const rounds = loadRounds(o.num).filter(r => !r.rejected);
   if (!rounds.length) { const c = Object.assign({}, o); c._projected = false; return c; }
   const p = applyRounds(o, rounds);
   p._projected = true;
@@ -1664,25 +1665,40 @@ function renderNego(num) {
         const scen = scenarioAfter(o, rounds, i);
         const d = scen._net - o._net;
         const cls = d > 0 ? 'up' : d < 0 ? 'down' : '';
-        const acc = !!r.accepted;
+        const acc = !!r.accepted && !r.rejected;
+        const rej = !!r.rejected;
+        const outline = acc ? 'inset 0 0 0 1.5px var(--emerald)' : rej ? 'inset 0 0 0 1.5px var(--rose)' : '';
+        const badge = acc ? ' <span class="tag tag-green" style="margin-left:.3rem">✓ Accepted</span>'
+                    : rej ? ' <span class="tag tag-rose" style="margin-left:.3rem">✗ Rejected</span>' : '';
+        const btnStyle = 'flex:1;padding:.45rem;border-radius:7px;font-family:inherit;font-weight:600;font-size:.76rem;cursor:pointer';
+        let actions;
+        if (acc) {
+          actions = `<button onclick="setRoundStatus(${num}, ${i}, 'pending')" style="${btnStyle};border:1.5px solid var(--border);background:transparent;color:var(--text-2)">↩ Undo accept</button>`;
+        } else if (rej) {
+          actions = `<button onclick="setRoundStatus(${num}, ${i}, 'pending')" style="${btnStyle};border:1.5px solid var(--border);background:transparent;color:var(--text-2)">↩ Undo reject</button>`;
+        } else {
+          actions = `
+            <button onclick="setRoundStatus(${num}, ${i}, 'accepted')" style="${btnStyle};border:1.5px solid var(--emerald);background:var(--emerald);color:#fff">✓ Accept</button>
+            <button onclick="setRoundStatus(${num}, ${i}, 'rejected')" style="${btnStyle};border:1.5px solid var(--rose);background:transparent;color:var(--rose)">✗ Reject</button>`;
+        }
         return `
-        <div class="round ${r.by.toLowerCase()}" style="${acc?'box-shadow:inset 0 0 0 1.5px var(--emerald)':''}">
+        <div class="round ${r.by.toLowerCase()}" style="${outline?'box-shadow:'+outline:''};${rej?'opacity:.7':''}">
           <button class="round-del" onclick="delRound(${num}, ${i})">delete</button>
           <div class="round-head">
-            <span class="round-by">${r.by === 'Seller' ? '🟢 Seller' : '🔵 Buyer'} · Round ${i+1}${acc?' <span class="tag tag-green" style="margin-left:.3rem">✓ Accepted</span>':''}</span>
+            <span class="round-by">${r.by === 'Seller' ? '🟢 Seller' : '🔵 Buyer'} · Round ${i+1}${badge}</span>
             <span class="round-date">${r.date}</span>
           </div>
-          ${(r.terms&&r.terms.length) ? `<ul class="round-terms">${r.terms.map(t=>{
+          ${(r.terms&&r.terms.length) ? `<ul class="round-terms" style="${rej?'text-decoration:line-through;color:var(--text-3)':''}">${r.terms.map(t=>{
             if (t && t.display) return `<li><span class="term-cat">${t.cat||'Term'}</span>${t.display}</li>`;
             return `<li>${t}</li>`; // legacy string
           }).join('')}</ul>` : ''}
           ${r.note ? `<div class="round-note">"${r.note}"</div>` : ''}
-          <div class="round-model">
+          ${rej ? '' : `<div class="round-model">
             <div class="rm-item"><div class="rm-v ${cls}">${fmt(scen._net)}</div><div class="rm-l">Net if agreed</div></div>
             <div class="rm-item"><div class="rm-v">${fmt(scen.price)}</div><div class="rm-l">Price</div></div>
             <div class="rm-item"><div class="rm-v ${cls}">${d>=0?'+':'−'}${fmt(Math.abs(d))}</div><div class="rm-l">Δ vs current</div></div>
-          </div>
-          <button onclick="toggleAccept(${num}, ${i})" style="margin-top:.5rem;width:100%;padding:.45rem;border-radius:7px;border:1.5px solid ${acc?'var(--border)':'var(--emerald)'};background:${acc?'transparent':'var(--emerald)'};color:${acc?'var(--text-2)':'#fff'};font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer">${acc?'↩ Mark as not accepted':'✓ Accept these terms'}</button>
+          </div>`}
+          <div style="display:flex;gap:.5rem;margin-top:.5rem">${actions}</div>
         </div>`; }).join('')
         : '<div class="empty">No rounds logged yet. Check terms above, then Record Round.</div>'}
     </div>
@@ -1738,9 +1754,10 @@ function delRound(num, i) {
   refreshAll(num);
 }
 
-function toggleAccept(num, i) {
+function setRoundStatus(num, i, status) {
   const rounds = loadRounds(num);
-  rounds[i].accepted = !rounds[i].accepted;
+  rounds[i].accepted = status === 'accepted';
+  rounds[i].rejected = status === 'rejected';
   saveRounds(num, rounds);
   refreshAll(num);
 }
