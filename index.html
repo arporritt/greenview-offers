@@ -726,6 +726,10 @@ function openOffer(num) {
   switchTab('offers');
   selectOffer(num);
 }
+function openNego(num) {
+  switchTab('negotiate');
+  selectNego(num);
+}
 
 function selectOffer(num) {
   _selectedOffer = num;
@@ -807,6 +811,43 @@ function renderDashboard() {
       </div>`;
   }
 
+  // Offers in numeric order + medal map (by net rank) for the matrix
+  const byNum = [...offers].sort((a, b) => +a.num - +b.num);
+  const medal = {}; sorted.slice(0, 3).forEach((o, i) => { medal[o.num] = ['🥇','🥈','🥉'][i]; });
+
+  // ── Negotiation summary (reads rounds stored per offer) ──
+  const negoOffers = byNum.map(o => ({ o, rounds: loadRounds(o.num) })).filter(x => x.rounds.length);
+  let negoSummaryHtml = '';
+  if (negoOffers.length) {
+    negoSummaryHtml = `
+      <div class="section-title">Negotiations In Progress</div>
+      <div class="card" style="padding:.5rem">
+        ${negoOffers.map(({o, rounds}) => {
+          const scen = scenarioAfter(o, rounds, rounds.length - 1);
+          const d = scen._net - o._net;
+          const last = rounds[rounds.length - 1];
+          const ball = last.by === 'Seller' ? 'Buyer to respond' : 'Your move';
+          return `
+          <div onclick="openNego(${o.num})" style="cursor:pointer;display:flex;align-items:center;gap:.75rem;padding:.6rem .65rem;border-bottom:1px solid var(--border-subtle)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.82rem;font-weight:700;color:var(--ink)">Offer ${o.num} · ${firstName(o)}</div>
+              <div style="font-size:.7rem;color:var(--text-3)">${rounds.length} round${rounds.length>1?'s':''} · last: ${last.by} (${last.date}) · <b style="color:var(--ink)">${ball}</b></div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:.9rem;font-weight:800;color:var(--emerald)">${fmt(scen._net)}</div>
+              <div style="font-size:.66rem;color:${d>=0?'var(--emerald)':'var(--rose)'}">${d>=0?'▲ +':'▼ '}${fmt(Math.abs(d))} if agreed</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  } else {
+    negoSummaryHtml = `
+      <div class="section-title">Negotiations In Progress</div>
+      <div class="empty" style="padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+        No active negotiations yet. Open the <b>Negotiate</b> tab to counter an offer and track rounds here.
+      </div>`;
+  }
+
   document.getElementById('tab-dashboard').innerHTML = `
     <!-- RECOMMENDATION -->
     <div class="rec-hero">
@@ -849,51 +890,49 @@ function renderDashboard() {
       <div class="kpi"><div class="kpi-val">${cagr}%/yr</div><div class="kpi-lbl">Annualized</div><div class="kpi-sub">5-yr CAGR</div></div>
     </div>
 
-    <div class="cols2">
-    <div>
-    <!-- IDEAL SCENARIO MATCH -->
+    ${negoSummaryHtml}
+
+    <!-- IDEAL SCENARIO MATCH + WATCH-OUTS (full width, ordered 1→6) -->
     <div class="section-title">How Each Offer Matches Your Ideal</div>
     <div class="compare-wrap">
-      <table class="compare-table" style="min-width:0">
+      <table class="compare-table" style="min-width:640px">
         <thead><tr>
-          <th>Offer</th><th class="offer-col">Cash</th><th class="offer-col">No Insp.</th>
+          <th>Offer</th>
+          <th class="offer-col">Cash</th><th class="offer-col">No Insp.</th>
           <th class="offer-col">Appr. Safe</th><th class="offer-col">Free Rent</th><th class="offer-col">≤Jun 26</th>
+          <th style="min-width:200px">Watch-Outs</th>
         </tr></thead>
         <tbody>
-          ${sorted.map(o => {
+          ${byNum.map(o => {
             const ck = p => p ? '<span style="color:var(--emerald);font-weight:700">✓</span>' : '<span style="color:var(--text-3)">·</span>';
+            const reds = (o.flags||[]).filter(f => f.type==='red');
+            const watch = reds.length
+              ? reds.map(f=>`<div style="font-size:.7rem;color:var(--rose);line-height:1.35;margin-bottom:.15rem">⚠ ${f.text}</div>`).join('')
+              : '<span style="font-size:.72rem;color:var(--emerald)">✓ None</span>';
             return `<tr onclick="openOffer(${o.num})" style="cursor:pointer">
-              <td class="row-label">#${o.num} ${firstName(o)}</td>
+              <td class="row-label">${medal[o.num]?medal[o.num]+' ':''}#${o.num} ${firstName(o)}</td>
               <td class="offer-col">${ck(o.fin_code==='cash')}</td>
               <td class="offer-col">${ck(o.insp_code!=='full')}</td>
               <td class="offer-col">${ck(o.appr_code!=='included')}</td>
               <td class="offer-col">${ck(o.rent_code==='free')}</td>
               <td class="offer-col">${ck(+o.close_days<=26)}</td>
+              <td>${watch}</td>
             </tr>`;
           }).join('')}
         </tbody>
       </table>
     </div>
-    </div>
-
-    <div>
-    <!-- RISK FLAGS -->
-    <div class="section-title">Watch-Outs</div>
-    ${sorted.map(o => {
-      const reds = (o.flags||[]).filter(f => f.type==='red');
-      return reds.length ? `
-        <div style="margin-bottom:.75rem">
-          <div style="font-size:.72rem;font-weight:700;color:var(--ink);margin-bottom:.3rem">Offer ${o.num} · ${firstName(o)}</div>
-          ${reds.map(f=>`<div class="flag flag-rose">${f.text}</div>`).join('')}
-        </div>` : '';
-    }).join('') || '<div class="empty" style="padding:1rem">No red-flag items.</div>'}
-    </div>
-    </div>
+    <p style="font-size:.68rem;color:var(--text-3);margin-top:.5rem">🥇🥈🥉 mark the top 3 by net proceeds. Rows ordered by offer number.</p>
   `;
 }
 
 // ── COMPARE ───────────────────────────────────────────────────────────────────
 function renderCompare() {
+  // Columns ordered by offer number 1→6 (medals reflect net-proceeds rank)
+  const cols = [...offers].sort((a, b) => +a.num - +b.num);
+  const medal = {}; [...offers].sort((a, b) => b._net - a._net).slice(0, 3)
+    .forEach((o, i) => { medal[o.num] = ['🥇','🥈','🥉'][i]; });
+
   function tagHtml(code, map) {
     const [cls, label] = map[code] || ['slate', code];
     return `<span class="tag tag-${cls}">${label}</span>`;
@@ -923,72 +962,73 @@ function renderCompare() {
   const netCls    = rank(o => o._net);
   const scoreCls  = rank(o => o._score);
 
-  const offerCols = offers.map(o =>
+  const offerCols = cols.map(o =>
     `<th class="offer-col">
-      Offer ${o.num}<br>
+      ${medal[o.num]?medal[o.num]+' ':''}Offer ${o.num}<br>
       <span style="font-weight:500;font-size:.65rem;color:rgba(255,255,255,.55)">${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}</span>
     </th>`).join('');
 
   const check = pass => pass ? '<span style="font-size:1rem">✅</span>' : '<span style="font-size:1rem">❌</span>';
   const span  = n => `<div class="cval"><div class="cval-main">${n}</div></div>`;
+  const N = cols.length + 1;
 
   document.getElementById('tab-compare').innerHTML = `
     <div class="compare-wrap">
     <table class="compare-table">
       <thead><tr><th>Criteria</th>${offerCols}</tr></thead>
       <tbody>
-        <tr class="section-row"><td colspan="${offers.length+1}">Price &amp; Financing</td></tr>
+        <tr class="section-row"><td colspan="${N}">Price &amp; Financing</td></tr>
         <tr>
           <td class="row-label">Offer Price</td>
-          ${offers.map(o => `<td class="offer-col ${priceCls(o)}">
+          ${cols.map(o => `<td class="offer-col ${priceCls(o)}">
             <div class="cval"><div class="cval-main">${fmt(o.price)}</div>
             <div class="cval-sub">+${fmtK(+o.price - cfgN('list_price',799000))}</div></div>
           </td>`).join('')}
         </tr>
-        <tr><td class="row-label">Financing</td>${offers.map(o=>`<td class="offer-col">${finTag(o)}</td>`).join('')}</tr>
+        <tr><td class="row-label">Financing</td>${cols.map(o=>`<td class="offer-col">${finTag(o)}</td>`).join('')}</tr>
         <tr>
           <td class="row-label">Down Payment</td>
-          ${offers.map(o => `<td class="offer-col ${downCls(o)}">${span(o.down_pct + '%')}</td>`).join('')}
+          ${cols.map(o => `<td class="offer-col ${downCls(o)}">${span(o.down_pct + '%')}</td>`).join('')}
         </tr>
 
-        <tr class="section-row"><td colspan="${offers.length+1}">Risk &amp; Contingencies</td></tr>
+        <tr class="section-row"><td colspan="${N}">Risk &amp; Contingencies</td></tr>
         <tr>
           <td class="row-label">Earnest Money</td>
-          ${offers.map(o => `<td class="offer-col ${emCls(o)}">
+          ${cols.map(o => `<td class="offer-col ${emCls(o)}">
             <div class="cval"><div class="cval-main">${fmt(o.em)}</div>
             <div class="cval-sub">${(+o.em/+o.price*100).toFixed(1)}%</div></div>
           </td>`).join('')}
         </tr>
-        <tr><td class="row-label">Inspection</td>${offers.map(o=>`<td class="offer-col">${inspTag(o)}</td>`).join('')}</tr>
-        <tr><td class="row-label">Appraisal</td>${offers.map(o=>`<td class="offer-col">${apprTag(o)}</td>`).join('')}</tr>
+        <tr><td class="row-label">Inspection</td>${cols.map(o=>`<td class="offer-col">${inspTag(o)}</td>`).join('')}</tr>
+        <tr><td class="row-label">Appraisal</td>${cols.map(o=>`<td class="offer-col">${apprTag(o)}</td>`).join('')}</tr>
 
-        <tr class="section-row"><td colspan="${offers.length+1}">Timing &amp; Possession</td></tr>
+        <tr class="section-row"><td colspan="${N}">Timing &amp; Possession</td></tr>
         <tr>
           <td class="row-label">Close Date</td>
-          ${offers.map(o => `<td class="offer-col ${closeCls(o)}">
+          ${cols.map(o => `<td class="offer-col ${closeCls(o)}">
             <div class="cval"><div class="cval-main">${fmtDate(o.close_date)}</div>
             <div class="cval-sub">${o.close_days} days out</div></div>
           </td>`).join('')}
         </tr>
-        <tr><td class="row-label">Possession</td>${offers.map(o=>`<td class="offer-col">${span(fmtDate(o.possession))}</td>`).join('')}</tr>
-        <tr><td class="row-label">Rent-Back</td>${offers.map(o=>{
+        <tr><td class="row-label">Possession</td>${cols.map(o=>`<td class="offer-col">${span(fmtDate(o.possession))}</td>`).join('')}</tr>
+        <tr><td class="row-label">Rent-Back</td>${cols.map(o=>{
           const cost = +o.rent_cost || 0;
           const sub = o.rent_code==='free' ? `<div class="cval-sub" style="color:var(--emerald)">$0 / no cost</div>`
             : cost ? `<div class="cval-sub" style="color:var(--rose)">−${fmt(cost)} cost</div>` : '';
           return `<td class="offer-col">${rentTag(o)}${sub}</td>`;
         }).join('')}</tr>
 
-        <tr class="section-row"><td colspan="${offers.length+1}">Ideal Scenario ✓</td></tr>
-        <tr><td class="row-label">Cash?</td>${offers.map(o=>`<td class="offer-col">${check(o.fin_code==='cash')}</td>`).join('')}</tr>
-        <tr><td class="row-label">No Insp. Requests?</td>${offers.map(o=>`<td class="offer-col">${check(o.insp_code!=='full')}</td>`).join('')}</tr>
-        <tr><td class="row-label">Free Rent-Back?</td>${offers.map(o=>`<td class="offer-col">${check(o.rent_code==='free')}</td>`).join('')}</tr>
-        <tr><td class="row-label">Close ≤ Jun 26?</td>${offers.map(o=>`<td class="offer-col">${check(+o.close_days<=26)}</td>`).join('')}</tr>
-        <tr><td class="row-label">Appraisal Waived?</td>${offers.map(o=>`<td class="offer-col">${check(o.appr_code==='waived')}</td>`).join('')}</tr>
+        <tr class="section-row"><td colspan="${N}">Ideal Scenario ✓</td></tr>
+        <tr><td class="row-label">Cash?</td>${cols.map(o=>`<td class="offer-col">${check(o.fin_code==='cash')}</td>`).join('')}</tr>
+        <tr><td class="row-label">No Insp. Requests?</td>${cols.map(o=>`<td class="offer-col">${check(o.insp_code!=='full')}</td>`).join('')}</tr>
+        <tr><td class="row-label">Free Rent-Back?</td>${cols.map(o=>`<td class="offer-col">${check(o.rent_code==='free')}</td>`).join('')}</tr>
+        <tr><td class="row-label">Close ≤ Jun 26?</td>${cols.map(o=>`<td class="offer-col">${check(+o.close_days<=26)}</td>`).join('')}</tr>
+        <tr><td class="row-label">Appraisal Waived?</td>${cols.map(o=>`<td class="offer-col">${check(o.appr_code==='waived')}</td>`).join('')}</tr>
 
-        <tr class="section-row"><td colspan="${offers.length+1}">Bottom Line</td></tr>
+        <tr class="section-row"><td colspan="${N}">Bottom Line</td></tr>
         <tr>
           <td class="row-label">Commission</td>
-          ${offers.map(o => {
+          ${cols.map(o => {
             const rate = +o.comm_pct || 0.05;
             const dollars = +o.price * rate;
             const savesVs5 = +o.price * (0.05 - rate); // + if below 5%
@@ -1000,27 +1040,27 @@ function renderCompare() {
         </tr>
         <tr>
           <td class="row-label">Transfer Tax (0.45%)</td>
-          ${offers.map(o => `<td class="offer-col"><div class="cval-sub">−${fmt(+o.price*cfgN('transfer_tax_pct',0.0045))}</div></td>`).join('')}
+          ${cols.map(o => `<td class="offer-col"><div class="cval-sub">−${fmt(+o.price*cfgN('transfer_tax_pct',0.0045))}</div></td>`).join('')}
         </tr>
         <tr>
           <td class="row-label">Tax Proration</td>
-          ${offers.map(o => `<td class="offer-col"><div class="cval"><div class="cval-main" style="font-size:.76rem">${o.tax_prorate||'TBD'}</div><div class="cval-sub" style="color:var(--rose)">−${fmt(taxProrationAmt(o))}</div></div></td>`).join('')}
+          ${cols.map(o => `<td class="offer-col"><div class="cval"><div class="cval-main" style="font-size:.76rem">${o.tax_prorate||'TBD'}</div><div class="cval-sub" style="color:var(--rose)">−${fmt(taxProrationAmt(o))}</div></div></td>`).join('')}
         </tr>
         <tr>
           <td class="row-label">Carrying to Close</td>
-          ${offers.map(o => `<td class="offer-col ${rank(x=>-carryCost(x))(o)}"><div class="cval"><div class="cval-main" style="font-size:.76rem">${Math.round(+o.close_days)}d</div><div class="cval-sub" style="color:var(--rose)">−${fmt(carryCost(o))}</div></div></td>`).join('')}
+          ${cols.map(o => `<td class="offer-col ${rank(x=>-carryCost(x))(o)}"><div class="cval"><div class="cval-main" style="font-size:.76rem">${Math.round(+o.close_days)}d</div><div class="cval-sub" style="color:var(--rose)">−${fmt(carryCost(o))}</div></div></td>`).join('')}
         </tr>
         <tr>
           <td class="row-label">Mortgage Payoff</td>
-          ${offers.map(o => `<td class="offer-col"><div class="cval-sub">−${fmt(cfgN('mortgage_payoff',486311.79))}</div></td>`).join('')}
+          ${cols.map(o => `<td class="offer-col"><div class="cval-sub">−${fmt(cfgN('mortgage_payoff',486311.79))}</div></td>`).join('')}
         </tr>
         <tr>
           <td class="row-label">Est. Net Proceeds</td>
-          ${offers.map(o => `<td class="offer-col ${netCls(o)}"><strong>${fmt(o._net)}</strong></td>`).join('')}
+          ${cols.map(o => `<td class="offer-col ${netCls(o)}"><strong>${fmt(o._net)}</strong></td>`).join('')}
         </tr>
         <tr>
           <td class="row-label">Strength Score</td>
-          ${offers.map(o => `<td class="offer-col ${scoreCls(o)}"><strong>${o._score.toFixed(1)}</strong></td>`).join('')}
+          ${cols.map(o => `<td class="offer-col ${scoreCls(o)}"><strong>${o._score.toFixed(1)}</strong></td>`).join('')}
         </tr>
       </tbody>
     </table>
