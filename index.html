@@ -1596,7 +1596,16 @@ function renderNego(num) {
       <div class="sb-delta">${netDelta>=0?'▲ +':'▼ '}${fmt(Math.abs(netDelta))} net vs current offer</div>
     </div>` : ''}
 
-    <div class="section-title">Suggested Counter Terms</div>
+    <div class="section-title">Step 1 · Whose Move Is This?</div>
+    <div class="nego-compose" style="margin-top:0">
+      <div class="seg">
+        <button id="by-seller" class="${_negoBy==='Seller'?'on':''}" onclick="setNegoBy('Seller')">🟢 Seller counter</button>
+        <button id="by-buyer" class="${_negoBy==='Buyer'?'on':''}" onclick="setNegoBy('Buyer')">🔵 Buyer response</button>
+      </div>
+      <div style="font-size:.74rem;color:var(--text-3);margin-top:.3rem">Pick who is making this move, then choose the terms below.</div>
+    </div>
+
+    <div class="section-title">Step 2 · Suggested Counter Terms</div>
     ${suggestions.length ? suggestions.map(sg => {
       const dl = sg._delta;
       const impact = Math.abs(dl) >= 1 ? `${dl>=0?'+':'−'}${fmt(Math.abs(dl))} net` : 'risk / terms';
@@ -1621,7 +1630,7 @@ function renderNego(num) {
       </div>`; }).join('')
       : '<div class="empty">This offer already meets your ideal terms — nothing obvious to counter.</div>'}
 
-    <div class="section-title">Add a Custom Term</div>
+    <div class="section-title">Step 2 · Add a Custom Term</div>
     <div class="nego-compose" style="margin-top:0">
       <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
         <select id="cf-field" onchange="customFieldChanged()" style="padding:.45rem .6rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.8rem">
@@ -1642,15 +1651,11 @@ function renderNego(num) {
       </div>` : ''}
     </div>
 
-    <div class="section-title">Build the Round</div>
+    <div class="section-title">Step 3 · Record the Round</div>
     <div class="nego-compose">
-      <div class="seg">
-        <button id="by-seller" class="on" onclick="setNegoBy('Seller')">Seller counter</button>
-        <button id="by-buyer" onclick="setNegoBy('Buyer')">Buyer response</button>
-      </div>
-      <div style="font-size:.74rem;color:var(--text-3);margin-bottom:.3rem">Checked suggestions + custom terms above are included &amp; modelled. Add a note for anything else:</div>
+      <div style="font-size:.74rem;color:var(--text-3);margin-bottom:.3rem">This will be logged as a <b id="record-by-label">${_negoBy}</b> move. Checked suggestions + custom terms above are included &amp; modelled. Add a note for anything else:</div>
       <textarea class="nego-note" id="nego-note" placeholder="e.g. 'Verbally agreed to split the survey cost'…"></textarea>
-      <button class="nego-save" onclick="saveRound(${num})">Record Round →</button>
+      <button class="nego-save" onclick="saveRound(${num})">Record ${_negoBy} Move →</button>
     </div>
 
     <div class="section-title">Negotiation History ${rounds.length ? `(${rounds.length} round${rounds.length>1?'s':''})` : ''}</div>
@@ -1693,6 +1698,8 @@ function setNegoBy(who) {
   _negoBy = who;
   document.getElementById('by-seller').classList.toggle('on', who === 'Seller');
   document.getElementById('by-buyer').classList.toggle('on', who === 'Buyer');
+  const lbl = document.getElementById('record-by-label'); if (lbl) lbl.textContent = who;
+  const btn = document.querySelector('.nego-save'); if (btn) btn.textContent = `Record ${who} Move →`;
 }
 
 function saveRound(num) {
