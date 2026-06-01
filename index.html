@@ -1013,7 +1013,7 @@ function renderCompare() {
       ${medal[o.num]?medal[o.num]+' ':''}Offer ${o.num}${o._negotiated?' <span title="in active negotiation" style="color:#6ee7b7">↻</span>':''}<br>
       <span style="font-weight:500;font-size:.65rem;color:rgba(255,255,255,.55)">${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}${o._negotiated?' · in talks':''}</span>
     </th>`).join('');
-  const colGroup = `<colgroup><col>${cols.map(o=>o._negotiated?'<col class="nego-col">':'<col>').join('')}</colgroup>`;
+  const colGroup = `<colgroup><col style="width:150px">${cols.map(o=>`<col style="width:150px"${o._negotiated?' class="nego-col"':''}>`).join('')}</colgroup>`;
 
   const check = pass => pass ? '<span style="font-size:1rem">✅</span>' : '<span style="font-size:1rem">❌</span>';
   const span  = n => `<div class="cval"><div class="cval-main">${n}</div></div>`;
@@ -1021,7 +1021,7 @@ function renderCompare() {
 
   document.getElementById('tab-compare').innerHTML = `
     <div class="compare-wrap">
-    <table class="compare-table">
+    <table class="compare-table" style="table-layout:fixed;min-width:${150*(cols.length+1)}px">
       ${colGroup}
       <thead><tr><th>Criteria</th>${offerCols}</tr></thead>
       <tbody>
