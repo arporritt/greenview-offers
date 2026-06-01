@@ -411,6 +411,20 @@ body {
 .round-terms li::before { content: '→'; position: absolute; left: 0; color: var(--text-3); }
 .round-note { font-size: .76rem; color: var(--text-2); font-style: italic; margin-top: .35rem; }
 .round-del { float: right; font-size: .68rem; color: var(--rose); background: none; border: none; cursor: pointer; }
+.term-cat { display: inline-block; font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-2); background: var(--bg); border-radius: 4px; padding: .05rem .35rem; margin-right: .35rem; }
+.round-model { margin-top: .5rem; padding-top: .45rem; border-top: 1px dashed var(--border); display: flex; gap: 1.1rem; }
+.rm-item .rm-v { font-size: .9rem; font-weight: 800; color: var(--ink); }
+.rm-item .rm-v.up { color: var(--emerald); }
+.rm-item .rm-v.down { color: var(--rose); }
+.rm-item .rm-l { font-size: .62rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+
+.scenario-box { background: linear-gradient(145deg,#064e3b,#022c22); border-radius: var(--radius); padding: .9rem 1rem; margin-bottom: .6rem; color: #fff; position: relative; overflow: hidden; }
+.scenario-box .sb-l { font-size: .62rem; font-weight: 700; color: #6ee7b7; text-transform: uppercase; letter-spacing: .08em; }
+.scenario-box .sb-figs { display: flex; gap: 1.5rem; margin-top: .5rem; }
+.scenario-box .sb-v { font-size: 1.35rem; font-weight: 800; letter-spacing: -.02em; }
+.scenario-box .sb-sub { font-size: .62rem; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .05em; margin-top: .2rem; }
+.scenario-box .sb-delta { font-size: .78rem; font-weight: 600; color: #6ee7b7; }
+.sugg-impact.neg { color: var(--text-3); }
 
 /* ── LISTING ── */
 .listing-hero {
@@ -1123,49 +1137,65 @@ function selectNego(num) {
   renderNego(num);
 }
 
-// Smart counter-term suggestions, computed from this offer's gaps vs ideal + competitors
+// Apply one structured term to a working copy of an offer
+function applyTerm(oc, field, value) {
+  if (field === 'rent') { oc.rent_code = 'free'; oc.rent_cost = 0; }
+  else if (field === 'price' || field === 'em' || field === 'close_days') oc[field] = +value;
+  else if (field === 'comm_pct') oc.comm_pct = +value;
+  else oc[field] = value;
+}
+
+// Build the cumulative scenario after applying rounds[0..uptoIndex] to the base offer
+function scenarioAfter(base, rounds, uptoIndex) {
+  const oc = Object.assign({}, base);
+  for (let i = 0; i <= uptoIndex && i < rounds.length; i++) {
+    (rounds[i].terms || []).forEach(t => { if (t && t.field) applyTerm(oc, t.field, t.value); });
+  }
+  oc._net = calcNet(oc);
+  oc._score = calcScore(oc);
+  return oc;
+}
+
+// Smart counter-term suggestions — each carries structured {cat, field, type, applyVal} for modeling
 function genSuggestions(o) {
   const LIST = cfgN('list_price', 799000);
   const maxPrice = Math.max(...offers.map(x => +x.price));
   const s = [];
 
-  if (+o.price < maxPrice) {
-    s.push({ id:'price', lever:'Purchase Price', cur: fmt(o.price), sug: fmt(maxPrice),
-      why:`Highest competing offer is ${fmt(maxPrice)}. Ask them to match.`,
-      impact:`+${fmt((maxPrice - +o.price) * (1 - (parseFloat(o.comm_pct)||0.05) - cfgN('transfer_tax_pct',0.0045)))} net` });
-  }
-  if (o.insp_code === 'full') {
-    s.push({ id:'insp', lever:'Inspection', cur:'With requests', sug:'Info-only / no requests',
-      why:'Removes their ability to renegotiate repairs after signing.', impact:'Lower fall-through risk' });
-  }
-  if (o.appr_code === 'included') {
-    s.push({ id:'appr', lever:'Appraisal', cur:'Standard contingency', sug:'Appraisal gap coverage / waiver',
-      why:`Offer is ${fmt(+o.price - LIST)} over list — protects you if it appraises low.`, impact:'Protects price' });
-  }
+  if (+o.price < maxPrice)
+    s.push({ id:'price', cat:'Price', field:'price', type:'num', applyVal:maxPrice,
+      cur:fmt(o.price), sug:fmt(maxPrice), why:`Highest competing offer is ${fmt(maxPrice)}. Ask them to match.` });
+  if (o.insp_code === 'full')
+    s.push({ id:'insp', cat:'Inspection', field:'insp_code', type:'enum', applyVal:'none',
+      cur:'With requests', sug:'Info-only / no requests', why:'Removes ability to renegotiate repairs after signing.' });
+  if (o.appr_code === 'included')
+    s.push({ id:'appr', cat:'Appraisal', field:'appr_code', type:'enum', applyVal:'gap',
+      cur:'Standard contingency', sug:'Appraisal gap coverage', why:`${fmt(+o.price - LIST)} over list — protects price if it appraises low.` });
   if (+o.em / +o.price < 0.03) {
-    const target = Math.round(+o.price * 0.03 / 1000) * 1000;
-    s.push({ id:'em', lever:'Earnest Money', cur:`${fmt(o.em)} (${(+o.em/+o.price*100).toFixed(1)}%)`, sug:`${fmt(target)} (3%)`,
-      why:'More skin in the game; stronger commitment.', impact:'Lower walk risk' });
+    const t = Math.round(+o.price * 0.03 / 1000) * 1000;
+    s.push({ id:'em', cat:'Earnest Money', field:'em', type:'num', applyVal:t,
+      cur:`${fmt(o.em)} (${(+o.em/+o.price*100).toFixed(1)}%)`, sug:`${fmt(t)} (3%)`, why:'More commitment / skin in the game.' });
   }
-  if (o.rent_code !== 'free') {
-    s.push({ id:'rent', lever:'Rent-Back', cur: o.rent_back || 'Paid', sug:'Free through July 31',
-      why:'Saves your post-close occupancy cost.', impact:`+${fmt(+o.rent_cost||0)} saved` });
-  }
-  if (+o.close_days > 26) {
-    s.push({ id:'close', lever:'Closing Date', cur: fmtDate(o.close_date, true), sug:'On or before June 26',
-      why:'Hits your target close window.', impact:'Timing' });
-  }
+  if (o.rent_code !== 'free')
+    s.push({ id:'rent', cat:'Rent-Back', field:'rent', type:'enum', applyVal:'free',
+      cur:o.rent_back || 'Paid', sug:'Free through July 31', why:'Saves your post-close occupancy cost.' });
+  if (+o.close_days > 26)
+    s.push({ id:'close', cat:'Closing', field:'close_days', type:'num', applyVal:26,
+      cur:fmtDate(o.close_date, true), sug:'On or before June 26', why:'Hits your target close window.' });
   const taxpct = parseTaxPct(o.tax_prorate);
-  if (taxpct > 1.0 || String(o.tax_prorate||'').toUpperCase()==='TBD') {
-    s.push({ id:'tax', lever:'Tax Proration', cur: o.tax_prorate||'TBD', sug:'100% of last bill',
-      why:'Standard ask is 105%+; 100% keeps more in your pocket.',
-      impact:`~+${fmt(((150+ +o.close_days)/365) * cfgN('tax_annual',13700) * (taxpct-1.0))} net` });
-  }
-  if ((parseFloat(o.comm_pct)||0.05) > 0.04) {
-    s.push({ id:'comm', lever:'Commission', cur:`${((parseFloat(o.comm_pct)||0.05)*100).toFixed(1)}%`, sug:'Reduce buyer-agent to 2%',
-      why:'Every 0.5% saved on this price is real money to you.',
-      impact:`~+${fmt(+o.price * 0.005)} per 0.5%` });
-  }
+  if (taxpct > 1.0 || String(o.tax_prorate||'').toUpperCase()==='TBD')
+    s.push({ id:'tax', cat:'Tax Proration', field:'tax_prorate', type:'enum', applyVal:'100%',
+      cur:o.tax_prorate||'TBD', sug:'100% of last bill', why:'Standard ask is 105%+; 100% keeps more in your pocket.' });
+  if ((parseFloat(o.comm_pct)||0.05) > 0.04)
+    s.push({ id:'comm', cat:'Commission', field:'comm_pct', type:'enum', applyVal:0.045,
+      cur:`${((parseFloat(o.comm_pct)||0.05)*100).toFixed(1)}%`, sug:'Buyer-agent to 2% (4.5% total)', why:'Direct savings to you.' });
+
+  // Compute each suggestion's modelled net impact
+  s.forEach(sg => {
+    const oc = Object.assign({}, o);
+    applyTerm(oc, sg.field, sg.applyVal);
+    sg._delta = calcNet(oc) - o._net;
+  });
   return s;
 }
 
@@ -1174,7 +1204,10 @@ function renderNego(num) {
   if (!o) return;
   const suggestions = genSuggestions(o);
   const rounds = loadRounds(num);
-  const firstName = o.buyers.split(/[&,]/)[0].trim().split(' ').slice(0,2).join(' ');
+  window._negoSugg = {}; suggestions.forEach(sg => window._negoSugg[sg.id] = sg);
+
+  const working = rounds.length ? scenarioAfter(o, rounds, rounds.length - 1) : o;
+  const netDelta = working._net - o._net;
 
   document.getElementById('nego-area').innerHTML = `
     <div class="nego-summary">
@@ -1182,27 +1215,43 @@ function renderNego(num) {
         <span class="ns-name">Offer ${o.num} — ${o.buyers}</span>
         <span class="ns-net">${fmt(o._net)}</span>
       </div>
-      <div class="ns-sub">${o.financing} · ${fmt(o.price)} · closes ${fmtDate(o.close_date)} · score ${o._score.toFixed(0)} · net proceeds</div>
+      <div class="ns-sub">${o.financing} · ${fmt(o.price)} · closes ${fmtDate(o.close_date)} · score ${o._score.toFixed(0)} · current net proceeds</div>
     </div>
 
+    ${rounds.length ? `
+    <div class="scenario-box">
+      <div class="sb-l">Working Scenario · if all logged terms hold</div>
+      <div class="sb-figs">
+        <div><div class="sb-v">${fmt(working._net)}</div><div class="sb-sub">Net Proceeds</div></div>
+        <div><div class="sb-v">${fmt(working.price)}</div><div class="sb-sub">Price</div></div>
+        <div><div class="sb-v">${working._score.toFixed(0)}</div><div class="sb-sub">Score</div></div>
+      </div>
+      <div class="sb-delta">${netDelta>=0?'▲ +':'▼ '}${fmt(Math.abs(netDelta))} net vs current offer</div>
+    </div>` : ''}
+
     <div class="section-title">Suggested Counter Terms</div>
-    ${suggestions.length ? suggestions.map(sg => `
+    ${suggestions.length ? suggestions.map(sg => {
+      const dl = sg._delta;
+      const impact = Math.abs(dl) >= 1 ? `${dl>=0?'+':'−'}${fmt(Math.abs(dl))} net` : 'risk / terms';
+      return `
       <div class="sugg" id="sugg-${sg.id}">
         <div class="sugg-head">
           <input type="checkbox" class="sugg-check" onchange="toggleSugg('${sg.id}')">
           <div class="sugg-body">
             <div style="display:flex;justify-content:space-between;gap:.5rem">
-              <span class="sugg-lever">${sg.lever}</span>
-              <span class="sugg-impact">${sg.impact}</span>
+              <span class="sugg-lever"><span class="term-cat">${sg.cat}</span>${sg.sug}</span>
+              <span class="sugg-impact ${Math.abs(dl)<1?'neg':''}">${impact}</span>
             </div>
             <div class="sugg-flow"><span class="cur">${sg.cur}</span><span class="arr">→</span><span class="new">${sg.sug}</span></div>
             <div class="sugg-why">${sg.why}</div>
             <div class="sugg-edit">
-              <input id="sugg-val-${sg.id}" value="${sg.lever}: ${sg.sug}" data-lever="${sg.lever}">
+              ${sg.type==='num'
+                ? `<input id="sugg-val-${sg.id}" type="number" value="${sg.applyVal}" data-id="${sg.id}">`
+                : `<input id="sugg-val-${sg.id}" value="${sg.sug}" data-id="${sg.id}" readonly style="background:var(--bg)">`}
             </div>
           </div>
         </div>
-      </div>`).join('')
+      </div>`; }).join('')
       : '<div class="empty">This offer already meets your ideal terms — nothing obvious to counter.</div>'}
 
     <div class="section-title">Build the Round</div>
@@ -1211,23 +1260,36 @@ function renderNego(num) {
         <button id="by-seller" class="on" onclick="setNegoBy('Seller')">Seller counter</button>
         <button id="by-buyer" onclick="setNegoBy('Buyer')">Buyer response</button>
       </div>
-      <div style="font-size:.74rem;color:var(--text-3);margin-bottom:.3rem">Checked suggestions above are included automatically. Add a note for anything else:</div>
-      <textarea class="nego-note" id="nego-note" placeholder="e.g. 'Verbally agreed to split the survey cost' or other terms…"></textarea>
+      <div style="font-size:.74rem;color:var(--text-3);margin-bottom:.3rem">Checked terms above are included &amp; modelled. Add a note for anything else:</div>
+      <textarea class="nego-note" id="nego-note" placeholder="e.g. 'Verbally agreed to split the survey cost'…"></textarea>
       <button class="nego-save" onclick="saveRound(${num})">Record Round →</button>
     </div>
 
     <div class="section-title">Negotiation History ${rounds.length ? `(${rounds.length} round${rounds.length>1?'s':''})` : ''}</div>
     <div class="rounds">
-      ${rounds.length ? rounds.map((r, i) => `
+      ${rounds.length ? rounds.map((r, i) => {
+        const scen = scenarioAfter(o, rounds, i);
+        const d = scen._net - o._net;
+        const cls = d > 0 ? 'up' : d < 0 ? 'down' : '';
+        return `
         <div class="round ${r.by.toLowerCase()}">
           <button class="round-del" onclick="delRound(${num}, ${i})">delete</button>
           <div class="round-head">
             <span class="round-by">${r.by === 'Seller' ? '🟢 Seller' : '🔵 Buyer'} · Round ${i+1}</span>
             <span class="round-date">${r.date}</span>
           </div>
-          ${r.terms.length ? `<ul class="round-terms">${r.terms.map(t=>`<li>${t}</li>`).join('')}</ul>` : ''}
+          ${(r.terms&&r.terms.length) ? `<ul class="round-terms">${r.terms.map(t=>{
+            if (t && t.display) return `<li><span class="term-cat">${t.cat||'Term'}</span>${t.display}</li>`;
+            return `<li>${t}</li>`; // legacy string
+          }).join('')}</ul>` : ''}
           ${r.note ? `<div class="round-note">"${r.note}"</div>` : ''}
-        </div>`).join('')
+          <div class="round-model">
+            <div class="rm-item"><div class="rm-v ${cls}">${fmt(scen._net)}</div><div class="rm-l">Net if agreed</div></div>
+            <div class="rm-item"><div class="rm-v">${fmt(scen.price)}</div><div class="rm-l">Price</div></div>
+            <div class="rm-item"><div class="rm-v">${scen._score.toFixed(0)}</div><div class="rm-l">Score</div></div>
+            <div class="rm-item"><div class="rm-v ${cls}">${d>=0?'+':'−'}${fmt(Math.abs(d))}</div><div class="rm-l">Δ vs current</div></div>
+          </div>
+        </div>`; }).join('')
         : '<div class="empty">No rounds logged yet. Check terms above, then Record Round.</div>'}
     </div>
     <div style="font-size:.68rem;color:var(--text-3);margin-top:.5rem">History is saved on this device (browser). It is not shared via the live link.</div>
@@ -1248,7 +1310,13 @@ function saveRound(num) {
   const terms = [];
   document.querySelectorAll('#nego-area .sugg.on').forEach(el => {
     const inp = el.querySelector('input[id^="sugg-val-"]');
-    if (inp && inp.value.trim()) terms.push(inp.value.trim());
+    const sg = window._negoSugg[inp.dataset.id];
+    if (!sg) return;
+    const value = sg.type === 'num' ? (+inp.value || sg.applyVal) : sg.applyVal;
+    const display = sg.type === 'num'
+      ? (sg.field === 'comm_pct' ? (value*100).toFixed(1)+'%' : fmt(value))
+      : sg.sug;
+    terms.push({ cat: sg.cat, field: sg.field, value: value, display: display });
   });
   const note = document.getElementById('nego-note').value.trim();
   if (!terms.length && !note) { alert('Check at least one suggested term or add a note.'); return; }
