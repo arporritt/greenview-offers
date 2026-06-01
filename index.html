@@ -737,7 +737,7 @@ function buildOfferTabs() {
     const active = String(_selectedOffer) === String(o.num);
     const inTalks = loadRounds(o.num).length > 0;
     return `<button class="subtab-btn${active?' active':''}" data-offer="${o.num}" onclick="selectOffer(${o.num})">
-      Offer ${o.num}${inTalks?' <span style="color:#34d399" title="in active negotiation">●</span>':''}<span class="st-net">${fmt(o._net)}</span>
+      ${isWinner(o)?'🏆 ':''}Offer ${o.num}${inTalks?' <span style="color:#34d399" title="in active negotiation">●</span>':''}<span class="st-net">${fmt(o._net)}</span>
     </button>`;
   }).join('');
 
@@ -903,6 +903,21 @@ function renderDashboard() {
       </div>`;
   }
 
+  // ── Winning-deal banner ──
+  let winnerHtml = '';
+  const winOffer = real.find(x => isWinner(x));
+  if (winOffer) {
+    winnerHtml = `
+      <div onclick="openOffer(${winOffer.num})" style="cursor:pointer;background:linear-gradient(145deg,#065f46,#022c22);border-radius:var(--radius);padding:1rem 1.1rem;margin-bottom:1.25rem;box-shadow:var(--shadow-lg);display:flex;align-items:center;justify-content:space-between;gap:.75rem">
+        <div>
+          <div style="font-size:.62rem;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.25rem">🏆 Winning Deal Selected</div>
+          <div style="font-size:1.05rem;font-weight:800;color:#fff">Offer ${winOffer.num} — ${winOffer.buyers}</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.6);margin-top:.1rem">${winOffer.financing} · ${fmt(winOffer.price)} · closes ${fmtDate(winOffer.close_date)}</div>
+        </div>
+        <div style="text-align:right"><div style="font-size:1.2rem;font-weight:800;color:#fff">${fmt(winOffer._net)}</div><div style="font-size:.6rem;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.05em">Net to You</div></div>
+      </div>`;
+  }
+
   let negoSummaryHtml = '';
   if (negoOffers.length) {
     negoSummaryHtml = `
@@ -935,9 +950,11 @@ function renderDashboard() {
   }
 
   document.getElementById('tab-dashboard').innerHTML = `
+    ${winnerHtml}
+
     <!-- RECOMMENDATION -->
     <div class="rec-hero">
-      <div class="rec-tag">Leading Offer · by net proceeds</div>
+      <div class="rec-tag">${winOffer ? 'Leading Offer · by net proceeds' : 'Leading Offer · by net proceeds'}</div>
       <div class="rec-name">Offer ${top.num} — ${top.buyers.replace('&','&amp;')}</div>
       <div class="rec-figures">
         <div><div class="rec-fig-v">${fmt(top.price)}</div><div class="rec-fig-l">Sale Price</div></div>
@@ -1057,8 +1074,8 @@ function renderCompare() {
                      : o._hasPending ? ' <span title="counter proposed, pending acceptance" style="color:#fbbf24">⋯</span>' : '';
   const negoSub = o => o._negotiated ? ' · terms accepted' : o._hasPending ? ' · counter pending' : '';
   const offerCols = cols.map(o =>
-    `<th class="offer-col${inNego(o)?' nego':''}">
-      ${medal[o.num]?medal[o.num]+' ':''}Offer ${o.num}${negoTag(o)}<br>
+    `<th class="offer-col${inNego(o)?' nego':''}" style="${isWinner(o)?'box-shadow:inset 0 3px 0 var(--emerald)':''}">
+      ${isWinner(o)?'🏆 ':medal[o.num]?medal[o.num]+' ':''}Offer ${o.num}${negoTag(o)}<br>
       <span style="font-weight:500;font-size:.65rem;color:rgba(255,255,255,.55)">${o.buyers.split(/[&,]/)[0].trim().split(' ')[0]}${negoSub(o)}</span>
     </th>`).join('');
   const colGroup = `<colgroup><col style="width:150px">${cols.map(o=>`<col style="width:150px"${inNego(o)?' class="nego-col"':''}>`).join('')}</colgroup>`;
@@ -1220,9 +1237,10 @@ function renderOfferDetail(o) {
       </div>`;
   }
 
+  const won = isWinner(o);
   pane.innerHTML = `
-    <div class="offer-hero">
-      <div class="oh-num">Offer #${o.num} · ${o.date||''}${rounds.length?' · <span style="color:#6ee7b7">🤝 in negotiation</span>':''}</div>
+    <div class="offer-hero" style="${won?'box-shadow:0 0 0 2px var(--emerald), var(--shadow-lg)':''}">
+      <div class="oh-num">Offer #${o.num} · ${o.date||''}${won?' · <span style="color:#6ee7b7">🏆 winning deal</span>':rounds.length?' · <span style="color:#6ee7b7">🤝 in negotiation</span>':''}</div>
       <div class="oh-name">${o.buyers}</div>
       <div class="oh-agent">${o.agent||''}</div>
       <div class="oh-stats">
@@ -1233,6 +1251,8 @@ function renderOfferDetail(o) {
         <div class="ohs"><div class="ohs-v">${fmtDate(o.possession)}</div><div class="ohs-l">Possession</div></div>
       </div>
     </div>
+
+    <button onclick="setWinner(${o.num})" style="width:100%;margin-bottom:1.25rem;padding:.7rem;border-radius:var(--radius-sm);font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer;border:1.5px solid var(--emerald);background:${won?'var(--emerald)':'transparent'};color:${won?'#fff':'var(--emerald)'}">${won?'🏆 Winning Deal — tap to unselect':'🏆 Select as Winning Deal'}</button>
 
     ${negoBanner}
 
@@ -1409,7 +1429,7 @@ function buildNegoTabs() {
   document.getElementById('nego-subtabnav').innerHTML = byNum.map(o => {
     const active = String(_negoOffer) === String(o.num);
     const inTalks = loadRounds(o.num).length > 0;
-    return `<button class="subtab-btn${active?' active':''}" data-nego="${o.num}" onclick="selectNego(${o.num})">Offer ${o.num}${inTalks?' <span style="color:#34d399" title="in active negotiation">●</span>':''}</button>`;
+    return `<button class="subtab-btn${active?' active':''}" data-nego="${o.num}" onclick="selectNego(${o.num})">${isWinner(o)?'🏆 ':''}Offer ${o.num}${inTalks?' <span style="color:#34d399" title="in active negotiation">●</span>':''}</button>`;
   }).join('');
 }
 
@@ -1838,7 +1858,19 @@ function setRoundStatus(num, i, status) {
   refreshAll(num);
 }
 
-// Re-render every view so negotiation changes show everywhere immediately
+// Mark (or unmark) an offer as the chosen winning deal — persists to the Sheet
+function setWinner(num) {
+  const next = String(cfg.winner || '') === String(num) ? '' : String(num);
+  cfg.winner = next;
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'updateConfig', key: 'winner', value: next })
+  }).catch(() => {});
+  refreshAll(_negoOffer);
+}
+function isWinner(o) { return String(cfg.winner || '') === String(o.num); }
+
+// Re-render every view so changes show everywhere immediately
 function refreshAll(num) {
   buildNegoTabs(); buildOfferTabs();
   renderDashboard(); renderCompare();
